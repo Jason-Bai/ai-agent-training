@@ -1,0 +1,85 @@
+....................................FFF.........                         [100%]
+=================================== FAILURES ===================================
+__________ test_real_bailian_schema_preserves_precise_decimal[light] ___________
+
+f13_real_environment = RealEnvironment(client=<starlette.testclient.TestClient object at 0x115f78b30>, application=<fastapi.applications.Fast...56zjgm8txl21tvpq00000gn/T/llmgw-f13-work-eifzl4on/pytest-stage-a-real-rerun/test_real_bailian_schema_prese0/f13-real'))
+group = 'light'
+record_property = <function record_property.<locals>.append_property at 0x115f5cfe0>
+
+    @pytest.mark.parametrize('group',list(MODELS))
+    def test_real_bailian_schema_preserves_precise_decimal(f13_real_environment,group,record_property):
+        env=f13_real_environment;value=Decimal('1.0000000000000001')
+        body={'model':group,'prompt':{'name':'context_answer','version':'1.2.0',
+            'variables':{'context':'订单A123的已确认金额是1.0000000000000001元，必须逐位保留。'}},
+            'messages':[{'role':'user','content':'只返回JSON，字段order_id和amount，金额不得舍入。'}],
+            'max_output_tokens':256,'timeout_seconds':60,
+            'response_schema':{'type':'object','properties':{
+                'order_id':{'type':'string','enum':['A123']},
+                'amount':{'type':'number','enum':[value]}},
+                'required':['order_id','amount'],'additionalProperties':False}}
+        reply=env.client.post('/v1/llm',content=dumps(body),headers={'Content-Type':'application/json'})
+        rid=reply.headers['x-request-id'];trace=env.trace(rid)
+        record_property('f13_request_id',rid);record_property('f13_trace',json.dumps(trace,ensure_ascii=False))
+>       assert reply.status_code==200,reply.text
+E       AssertionError: {"success":false,"code":"schema_validation_failed","data":null,"message":"模型输出不符合 response_schema"}
+E       assert 502 == 200
+E        +  where 502 = <Response [502 Bad Gateway]>.status_code
+
+tests/live/test_f13_precision.py:27: AssertionError
+_________ test_real_bailian_schema_preserves_precise_decimal[general] __________
+
+f13_real_environment = RealEnvironment(client=<starlette.testclient.TestClient object at 0x10c3a3f20>, application=<fastapi.applications.Fast...56zjgm8txl21tvpq00000gn/T/llmgw-f13-work-eifzl4on/pytest-stage-a-real-rerun/test_real_bailian_schema_prese1/f13-real'))
+group = 'general'
+record_property = <function record_property.<locals>.append_property at 0x115d3a020>
+
+    @pytest.mark.parametrize('group',list(MODELS))
+    def test_real_bailian_schema_preserves_precise_decimal(f13_real_environment,group,record_property):
+        env=f13_real_environment;value=Decimal('1.0000000000000001')
+        body={'model':group,'prompt':{'name':'context_answer','version':'1.2.0',
+            'variables':{'context':'订单A123的已确认金额是1.0000000000000001元，必须逐位保留。'}},
+            'messages':[{'role':'user','content':'只返回JSON，字段order_id和amount，金额不得舍入。'}],
+            'max_output_tokens':256,'timeout_seconds':60,
+            'response_schema':{'type':'object','properties':{
+                'order_id':{'type':'string','enum':['A123']},
+                'amount':{'type':'number','enum':[value]}},
+                'required':['order_id','amount'],'additionalProperties':False}}
+        reply=env.client.post('/v1/llm',content=dumps(body),headers={'Content-Type':'application/json'})
+        rid=reply.headers['x-request-id'];trace=env.trace(rid)
+        record_property('f13_request_id',rid);record_property('f13_trace',json.dumps(trace,ensure_ascii=False))
+>       assert reply.status_code==200,reply.text
+E       AssertionError: {"success":false,"code":"schema_validation_failed","data":null,"message":"模型输出不符合 response_schema"}
+E       assert 502 == 200
+E        +  where 502 = <Response [502 Bad Gateway]>.status_code
+
+tests/live/test_f13_precision.py:27: AssertionError
+_________ test_real_bailian_schema_preserves_precise_decimal[analysis] _________
+
+f13_real_environment = RealEnvironment(client=<starlette.testclient.TestClient object at 0x10c54c410>, application=<fastapi.applications.Fast...56zjgm8txl21tvpq00000gn/T/llmgw-f13-work-eifzl4on/pytest-stage-a-real-rerun/test_real_bailian_schema_prese2/f13-real'))
+group = 'analysis'
+record_property = <function record_property.<locals>.append_property at 0x10c72eca0>
+
+    @pytest.mark.parametrize('group',list(MODELS))
+    def test_real_bailian_schema_preserves_precise_decimal(f13_real_environment,group,record_property):
+        env=f13_real_environment;value=Decimal('1.0000000000000001')
+        body={'model':group,'prompt':{'name':'context_answer','version':'1.2.0',
+            'variables':{'context':'订单A123的已确认金额是1.0000000000000001元，必须逐位保留。'}},
+            'messages':[{'role':'user','content':'只返回JSON，字段order_id和amount，金额不得舍入。'}],
+            'max_output_tokens':256,'timeout_seconds':60,
+            'response_schema':{'type':'object','properties':{
+                'order_id':{'type':'string','enum':['A123']},
+                'amount':{'type':'number','enum':[value]}},
+                'required':['order_id','amount'],'additionalProperties':False}}
+        reply=env.client.post('/v1/llm',content=dumps(body),headers={'Content-Type':'application/json'})
+        rid=reply.headers['x-request-id'];trace=env.trace(rid)
+        record_property('f13_request_id',rid);record_property('f13_trace',json.dumps(trace,ensure_ascii=False))
+>       assert reply.status_code==200,reply.text
+E       AssertionError: {"success":false,"code":"schema_validation_failed","data":null,"message":"模型输出不符合 response_schema"}
+E       assert 502 == 200
+E        +  where 502 = <Response [502 Bad Gateway]>.status_code
+
+tests/live/test_f13_precision.py:27: AssertionError
+=========================== short test summary info ============================
+FAILED tests/live/test_f13_precision.py::test_real_bailian_schema_preserves_precise_decimal[light]
+FAILED tests/live/test_f13_precision.py::test_real_bailian_schema_preserves_precise_decimal[general]
+FAILED tests/live/test_f13_precision.py::test_real_bailian_schema_preserves_precise_decimal[analysis]
+3 failed, 45 passed in 113.05s (0:01:53)

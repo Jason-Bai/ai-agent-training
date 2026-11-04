@@ -1,0 +1,150 @@
+{
+  "capacity-development": {
+    "outcome": "failed",
+    "phases": [
+      {
+        "concurrency": 1,
+        "started": 78,
+        "successes": 78,
+        "failures": {},
+        "dispatch_seconds": 60,
+        "elapsed_including_drain_seconds": 60.320487791032065
+      },
+      {
+        "concurrency": 5,
+        "started": 386,
+        "successes": 386,
+        "failures": {},
+        "dispatch_seconds": 60,
+        "elapsed_including_drain_seconds": 60.77075283305021
+      },
+      {
+        "concurrency": 10,
+        "started": 773,
+        "successes": 773,
+        "failures": {},
+        "dispatch_seconds": 60,
+        "elapsed_including_drain_seconds": 60.67146637500264
+      },
+      {
+        "concurrency": 20,
+        "started": 1586,
+        "successes": 1586,
+        "failures": {},
+        "dispatch_seconds": 60,
+        "elapsed_including_drain_seconds": 60.75190004199976
+      }
+    ],
+    "partial_sustained_completed_records": 5402,
+    "started": null,
+    "failures": null
+  },
+  "capacity-second-report": {
+    "outcome": "failed",
+    "phases": [
+      {
+        "concurrency": 1,
+        "started": 69,
+        "successes": 69,
+        "failures": {},
+        "dispatch_seconds": 60,
+        "elapsed_including_drain_seconds": 60.69796837505419
+      },
+      {
+        "concurrency": 5,
+        "started": 373,
+        "successes": 373,
+        "failures": {},
+        "dispatch_seconds": 60,
+        "elapsed_including_drain_seconds": 60.913937041012105
+      },
+      {
+        "concurrency": 10,
+        "started": 786,
+        "successes": 786,
+        "failures": {},
+        "dispatch_seconds": 60,
+        "elapsed_including_drain_seconds": 60.898331583011895
+      },
+      {
+        "concurrency": 20
+      }
+    ],
+    "partial_sustained_completed_records": 0,
+    "started": null,
+    "failures": null
+  },
+  "diagnostic-fullwire-report": {
+    "outcome": null,
+    "phases": [],
+    "partial_sustained_completed_records": 0,
+    "started": 14406,
+    "failures": {
+      "provider_invalid_response": 3601
+    }
+  },
+  "diagnostic-fixed-report": {
+    "outcome": null,
+    "phases": [],
+    "partial_sustained_completed_records": 0,
+    "started": 14483,
+    "failures": {}
+  },
+  "capacity-first-redacted-receipt": {
+    "output_tail": "                                elapsed_ms=(monotonic()-started)*1000,first_text_ms=None,create_ms=create_ms,events=[])\n                async for event in frames(stream):\n                    if event[1]=='response.delta' and first_text is None:\n                        first_text=(monotonic()-subscribed)*1000\n                    if event[1]!='response.heartbeat':\n                        events.append(event)\n            assert events and events[-1][1] in {'response.completed','response.failed','response.canceled'}\n            terminal=events[-1][1].split('.')[1]\n            if terminal=='completed':\n                answer=''.join(e[2]['delta'] for e in events if e[1]=='response.delta')\n>               assert 'A123' in answer and '充电器' in answer\n                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE               AssertionError\n\ntests/f10_support.py:173: AssertionError\n=========================== short test summary info ============================\nFAILED tests/live/test_f10_capacity.py::test_real_capacity_and_ten_minute_sustained\n1 failed in 484.31s (0:08:04)"
+  },
+  "capacity-second-receipt": {
+    "output_tail": "        data=payload(model,mode)\n        events=[]\n        first_text=None\n        create_ms=None\n        if mode=='streaming':\n            response=await self.client.post('/v1/llm/stream',json=data,headers=headers)\n            create_ms=(monotonic()-started)*1000\n            rid=response.headers['x-request-id']\n            if response.status_code!=202:\n                return dict(request_id=rid,status='failed',error_code=response.json()['code'],\n>                           elapsed_ms=(monotonic()-started)*1000,first_text_ms=None,create_ms=create_ms,events=[])\n                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE               AssertionError: business fact mismatch {\"request_id\": \"01dbd5b7-35bb-46e7-8238-470e09545c9d\", \"model\": \"general-primary\", \"mode\": \"streaming\", \"answer\": \"订\"}\n\ntests/f10_support.py:181: AssertionError\n=========================== short test summary info ============================\nFAILED tests/live/test_f10_capacity.py::test_real_capacity_and_ten_minute_sustained\n1 failed in 244.03s (0:04:04)"
+  },
+  "diagnostic-receipt": {
+    "output_tail": "            code=events[-1][2].get('code')\n        else:\n            response=await self.client.post('/v1/llm',json=data,headers=headers)\n            rid=response.headers['x-request-id']\n            terminal='completed' if response.status_code==200 else 'failed'\n            code=response.json()['code'] if terminal=='failed' else None\n            if terminal=='completed':\n                answer=response.json()['data']['text']\n                if 'A123' not in answer or '充电器' not in answer:\n                    failure={'request_id':rid,'model':model,'mode':mode,'answer':answer}\n                    (self.directory/'semantic-failure.json').write_text(json.dumps(failure,ensure_ascii=False))\n>                   raise AssertionError('business fact mismatch '+json.dumps(failure,ensure_ascii=False))\nE                   AssertionError: business fact mismatch {\"request_id\": \"d586dc81-67d1-418a-a862-34b4f0628bae\", \"model\": \"general-backup\", \"mode\": \"text\", \"answer\": \"订\"}\n\ntests/f10_support.py:242: AssertionError\n=========================== short test summary info ============================\nFAILED tests/live/test_f10_diagnostic_tmp.py::test_capture_wire_for_single_character\n1 failed in 587.89s (0:09:47)"
+  },
+  "diagnostic-fullwire-receipt": {
+    "output_tail": "observed = {'9bc0d881-16da-4a69-a20b-001264159467': {'request_id': '9bc0d881-16da-4a69-a20b-001264159467', 'status': 'completed',...45b': {'request_id': 'c40b22c0-2bc2-4887-b47a-324be422045b', 'status': 'failed', 'attempts': 1, 'events': 9, ...}, ...}\n\n    def validate_records(records, observed):\n        identifiers = [record['request_id'] for record in records]\n        assert len(set(identifiers)) == len(identifiers), 'duplicate business request ID'\n        assert set(identifiers) == set(observed), 'missing observed request'\n        for record in records:\n            rid = record['request_id']\n            assert observed[rid]['status'] == record['status'], 'response/database terminal mismatch'\n>           assert record['status'] == 'completed' or (\n                record['status'] == 'failed' and record['error_code'] in CAPACITY_ERRORS\n            ), f\"unexpected capacity outcome {record['status']} / {record['error_code']}\"\nE           AssertionError: unexpected capacity outcome failed / provider_invalid_response\n\ntests/f10_metrics.py:54: AssertionError\n=========================== short test summary info ============================\nFAILED tests/live/test_f10_diagnostic_tmp.py::test_capture_wire_for_single_character\n1 failed in 706.54s (0:11:46)"
+  },
+  "diagnostic-fixed-receipt": {
+    "output_tail": ".                                                                        [100%]\n1 passed in 705.62s (0:11:45)"
+  },
+  "observation-red": {
+    "output_tail": [
+      ">       raise TypeError(f'Object of type {o.__class__.__name__} '",
+      "                        f'is not JSON serializable')",
+      "E       TypeError: Object of type Decimal is not JSON serializable",
+      "",
+      "/Users/baiyu/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/json/encoder.py:180: TypeError",
+      "=========================== short test summary info ============================",
+      "FAILED tests/unit/test_f10_observation.py::test_provider_raw_precision_is_serializable_without_changing_input",
+      "1 failed, 1 passed in 0.17s"
+    ]
+  },
+  "observation-green": {
+    "output_tail": [
+      "..                                                                       [100%]",
+      "2 passed in 1.02s"
+    ]
+  },
+  "layered-red": {
+    "output_tail": [
+      ">       assert correct, 'business fact mismatch'",
+      "               ^^^^^^^",
+      "E       AssertionError: business fact mismatch",
+      "",
+      "tests/f10_support.py:138: AssertionError",
+      "=========================== short test summary info ============================",
+      "FAILED tests/unit/test_f10_observation.py::test_capacity_quality_separates_upstream_answer_from_gateway_corruption",
+      "1 failed, 3 passed in 1.28s"
+    ]
+  },
+  "layered-green": {
+    "output_tail": [
+      "............                                                             [100%]",
+      "12 passed in 3.63s"
+    ]
+  },
+  "final-helpers": {
+    "output_tail": [
+      ".............                                                            [100%]",
+      "13 passed in 4.79s"
+    ]
+  }
+}

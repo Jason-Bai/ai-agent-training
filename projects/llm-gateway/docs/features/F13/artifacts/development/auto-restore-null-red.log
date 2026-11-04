@@ -1,0 +1,45 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+__ test_pending_auto_snapshot_restores_omitted_optional_fields_without_calls ___
+
+    def test_pending_auto_snapshot_restores_omitted_optional_fields_without_calls():
+        gateway,trace,provider,traces=service()
+        execution=gateway.prepare_stream(request(streaming=True,model='auto-general'),trace)
+        manager=StreamingManager(None,traces,gateway.model_registry,gateway.token_budget,
+            gateway.providers,None,set(),awaiting_persistence=lambda _:False,
+            limiter=gateway.limiter,prompt_registry=gateway.prompt_registry)
+>       restored=manager._restore({'input_snapshot':dumps(execution.snapshot),
+                                   'requested_model':'auto-general'},trace)
+
+tests/unit/test_f13_auto_routing.py:87: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <services.streaming_manager.StreamingManager object at 0x10cbf7530>
+row = {'input_snapshot': '{"snapshot_version":2,"auto_request":{"model":"auto-general","prompt":{"name":"basic_text","versio...sk_router","classifier_prompt_version":"1.0.0","classification_duration_ms":null}}', 'requested_model': 'auto-general'}
+trace = RequestTrace(request_id='9d89f532-46b1-4bf8-99ba-d0eaf8cabc0e', operation='completion', requested_model='auto-general'...ne, 'classifier_prompt_name': 'task_router', 'classifier_prompt_version': '1.0.0', 'classification_duration_ms': None})
+
+    def _restore(self, row, trace):
+        from services.models import RecoveryPolicy
+        from services.routing import Router
+        from trace_contracts import TraceRouting
+        snapshot = loads(row['input_snapshot'])
+        if snapshot.get('snapshot_version') == 2:
+            from services.auto_routing import auto_configuration_snapshot
+            router = Router(self.registry, self.prompt_registry, self.token_budget)
+>           body = StreamRequest.model_validate(snapshot['auto_request'])
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           pydantic_core._pydantic_core.ValidationError: 3 validation errors for StreamRequest
+E           max_output_tokens
+E             Value error, omit the field to use the selected model default [type=value_error, input_value=None, input_type=NoneType]
+E               For further information visit https://errors.pydantic.dev/2.14/v/value_error
+E           initial_output_tokens
+E             Value error, omit the field to use the selected model default [type=value_error, input_value=None, input_type=NoneType]
+E               For further information visit https://errors.pydantic.dev/2.14/v/value_error
+E           timeout_seconds
+E             Value error, omit the field to use the selected model default [type=value_error, input_value=None, input_type=NoneType]
+E               For further information visit https://errors.pydantic.dev/2.14/v/value_error
+
+src/services/streaming_manager.py:281: ValidationError
+=========================== short test summary info ============================
+FAILED tests/unit/test_f13_auto_routing.py::test_pending_auto_snapshot_restores_omitted_optional_fields_without_calls
+1 failed in 0.13s

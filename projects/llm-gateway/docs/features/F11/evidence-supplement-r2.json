@@ -1,0 +1,26 @@
+{
+  "supplement_command": "PYTHONPATH=/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llmgw-f11-diagnosis-r2-nz404qhe/live-supplement:$PYTHONPATH uv run --python 3.12 python -W error -m pytest tests/live/test_f11_real_acceptance.py --run-live -p f11_scene_capture --basetemp=/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llmgw-f11-diagnosis-r2-nz404qhe/pytest-supplement -o junit_family=xunit1 --junitxml=/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llmgw-f11-diagnosis-r2-nz404qhe/supplement.xml -q",
+  "exit_code": 0,
+  "passed": 6,
+  "elapsed_seconds": 56.82,
+  "scope": "one bounded supplemental batch after two observed real probe successes; no product/test-source changes",
+  "actual_source_scopes": {
+    "full_frozen_files": 217,
+    "product_config_and_agents_changed": 0
+  },
+  "artifact_files": 80,
+  "probe_finalization": {
+    "mock_delay_seconds": 11,
+    "probe_deadline_seconds": 10,
+    "persisted_final_at_ms": 11033.84783299407,
+    "real_probes_completed": 2
+  },
+  "audit": {
+    "capacity_failures": 75,
+    "manual_or_automatic_classified": 75,
+    "one_trace_gap_explicit": true,
+    "legacy_scenes": 16,
+    "classified_legacy_scenes": 15,
+    "early_probe_snapshot_unclassified": true
+  }
+}

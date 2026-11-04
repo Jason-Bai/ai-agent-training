@@ -1,0 +1,20 @@
+{
+  "command": [
+    ".venv/bin/python",
+    "-W",
+    "error",
+    "-m",
+    "pytest",
+    "tests/smoke/test_f13_restart.py",
+    "-ra",
+    "-q",
+    "-o",
+    "junit_family=xunit1",
+    "--junitxml=/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llmgw-f13-work-eifzl4on/auto-os-restart-first.xml",
+    "--basetemp=/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llmgw-f13-work-eifzl4on/pytest-auto-os-restart-first"
+  ],
+  "started_at": "2026-11-03T15:40:54.414907+00:00",
+  "ended_at": "2026-11-03T15:41:12.341350+00:00",
+  "elapsed_seconds": 17.92644891695818,
+  "exit_code": 0
+}

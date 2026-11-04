@@ -1,0 +1,62 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+________ test_bailian_responses_registry_accepts_real_model_definition _________
+
+tmp_path = PosixPath('/private/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/pytest-of-baiyu/pytest-472/test_bailian_responses_registr0')
+
+    def test_bailian_responses_registry_accepts_real_model_definition(tmp_path):
+        definition=document()
+        definition['providers']['mock-main']={'adapter':'bailian','api_protocol':'responses',
+            'base_url':'https://dashscope.aliyuncs.com/api/v2/apps/protocols/compatible-mode/v1',
+            'credential_ref':'bailian-key'}
+        definition['endpoints']['chat'].update(model_id='qwen3.8-flash',
+            token_counter='qwen_text_estimate_v1',structured_output_mode='json_schema',
+            min_output_tokens=16)
+>       result=load(tmp_path,definition)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_f13_configuration.py:17: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/unit/test_f12_config.py:28: in load
+    return load_registry(tmp_path)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+src/services/models.py:218: in load_registry
+    return ModelRegistry(endpoints=data['endpoints'], providers=data['providers'], model_groups=data['model_groups'],
+<string>:8: in __init__
+    ???
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = ModelRegistry(endpoints={'chat': {'context_window_tokens': 1048576, 'enabled': True, 'max_output_tokens': 4096, 'max_t...okens': 4096, 'max_timeout_seconds': 120}}, concurrency={'max_requests': 20, 'max_requests_per_agent': 5}, recovery={})
+
+    def __post_init__(self):
+        try:
+            if not self.endpoints or not self.providers or not self.model_groups:
+                raise ValueError
+            endpoints = {name: endpoint if isinstance(endpoint, EndpointConfig) else EndpointConfig.model_validate(endpoint)
+                         for name, endpoint in self.endpoints.items()}
+            providers = {name: provider if isinstance(provider, ProviderConfig) else ProviderConfig.model_validate(provider)
+                         for name, provider in self.providers.items()}
+            groups = {name: group if isinstance(group, ModelGroupConfig) else ModelGroupConfig.model_validate(group)
+                      for name, group in self.model_groups.items()}
+            if any(not isinstance(name, str) or not name.strip() for name in [*endpoints, *providers, *groups]):
+                raise ValueError
+            if any(endpoint.provider not in providers for endpoint in endpoints.values()):
+                raise ValueError
+            if any(name not in endpoints for group in groups.values() for name in group.candidates):
+                raise ValueError
+            concurrency = (self.concurrency if isinstance(self.concurrency, ConcurrencyPolicy)
+                           else ConcurrencyPolicy.model_validate(self.concurrency))
+            recovery = (self.recovery if isinstance(self.recovery, RecoveryPolicy)
+                        else RecoveryPolicy.model_validate(self.recovery))
+            modes = {'chat_completions': {'none', 'json_object'}, 'responses': {'none', 'json_schema'}}
+            if any(endpoint.structured_output_mode not in modes[providers[endpoint.provider].api_protocol]
+                   for endpoint in endpoints.values()):
+                raise ValueError
+        except (ValueError, TypeError, AttributeError):
+>           raise ConfigurationError('模型注册配置不合法：请检查字段、预算和 Provider/端点引用') from None
+E           services.models.ConfigurationError: 模型注册配置不合法：请检查字段、预算和 Provider/端点引用
+
+src/services/models.py:165: ConfigurationError
+=========================== short test summary info ============================
+FAILED tests/unit/test_f13_configuration.py::test_bailian_responses_registry_accepts_real_model_definition
+1 failed in 0.17s

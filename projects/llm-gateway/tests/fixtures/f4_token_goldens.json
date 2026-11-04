@@ -1,0 +1,126 @@
+{
+  "source": "Pinned official reference_encoding.py encode_messages (thinking_mode=chat) + tokenizer; generated independently before counter implementation",
+  "resource_revision": "314113f8a7dadb388215396ba5fbee2c610a04d6",
+  "cases": [
+    {
+      "name": "flat",
+      "messages": [
+        {
+          "role": "system",
+          "content": "固定规则：只根据资料回答。"
+        },
+        {
+          "role": "user",
+          "content": "订单A123，商品是充电器。<output_contract>{\"mode\":\"json\"}</output_contract>"
+        }
+      ],
+      "encoded": "<｜begin▁of▁sentence｜><｜System｜>固定规则：只根据资料回答。\n\n## Response Format:\n\nYou MUST strictly adhere to the following schema to reply:\n{\"additionalProperties\": false, \"properties\": {\"order_id\": {\"type\": \"string\"}}, \"required\": [\"order_id\"], \"type\": \"object\"}<｜User｜>订单A123，商品是充电器。<output_contract>{\"mode\":\"json\"}</output_contract><｜Assistant｜></think>",
+      "count": 84,
+      "generation_constraint": {
+        "additionalProperties": false,
+        "properties": {
+          "order_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "order_id"
+        ],
+        "type": "object"
+      }
+    },
+    {
+      "name": "unicode-enum",
+      "messages": [
+        {
+          "role": "system",
+          "content": "固定规则：只根据资料回答。"
+        },
+        {
+          "role": "user",
+          "content": "订单A123，商品是充电器。<output_contract>{\"mode\":\"json\"}</output_contract>"
+        }
+      ],
+      "encoded": "<｜begin▁of▁sentence｜><｜System｜>固定规则：只根据资料回答。\n\n## Response Format:\n\nYou MUST strictly adhere to the following schema to reply:\n{\"properties\": {\"kind\": {\"default\": \"其他\", \"description\": \"商品类别\", \"enum\": [\"配件\", \"其他\"], \"type\": \"string\"}}, \"type\": \"object\"}<｜User｜>订单A123，商品是充电器。<output_contract>{\"mode\":\"json\"}</output_contract><｜Assistant｜></think>",
+      "count": 92,
+      "generation_constraint": {
+        "properties": {
+          "kind": {
+            "default": "其他",
+            "description": "商品类别",
+            "enum": [
+              "配件",
+              "其他"
+            ],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "name": "nullable-ref",
+      "messages": [
+        {
+          "role": "system",
+          "content": "固定规则：只根据资料回答。"
+        },
+        {
+          "role": "user",
+          "content": "订单A123，商品是充电器。<output_contract>{\"mode\":\"json\"}</output_contract>"
+        }
+      ],
+      "encoded": "<｜begin▁of▁sentence｜><｜System｜>固定规则：只根据资料回答。\n\n## Response Format:\n\nYou MUST strictly adhere to the following schema to reply:\n{\"$defs\": {\"Item\": {\"properties\": {\"name\": {\"type\": \"string\"}}, \"type\": \"object\"}}, \"properties\": {\"a\": {\"$ref\": \"#/$defs/Item\"}, \"b\": {\"$ref\": \"#/$defs/Item\"}, \"note\": {\"anyOf\": [{\"type\": \"string\"}, {\"type\": \"null\"}]}}, \"type\": \"object\"}<｜User｜>订单A123，商品是充电器。<output_contract>{\"mode\":\"json\"}</output_contract><｜Assistant｜></think>",
+      "count": 138,
+      "generation_constraint": {
+        "$defs": {
+          "Item": {
+            "properties": {
+              "name": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "properties": {
+          "a": {
+            "$ref": "#/$defs/Item"
+          },
+          "b": {
+            "$ref": "#/$defs/Item"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "name": "json-mode-api-flag",
+      "messages": [
+        {
+          "role": "system",
+          "content": "固定规则：只根据资料回答。"
+        },
+        {
+          "role": "user",
+          "content": "订单A123，商品是充电器。<output_contract>{\"mode\":\"json\"}</output_contract>"
+        }
+      ],
+      "generation_constraint": {
+        "type": "json_object"
+      },
+      "encoded": "<｜begin▁of▁sentence｜><｜System｜>固定规则：只根据资料回答。\n\n## Response Format:\n\nYou MUST strictly adhere to the following schema to reply:\n{\"type\": \"json_object\"}<｜User｜>订单A123，商品是充电器。<output_contract>{\"mode\":\"json\"}</output_contract><｜Assistant｜></think>",
+      "count": 58
+    }
+  ]
+}

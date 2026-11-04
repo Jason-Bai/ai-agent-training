@@ -1,0 +1,363 @@
+{
+  "work_directory": "/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llm-gateway-f4o1-b7kksrub",
+  "runs": [
+    {
+      "label": "baseline",
+      "command": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "pytest",
+        "-q"
+      ],
+      "exit_code": 0,
+      "duration_seconds": 52.865,
+      "output_file": "/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llm-gateway-f4o1-b7kksrub/baseline.txt",
+      "output": "........................................................................ [  8%]\n........................................................................ [ 17%]\n........................................................................ [ 25%]\n.........................................ssssss......................... [ 34%]\n........................................................................ [ 42%]\n........................................................................ [ 51%]\n........................................................................ [ 59%]\n........................................................................ [ 68%]\n........................................................................ [ 76%]\n........................................................................ [ 85%]\n........................................................................ [ 94%]\n..................................................                       [100%]\n836 passed, 6 skipped in 52.04s\n"
+    },
+    {
+      "label": "characterization-before",
+      "command": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "pytest",
+        "tests/unit/test_f4_validation.py",
+        "tests/integration/test_f4o1_boundaries.py",
+        "-q"
+      ],
+      "exit_code": 0,
+      "duration_seconds": 0.791,
+      "output_file": "/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llm-gateway-f4o1-b7kksrub/characterization-before.txt",
+      "output": "........................................................................ [ 51%]\n...................................................................      [100%]\n139 passed in 0.28s\n"
+    },
+    {
+      "label": "characterization-baseline-snapshot",
+      "command": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "pytest",
+        "tests/unit/test_f4_validation.py",
+        "tests/integration/test_f4o1_boundaries.py",
+        "-q",
+        "-o",
+        "pythonpath=/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llm-gateway-f4o1-b7kksrub/baseline/src"
+      ],
+      "exit_code": 1,
+      "duration_seconds": 0.795,
+      "output_file": "/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llm-gateway-f4o1-b7kksrub/characterization-baseline-snapshot.txt",
+      "output": "........................................................................ [ 48%]\n...................................................................FFFFF [ 97%]\nFFFF                                                                     [100%]\n=================================== FAILURES ===================================\n___ test_schema_resource_boundaries_reach_the_http_boundary[0-bytes-values0] ___\n\npayload = {'model': 'general-primary', 'prompt': {'name': 'context_answer', 'version': '1.2.0', 'variables': {'context': '订单 A12...aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'}}\nkind = 'bytes', values = (16383, 16384, 16385), index = 0\n\n    @pytest.mark.parametrize('kind,values', [\n        ('bytes', (16383, 16384, 16385)),\n        ('raw_depth', (31, 32, 33)),\n        ('expanded_depth', (7, 8, 9)),\n    ])\n    @pytest.mark.parametrize('index', [0, 1, 2])\n    def test_schema_resource_boundaries_reach_the_http_boundary(payload, kind, values, index):\n        value = values[index]\n        schema = {'type': 'object'}\n        if kind == 'bytes':\n            schema['description'] = '中'\n            overhead = len(json.dumps(schema, ensure_ascii=False, sort_keys=True, separators=(',', ':')).encode())\n            schema['description'] += 'a' * (value - overhead)\n        elif kind == 'raw_depth':\n            data = 0\n            for _ in range(value - 1):\n                data = [data]\n            schema['default'] = data\n        else:\n            for _ in range(value - 1):\n                schema = {'type': 'object', 'properties': {'x': schema}}\n        payload['prompt'] = {'name': 'context_answer', 'version': '1.2.0', 'variables': {'context': '订单 A123'}}\n        payload['response_schema'] = schema\n        valid = index < 2\n>       submit(payload, 200 if valid else 400, 'ok' if valid else 'invalid_response_schema')\n\ntests/integration/test_f4o1_boundaries.py:96: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \ntests/integration/test_f4o1_boundaries.py:16: in submit\n    app = make_structured_app(MockProvider(text='{}')) if structured else make_app(counter=CountingFixture())\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests/f4_cases.py:54: in make_app\n    return create_app(settings=Settings(env='test',_env_file=None), provider=provider or MockProvider(text=TEXT),\n/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llm-gateway-f4o1-b7kksrub/baseline/src/main.py:29: in create_app\n    token_budget = TokenBudget.from_models(models) if token_budget is None else token_budget\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llm-gateway-f4o1-b7kksrub/baseline/src/services/token_budget.py:18: in from_models\n    budget = cls(build_counters(models))\n                 ^^^^^^^^^^^^^^^^^^^^^^\n/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llm-gateway-f4o1-b7kksrub/baseline/src/services/token_counters/__init__.py:15: in build_counters\n    return {identifier: COUNTER_FACTORIES[identifier]() for identifier in identifiers}\n                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nself = <services.token_counters.deepseek_v41.DeepSeekV41Counter object at 0x109fcf8c0>\nasset_dir = PosixPath('/private/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llm-gateway-f4o1-b7kksrub/baseline/assets/tokenizers/deepseek-v4.1-flash')\n\n    def __init__(self, asset_dir: Path = DEFAULT_ASSET_DIR):\n        try:\n            manifest = json.loads((asset_dir / \"manifest.json\").read_text())\n            if manifest[\"revision\"] != REVISION or manifest[\"model\"] != \"deepseek-flash\" or manifest[\"mode\"] != \"chat\":\n                raise ValueError\n            for name, digest in RESOURCE_HASHES.items():\n                if manifest[\"files\"][name][\"sha256\"] != digest or hashlib.sha256((asset_dir / name).read_bytes()).hexdigest() != digest:\n                    raise ValueError\n            self._tokenizer = Tokenizer.from_file(str(asset_dir / \"tokenizer.json\"))\n        except Exception:\n>           raise ValueError(\"计数资源缺失、损坏或版本不匹配\") from None\nE           ValueError: 计数资源缺失、损坏或版本不匹配\n\n/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llm-gateway-f4o1-b7kksrub/baseline/src/services/token_counters/deepseek_v41.py:34: ValueError\n_ test_schema_resource_boundaries_reach_the_http_boundary[0-raw_depth-values1] _\n\npayload = {'model': 'general-primary', 'prompt': {'name': 'context_answer', 'version': '1.2.0', 'variables': {'context': '订单 A12...sages': [{'role': 'user', 'content': 'Explain TTFT'}], 'response_schema': {'type': 'object', 'default': [[[[[...]]]]]}}\nkind = 'raw_depth', values = (31, 32, 33), index = 0\n\n    @pytest.mark.parametrize('kind,values', [\n        ('bytes', (16383, 16384, 16385)),\n        ('raw_depth', (31, 32, 33)),\n        ('expanded_depth', (7, 8, 9)),\n    ])\n    @pytest.mark.parametrize('index', [0, 1, 2])\n    def test_schema_resource_boundaries_reach_the_http_boundary(payload, kind, values, index):\n        value = values[index]\n        schema = {'type': 'object'}\n        if kind == 'bytes':\n            schema['description'] = '中'\n            overhead = len(json.dumps(schema, ensure_ascii=False, sort_keys=True, separators=(',', ':')).encode())\n            schema['description'] += 'a' * (value - overhead)\n        elif kind == 'raw_depth':\n            data = 0\n            for _ in range(value - 1):\n                data = [data]\n            schema['default'] = data\n        else:\n            for _ in range(value - 1):\n                schema = {'type': 'object', 'properties': {'x': schema}}\n        payload['prompt'] = {'name': 'context_answer', 'version': '1.2.0', 'variables': {'context': '订单 A123'}}\n        payload['response_schema'] = schema\n        valid = index < 2\n>       submit(payload, 200 if valid else 400, 'ok' if valid else 'invalid_response_schema')\n\ntests/integration/test_f4o1_boundaries.py:96: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \ntests/integration/test_f4o1_boundaries.py:16: in submit\n    app = make_structured_app(MockProvider(text='{}')) if structured else make_app(counter=CountingFixture())\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests/f4_cases.py:54: in make_app\n    return create_app(settings=Settings(env='test',_env_file=None), provider=provider or MockProvider(text=TEXT),\n/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llm-gateway-f4o1-b7kksrub/baseline/src/main.py:29: in create_app\n    token_budget = TokenBudget.from_models(models) if token_budget is None else token_budget\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llm-gateway-f4o1-b7kksrub/baseline/src/services/token_budget.py:18: in from_models\n    budget = cls(build_counters(models))\n                 ^^^^^^^^^^^^^^^^^^^^^^\n/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llm-gateway-f4o1-b7kksrub/baseline/src/services/token_counters/__init__.py:15: in build_counters\n    return {identifier: COUNTER_FACTORIES[identifier]() for identifier in identifiers}\n                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nself = <services.token_counters.deepseek_v41.DeepSeekV41Counter object at 0x10a0df890>\nasset_dir = PosixPath('/private/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llm-gateway-f4o1-b7kksrub/baseline/assets/tokenizers/deepseek-v4.1-flash')\n\n    def __init__(self, asset_dir: Path = DEFAULT_ASSET_DIR):\n        try:\n            manifest = json.loads((asset_dir / \"manifest.json\").read_text())\n            if manifest[\"revision\"] != REVISION or manifest[\"model\"] != \"deepseek-flash\" or manifest[\"mode\"] != \"chat\":\n                raise ValueError\n            for name, digest in RESOURCE_HASHES.items():\n                if manifest[\"files\"][name][\"sha256\"] != digest or hashlib.sha256((asset_dir / name).read_bytes()).hexdigest() != digest:\n                    raise ValueError\n            self._tokenizer = Tokenizer.from_file(str(asset_dir / \"tokenizer.json\"))\n        except Exception:\n>           raise ValueError(\"计数资源缺失、损坏或版本不匹配\") from None\nE           ValueError: 计数资源缺失、损坏或版本不匹配\n\n/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llm-gateway-f4o1-b7kksrub/baseline/src/services/token_counters/deepseek_v41.py:34: ValueError\n_ test_schema_resource_boundaries_reach_the_http_boundary[0-expanded_depth-values2] _\n\npayload = {'model': 'general-primary', 'prompt': {'name': 'context_answer', 'version': '1.2.0', 'variables': {'context': '订单 A12...ype': 'object', 'properties': {'x': {'type': 'object', 'properties': {'x': {'type': 'object', 'properties': {...}}}}}}}\nkind = 'expanded_depth', values = (7, 8, 9), index = 0\n\n    @pytest.mark.parametrize('kind,values', [\n        ('bytes', (16383, 16384, 16385)),\n        ('raw_depth', (31, 32, 33)),\n        ('expanded_depth', (7, 8, 9)),\n    ])\n    @pytest.mark.parametrize('index', [0, 1, 2])\n    def test_schema_resource_boundaries_reach_the_http_boundary(payload, kind, values, index):\n        value = values[index]\n        schema = {'type': 'object'}\n        if kind == 'bytes':\n            schema['description'] = '中'\n            overhead = len(json.dumps(schema, ensure_ascii=False, sort_keys=True, separators=(',', ':')).encode())\n            schema['description'] += 'a' * (value - overhead)\n        elif kind == 'raw_depth':\n            data = 0\n            for _ in range(value - 1):\n                data = [data]\n            schema['default'] = data\n        else:\n            for _ in range(value - 1):\n                schema = {'type': 'object', 'properties': {'x': schema}}\n        payload['prompt'] = {'name': 'context_answer', 'version': '1.2.0', 'variables': {'context': '订单 A123'}}\n        payload['response_schema'] = schema\n        valid = index < 2\n>       submit(payload, 200 if valid else 400, 'ok' if valid else 'invalid_response_schema')\n\ntests/integration/test_f4o1_boundaries.py:96: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \ntests/integration/test_f4o1_boundaries.py:16: in submit\n    app = make_structured_app(MockProvider(text='{}')) if structured else make_app(counter=CountingFixture())\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests/f4_cases.py:54: in make_app\n    return create_app(settings=Settings(env='test',_env_file=None), provider=provider or MockProvider(text=TEXT),\n/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llm-gateway-f4o1-b7kksrub/baseline/src/main.py:29: in create_app\n    token_budget = TokenBudget.from_models(models) if token_budget is None else token_budget\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llm-gateway-f4o1-b7kksrub/baseline/src/services/token_budget.py:18: in from_models\n    budget = cls(build_counters(models))\n                 ^^^^^^^^^^^^^^^^^^^^^^\n/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llm-gateway-f4o1-b7kksrub/baseline/src/services/token_counters/__init__.py:15: in build_counters\n    return {identifier: COUNTER_FACTORIES[identifier]() for identifier in identifiers}\n                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nself = <services.token_counters.deepseek_v41.DeepSeekV41Counter object at 0x10a0de490>\nasset_dir = PosixPath('/private/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llm-gateway-f4o1-b7kksrub/baseline/assets/tokenizers/deepseek-v4.1-flash')\n\n    def __init__(self, asset_dir: Path = DEFAULT_ASSET_DIR):\n        try:\n            manifest = json.loads((asset_dir / \"manifest.json\").read_text())\n            if manifest[\"revision\"] != REVISION or manifest[\"model\"] != \"deepseek-flash\" or manifest[\"mode\"] != \"chat\":\n                raise ValueError\n            for name, digest in RESOURCE_HASHES.items():\n                if manifest[\"files\"][name][\"sha256\"] != digest or hashlib.sha256((asset_dir / name).read_bytes()).hexdigest() != digest:\n                    raise ValueError\n            self._tokenizer = Tokenizer.from_file(str(asset_dir / \"tokenizer.json\"))\n        except Exception:\n>           raise ValueError(\"计数资源缺失、损坏或版本不匹配\") from None\nE           ValueError: 计数资源缺失、损坏或版本不匹配\n\n/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llm-gateway-f4o1-b7kksrub/baseline/src/services/token_counters/deepseek_v41.py:34: ValueError\n___ test_schema_resource_boundaries_reach_the_http_boundary[1-bytes-values0] ___\n\npayload = {'model': 'general-primary', 'prompt': {'name': 'context_answer', 'version': '1.2.0', 'variables': {'context': '订单 A12...aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'}}\nkind = 'bytes', values = (16383, 16384, 16385), index = 1\n\n    @pytest.mark.parametrize('kind,values', [\n        ('bytes', (16383, 16384, 16385)),\n        ('raw_depth', (31, 32, 33)),\n        ('expanded_depth', (7, 8, 9)),\n    ])\n    @pytest.mark.parametrize('index', [0, 1, 2])\n    def test_schema_resource_boundaries_reach_the_http_boundary(payload, kind, values, index):\n        value = values[index]\n        schema = {'type': 'object'}\n        if kind == 'bytes':\n            schema['description'] = '中'\n            overhead = len(json.dumps(schema, ensure_ascii=False, sort_keys=True, separators=(',', ':')).encode())\n            schema['description'] += 'a' * (value - overhead)\n        elif kind == 'raw_depth':\n            data = 0\n            for _ in range(value - 1):\n                data = [data]\n            schema['default'] = data\n        else:\n            for _ in range(value - 1):\n                schema = {'type': 'object', 'properties': {'x': schema}}\n        payload['prompt'] = {'name': 'context_answer', 'version': '1.2.0', 'variables': {'context': '订单 A123'}}\n        payload['response_schema'] = schema\n        valid = index < 2\n>       submit(payload, 200 if valid else 400, 'ok' if valid else 'invalid_response_schema')\n\ntests/integration/test_f4o1_boundaries.py:96: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \ntests/integration/test_f4o1_boundaries.py:16: in submit\n    app = make_structured_app(MockProvider(text='{}')) if structured else make_app(counter=CountingFixture())\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests/f4_cases.py:54: in make_app\n    return create_app(settings=Settings(env='test',_env_file=None), provider=provider or MockProvider(text=TEXT),\n/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llm-gateway-f4o1-b7kksrub/baseline/src/main.py:29: in create_app\n    token_budget = TokenBudget.from_models(models) if token_budget is None else token_budget\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llm-gateway-f4o1-b7kksrub/baseline/src/services/token_budget.py:18: in from_models\n    budget = cls(build_counters(models))\n                 ^^^^^^^^^^^^^^^^^^^^^^\n/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llm-gateway-f4o1-b7kksrub/baseline/src/services/token_counters/__init__.py:15: in build_counters\n    return {identifier: COUNTER_FACTORIES[identifier]() for identifier in identifiers}\n                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nself = <services.token_counters.deepseek_v41.DeepSeekV41Counter object at 0x109ff35c0>\nasset_dir = PosixPath('/private/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llm-gateway-f4o1-b7kksrub/baseline/assets/tokenizers/deepseek-v4.1-flash')\n\n    def __init__(self, asset_dir: Path = DEFAULT_ASSET_DIR):\n        try:\n            manifest = json.loads((asset_dir / \"manifest.json\").read_text())\n            if manifest[\"revision\"] != REVISION or manifest[\"model\"] != \"deepseek-flash\" or manifest[\"mode\"] != \"chat\":\n                raise ValueError\n            for name, digest in RESOURCE_HASHES.items():\n                if manifest[\"files\"][name][\"sha256\"] != digest or hashlib.sha256((asset_dir / name).read_bytes()).hexdigest() != digest:\n                    raise ValueError\n            self._tokenizer = Tokenizer.from_file(str(asset_dir / \"tokenizer.json\"))\n        except Exception:\n>           raise ValueError(\"计数资源缺失、损坏或版本不匹配\") from None\nE           ValueError: 计数资源缺失、损坏或版本不匹配\n\n/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llm-gateway-f4o1-b7kksrub/baseline/src/services/token_counters/deepseek_v41.py:34: ValueError\n_ test_schema_resource_boundaries_reach_the_http_boundary[1-raw_depth-values1] _\n\npayload = {'model': 'general-primary', 'prompt': {'name': 'context_answer', 'version': '1.2.0', 'variables': {'context': '订单 A12...sages': [{'role': 'user', 'content': 'Explain TTFT'}], 'response_schema': {'type': 'object', 'default': [[[[[...]]]]]}}\nkind = 'raw_depth', values = (31, 32, 33), index = 1\n\n    @pytest.mark.parametrize('kind,values', [\n        ('bytes', (16383, 16384, 16385)),\n        ('raw_depth', (31, 32, 33)),\n        ('expanded_depth', (7, 8, 9)),\n    ])\n    @pytest.mark.parametrize('index', [0, 1, 2])\n    def test_schema_resource_boundaries_reach_the_http_boundary(payload, kind, values, index):\n        value = values[index]\n        schema = {'type': 'object'}\n        if kind == 'bytes':\n            schema['description'] = '中'\n            overhead = len(json.dumps(schema, ensure_ascii=False, sort_keys=True, separators=(',', ':')).encode())\n            schema['description'] += 'a' * (value - overhead)\n        elif kind == 'raw_depth':\n            data = 0\n            for _ in range(value - 1):\n                data = [data]\n            schema['default'] = data\n        else:\n            for _ in range(value - 1):\n                schema = {'type': 'object', 'properties': {'x': schema}}\n        payload['prompt'] = {'name': 'context_answer', 'version': '1.2.0', 'variables': {'context': '订单 A123'}}\n        payload['response_schema'] = schema\n        valid = index < 2\n>       submit(payload, 200 if valid else 400, 'ok' if valid else 'invalid_response_schema')\n\ntests/integration/test_f4o1_boundaries.py:96: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \ntests/integration/test_f4o1_boundaries.py:16: in submit\n    app = make_structured_app(MockProvider(text='{}')) if structured else make_app(counter=CountingFixture())\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests/f4_cases.py:54: in make_app\n    return create_app(settings=Settings(env='test',_env_file=None), provider=provider or MockProvider(text=TEXT),\n/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llm-gateway-f4o1-b7kksrub/baseline/src/main.py:29: in create_app\n    token_budget = TokenBudget.from_models(models) if token_budget is None else token_budget\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llm-gateway-f4o1-b7kksrub/baseline/src/services/token_budget.py:18: in from_models\n    budget = cls(build_counters(models))\n                 ^^^^^^^^^^^^^^^^^^^^^^\n/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llm-gateway-f4o1-b7kksrub/baseline/src/services/token_counters/__init__.py:15: in build_counters\n    return {identifier: COUNTER_FACTORIES[identifier]() for identifier in identifiers}\n                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nself = <services.token_counters.deepseek_v41.DeepSeekV41Counter object at 0x109ff2d70>\nasset_dir = PosixPath('/private/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llm-gateway-f4o1-b7kksrub/baseline/assets/tokenizers/deepseek-v4.1-flash')\n\n    def __init__(self, asset_dir: Path = DEFAULT_ASSET_DIR):\n        try:\n            manifest = json.loads((asset_dir / \"manifest.json\").read_text())\n            if manifest[\"revision\"] != REVISION or manifest[\"model\"] != \"deepseek-flash\" or manifest[\"mode\"] != \"chat\":\n                raise ValueError\n            for name, digest in RESOURCE_HASHES.items():\n                if manifest[\"files\"][name][\"sha256\"] != digest or hashlib.sha256((asset_dir / name).read_bytes()).hexdigest() != digest:\n                    raise ValueError\n            self._tokenizer = Tokenizer.from_file(str(asset_dir / \"tokenizer.json\"))\n        except Exception:\n>           raise ValueError(\"计数资源缺失、损坏或版本不匹配\") from None\nE           ValueError: 计数资源缺失、损坏或版本不匹配\n\n/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llm-gateway-f4o1-b7kksrub/baseline/src/services/token_counters/deepseek_v41.py:34: ValueError\n_ test_schema_resource_boundaries_reach_the_http_boundary[1-expanded_depth-values2] _\n\npayload = {'model': 'general-primary', 'prompt': {'name': 'context_answer', 'version': '1.2.0', 'variables': {'context': '订单 A12...ype': 'object', 'properties': {'x': {'type': 'object', 'properties': {'x': {'type': 'object', 'properties': {...}}}}}}}\nkind = 'expanded_depth', values = (7, 8, 9), index = 1\n\n    @pytest.mark.parametrize('kind,values', [\n        ('bytes', (16383, 16384, 16385)),\n        ('raw_depth', (31, 32, 33)),\n        ('expanded_depth', (7, 8, 9)),\n    ])\n    @pytest.mark.parametrize('index', [0, 1, 2])\n    def test_schema_resource_boundaries_reach_the_http_boundary(payload, kind, values, index):\n        value = values[index]\n        schema = {'type': 'object'}\n        if kind == 'bytes':\n            schema['description'] = '中'\n            overhead = len(json.dumps(schema, ensure_ascii=False, sort_keys=True, separators=(',', ':')).encode())\n            schema['description'] += 'a' * (value - overhead)\n        elif kind == 'raw_depth':\n            data = 0\n            for _ in range(value - 1):\n                data = [data]\n            schema['default'] = data\n        else:\n            for _ in range(value - 1):\n                schema = {'type': 'object', 'properties': {'x': schema}}\n        payload['prompt'] = {'name': 'context_answer', 'version': '1.2.0', 'variables': {'context': '订单 A123'}}\n        payload['response_schema'] = schema\n        valid = index < 2\n>       submit(payload, 200 if valid else 400, 'ok' if valid else 'invalid_response_schema')\n\ntests/integration/test_f4o1_boundaries.py:96: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \ntests/integration/test_f4o1_boundaries.py:16: in submit\n    app = make_structured_app(MockProvider(text='{}')) if structured else make_app(counter=CountingFixture())\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests/f4_cases.py:54: in make_app\n    return create_app(settings=Settings(env='test',_env_file=None), provider=provider or MockProvider(text=TEXT),\n/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llm-gateway-f4o1-b7kksrub/baseline/src/main.py:29: in create_app\n    token_budget = TokenBudget.from_models(models) if token_budget is None else token_budget\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llm-gateway-f4o1-b7kksrub/baseline/src/services/token_budget.py:18: in from_models\n    budget = cls(build_counters(models))\n                 ^^^^^^^^^^^^^^^^^^^^^^\n/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llm-gateway-f4o1-b7kksrub/baseline/src/services/token_counters/__init__.py:15: in build_counters\n    return {identifier: COUNTER_FACTORIES[identifier]() for identifier in identifiers}\n                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nself = <services.token_counters.deepseek_v41.DeepSeekV41Counter object at 0x10a05f770>\nasset_dir = PosixPath('/private/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llm-gateway-f4o1-b7kksrub/baseline/assets/tokenizers/deepseek-v4.1-flash')\n\n    def __init__(self, asset_dir: Path = DEFAULT_ASSET_DIR):\n        try:\n            manifest = json.loads((asset_dir / \"manifest.json\").read_text())\n            if manifest[\"revision\"] != REVISION or manifest[\"model\"] != \"deepseek-flash\" or manifest[\"mode\"] != \"chat\":\n                raise ValueError\n            for name, digest in RESOURCE_HASHES.items():\n                if manifest[\"files\"][name][\"sha256\"] != digest or hashlib.sha256((asset_dir / name).read_bytes()).hexdigest() != digest:\n                    raise ValueError\n            self._tokenizer = Tokenizer.from_file(str(asset_dir / \"tokenizer.json\"))\n        except Exception:\n>           raise ValueError(\"计数资源缺失、损坏或版本不匹配\") from None\nE           ValueError: 计数资源缺失、损坏或版本不匹配\n\n/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llm-gateway-f4o1-b7kksrub/baseline/src/services/token_counters/deepseek_v41.py:34: ValueError\n___ test_schema_resource_boundaries_reach_the_http_boundary[2-bytes-values0] ___\n\npayload = {'model': 'general-primary', 'prompt': {'name': 'context_answer', 'version': '1.2.0', 'variables': {'context': '订单 A12...aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'}}\nkind = 'bytes', values = (16383, 16384, 16385), index = 2\n\n    @pytest.mark.parametrize('kind,values', [\n        ('bytes', (16383, 16384, 16385)),\n        ('raw_depth', (31, 32, 33)),\n        ('expanded_depth', (7, 8, 9)),\n    ])\n    @pytest.mark.parametrize('index', [0, 1, 2])\n    def test_schema_resource_boundaries_reach_the_http_boundary(payload, kind, values, index):\n        value = values[index]\n        schema = {'type': 'object'}\n        if kind == 'bytes':\n            schema['description'] = '中'\n            overhead = len(json.dumps(schema, ensure_ascii=False, sort_keys=True, separators=(',', ':')).encode())\n            schema['description'] += 'a' * (value - overhead)\n        elif kind == 'raw_depth':\n            data = 0\n            for _ in range(value - 1):\n                data = [data]\n            schema['default'] = data\n        else:\n            for _ in range(value - 1):\n                schema = {'type': 'object', 'properties': {'x': schema}}\n        payload['prompt'] = {'name': 'context_answer', 'version': '1.2.0', 'variables': {'context': '订单 A123'}}\n        payload['response_schema'] = schema\n        valid = index < 2\n>       submit(payload, 200 if valid else 400, 'ok' if valid else 'invalid_response_schema')\n\ntests/integration/test_f4o1_boundaries.py:96: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \ntests/integration/test_f4o1_boundaries.py:16: in submit\n    app = make_structured_app(MockProvider(text='{}')) if structured else make_app(counter=CountingFixture())\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests/f4_cases.py:54: in make_app\n    return create_app(settings=Settings(env='test',_env_file=None), provider=provider or MockProvider(text=TEXT),\n/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llm-gateway-f4o1-b7kksrub/baseline/src/main.py:29: in create_app\n    token_budget = TokenBudget.from_models(models) if token_budget is None else token_budget\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llm-gateway-f4o1-b7kksrub/baseline/src/services/token_budget.py:18: in from_models\n    budget = cls(build_counters(models))\n                 ^^^^^^^^^^^^^^^^^^^^^^\n/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llm-gateway-f4o1-b7kksrub/baseline/src/services/token_counters/__init__.py:15: in build_counters\n    return {identifier: COUNTER_FACTORIES[identifier]() for identifier in identifiers}\n                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nself = <services.token_counters.deepseek_v41.DeepSeekV41Counter object at 0x10a25e360>\nasset_dir = PosixPath('/private/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llm-gateway-f4o1-b7kksrub/baseline/assets/tokenizers/deepseek-v4.1-flash')\n\n    def __init__(self, asset_dir: Path = DEFAULT_ASSET_DIR):\n        try:\n            manifest = json.loads((asset_dir / \"manifest.json\").read_text())\n            if manifest[\"revision\"] != REVISION or manifest[\"model\"] != \"deepseek-flash\" or manifest[\"mode\"] != \"chat\":\n                raise ValueError\n            for name, digest in RESOURCE_HASHES.items():\n                if manifest[\"files\"][name][\"sha256\"] != digest or hashlib.sha256((asset_dir / name).read_bytes()).hexdigest() != digest:\n                    raise ValueError\n            self._tokenizer = Tokenizer.from_file(str(asset_dir / \"tokenizer.json\"))\n        except Exception:\n>           raise ValueError(\"计数资源缺失、损坏或版本不匹配\") from None\nE           ValueError: 计数资源缺失、损坏或版本不匹配\n\n/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llm-gateway-f4o1-b7kksrub/baseline/src/services/token_counters/deepseek_v41.py:34: ValueError\n_ test_schema_resource_boundaries_reach_the_http_boundary[2-raw_depth-values1] _\n\npayload = {'model': 'general-primary', 'prompt': {'name': 'context_answer', 'version': '1.2.0', 'variables': {'context': '订单 A12...sages': [{'role': 'user', 'content': 'Explain TTFT'}], 'response_schema': {'type': 'object', 'default': [[[[[...]]]]]}}\nkind = 'raw_depth', values = (31, 32, 33), index = 2\n\n    @pytest.mark.parametrize('kind,values', [\n        ('bytes', (16383, 16384, 16385)),\n        ('raw_depth', (31, 32, 33)),\n        ('expanded_depth', (7, 8, 9)),\n    ])\n    @pytest.mark.parametrize('index', [0, 1, 2])\n    def test_schema_resource_boundaries_reach_the_http_boundary(payload, kind, values, index):\n        value = values[index]\n        schema = {'type': 'object'}\n        if kind == 'bytes':\n            schema['description'] = '中'\n            overhead = len(json.dumps(schema, ensure_ascii=False, sort_keys=True, separators=(',', ':')).encode())\n            schema['description'] += 'a' * (value - overhead)\n        elif kind == 'raw_depth':\n            data = 0\n            for _ in range(value - 1):\n                data = [data]\n            schema['default'] = data\n        else:\n            for _ in range(value - 1):\n                schema = {'type': 'object', 'properties': {'x': schema}}\n        payload['prompt'] = {'name': 'context_answer', 'version': '1.2.0', 'variables': {'context': '订单 A123'}}\n        payload['response_schema'] = schema\n        valid = index < 2\n>       submit(payload, 200 if valid else 400, 'ok' if valid else 'invalid_response_schema')\n\ntests/integration/test_f4o1_boundaries.py:96: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \ntests/integration/test_f4o1_boundaries.py:16: in submit\n    app = make_structured_app(MockProvider(text='{}')) if structured else make_app(counter=CountingFixture())\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests/f4_cases.py:54: in make_app\n    return create_app(settings=Settings(env='test',_env_file=None), provider=provider or MockProvider(text=TEXT),\n/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llm-gateway-f4o1-b7kksrub/baseline/src/main.py:29: in create_app\n    token_budget = TokenBudget.from_models(models) if token_budget is None else token_budget\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llm-gateway-f4o1-b7kksrub/baseline/src/services/token_budget.py:18: in from_models\n    budget = cls(build_counters(models))\n                 ^^^^^^^^^^^^^^^^^^^^^^\n/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llm-gateway-f4o1-b7kksrub/baseline/src/services/token_counters/__init__.py:15: in build_counters\n    return {identifier: COUNTER_FACTORIES[identifier]() for identifier in identifiers}\n                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nself = <services.token_counters.deepseek_v41.DeepSeekV41Counter object at 0x10a20b680>\nasset_dir = PosixPath('/private/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llm-gateway-f4o1-b7kksrub/baseline/assets/tokenizers/deepseek-v4.1-flash')\n\n    def __init__(self, asset_dir: Path = DEFAULT_ASSET_DIR):\n        try:\n            manifest = json.loads((asset_dir / \"manifest.json\").read_text())\n            if manifest[\"revision\"] != REVISION or manifest[\"model\"] != \"deepseek-flash\" or manifest[\"mode\"] != \"chat\":\n                raise ValueError\n            for name, digest in RESOURCE_HASHES.items():\n                if manifest[\"files\"][name][\"sha256\"] != digest or hashlib.sha256((asset_dir / name).read_bytes()).hexdigest() != digest:\n                    raise ValueError\n            self._tokenizer = Tokenizer.from_file(str(asset_dir / \"tokenizer.json\"))\n        except Exception:\n>           raise ValueError(\"计数资源缺失、损坏或版本不匹配\") from None\nE           ValueError: 计数资源缺失、损坏或版本不匹配\n\n/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llm-gateway-f4o1-b7kksrub/baseline/src/services/token_counters/deepseek_v41.py:34: ValueError\n_ test_schema_resource_boundaries_reach_the_http_boundary[2-expanded_depth-values2] _\n\npayload = {'model': 'general-primary', 'prompt': {'name': 'context_answer', 'version': '1.2.0', 'variables': {'context': '订单 A12...ype': 'object', 'properties': {'x': {'type': 'object', 'properties': {'x': {'type': 'object', 'properties': {...}}}}}}}\nkind = 'expanded_depth', values = (7, 8, 9), index = 2\n\n    @pytest.mark.parametrize('kind,values', [\n        ('bytes', (16383, 16384, 16385)),\n        ('raw_depth', (31, 32, 33)),\n        ('expanded_depth', (7, 8, 9)),\n    ])\n    @pytest.mark.parametrize('index', [0, 1, 2])\n    def test_schema_resource_boundaries_reach_the_http_boundary(payload, kind, values, index):\n        value = values[index]\n        schema = {'type': 'object'}\n        if kind == 'bytes':\n            schema['description'] = '中'\n            overhead = len(json.dumps(schema, ensure_ascii=False, sort_keys=True, separators=(',', ':')).encode())\n            schema['description'] += 'a' * (value - overhead)\n        elif kind == 'raw_depth':\n            data = 0\n            for _ in range(value - 1):\n                data = [data]\n            schema['default'] = data\n        else:\n            for _ in range(value - 1):\n                schema = {'type': 'object', 'properties': {'x': schema}}\n        payload['prompt'] = {'name': 'context_answer', 'version': '1.2.0', 'variables': {'context': '订单 A123'}}\n        payload['response_schema'] = schema\n        valid = index < 2\n>       submit(payload, 200 if valid else 400, 'ok' if valid else 'invalid_response_schema')\n\ntests/integration/test_f4o1_boundaries.py:96: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \ntests/integration/test_f4o1_boundaries.py:16: in submit\n    app = make_structured_app(MockProvider(text='{}')) if structured else make_app(counter=CountingFixture())\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests/f4_cases.py:54: in make_app\n    return create_app(settings=Settings(env='test',_env_file=None), provider=provider or MockProvider(text=TEXT),\n/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llm-gateway-f4o1-b7kksrub/baseline/src/main.py:29: in create_app\n    token_budget = TokenBudget.from_models(models) if token_budget is None else token_budget\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llm-gateway-f4o1-b7kksrub/baseline/src/services/token_budget.py:18: in from_models\n    budget = cls(build_counters(models))\n                 ^^^^^^^^^^^^^^^^^^^^^^\n/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llm-gateway-f4o1-b7kksrub/baseline/src/services/token_counters/__init__.py:15: in build_counters\n    return {identifier: COUNTER_FACTORIES[identifier]() for identifier in identifiers}\n                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nself = <services.token_counters.deepseek_v41.DeepSeekV41Counter object at 0x10a115d50>\nasset_dir = PosixPath('/private/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llm-gateway-f4o1-b7kksrub/baseline/assets/tokenizers/deepseek-v4.1-flash')\n\n    def __init__(self, asset_dir: Path = DEFAULT_ASSET_DIR):\n        try:\n            manifest = json.loads((asset_dir / \"manifest.json\").read_text())\n            if manifest[\"revision\"] != REVISION or manifest[\"model\"] != \"deepseek-flash\" or manifest[\"mode\"] != \"chat\":\n                raise ValueError\n            for name, digest in RESOURCE_HASHES.items():\n                if manifest[\"files\"][name][\"sha256\"] != digest or hashlib.sha256((asset_dir / name).read_bytes()).hexdigest() != digest:\n                    raise ValueError\n            self._tokenizer = Tokenizer.from_file(str(asset_dir / \"tokenizer.json\"))\n        except Exception:\n>           raise ValueError(\"计数资源缺失、损坏或版本不匹配\") from None\nE           ValueError: 计数资源缺失、损坏或版本不匹配\n\n/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llm-gateway-f4o1-b7kksrub/baseline/src/services/token_counters/deepseek_v41.py:34: ValueError\n=========================== short test summary info ============================\nFAILED tests/integration/test_f4o1_boundaries.py::test_schema_resource_boundaries_reach_the_http_boundary[0-bytes-values0]\nFAILED tests/integration/test_f4o1_boundaries.py::test_schema_resource_boundaries_reach_the_http_boundary[0-raw_depth-values1]\nFAILED tests/integration/test_f4o1_boundaries.py::test_schema_resource_boundaries_reach_the_http_boundary[0-expanded_depth-values2]\nFAILED tests/integration/test_f4o1_boundaries.py::test_schema_resource_boundaries_reach_the_http_boundary[1-bytes-values0]\nFAILED tests/integration/test_f4o1_boundaries.py::test_schema_resource_boundaries_reach_the_http_boundary[1-raw_depth-values1]\nFAILED tests/integration/test_f4o1_boundaries.py::test_schema_resource_boundaries_reach_the_http_boundary[1-expanded_depth-values2]\nFAILED tests/integration/test_f4o1_boundaries.py::test_schema_resource_boundaries_reach_the_http_boundary[2-bytes-values0]\nFAILED tests/integration/test_f4o1_boundaries.py::test_schema_resource_boundaries_reach_the_http_boundary[2-raw_depth-values1]\nFAILED tests/integration/test_f4o1_boundaries.py::test_schema_resource_boundaries_reach_the_http_boundary[2-expanded_depth-values2]\n9 failed, 139 passed in 0.30s\n"
+    },
+    {
+      "label": "characterization-baseline-complete",
+      "command": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "pytest",
+        "tests/unit/test_f4_validation.py",
+        "tests/integration/test_f4o1_boundaries.py",
+        "-q",
+        "-o",
+        "pythonpath=/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llm-gateway-f4o1-b7kksrub/baseline/src"
+      ],
+      "exit_code": 0,
+      "duration_seconds": 1.391,
+      "output_file": "/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llm-gateway-f4o1-b7kksrub/characterization-baseline-complete.txt",
+      "output": "........................................................................ [ 48%]\n........................................................................ [ 97%]\n....                                                                     [100%]\n148 passed in 0.94s\n"
+    },
+    {
+      "label": "python312-critical",
+      "command": [
+        "uv",
+        "run",
+        "--python",
+        "3.12",
+        "python",
+        "-W",
+        "error::DeprecationWarning",
+        "-m",
+        "pytest",
+        "tests/unit/test_f4_json_codec.py",
+        "tests/unit/test_f4_validation.py",
+        "tests/unit/test_f4_contracts.py",
+        "tests/unit/test_f4_prompts.py",
+        "tests/integration/test_f4_gateway.py",
+        "tests/integration/test_f4o1_boundaries.py",
+        "tests/protocol/test_f4_providers.py",
+        "-q"
+      ],
+      "exit_code": 0,
+      "duration_seconds": 8.484,
+      "output_file": "/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llm-gateway-f4o1-b7kksrub/python312-critical.txt",
+      "output": "Using CPython 3.12.13\nCreating virtual environment at: /var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llm-gateway-f4o1-b7kksrub/venv312\nInstalled 43 packages in 77ms\n........................................................................ [ 26%]\n........................................................................ [ 53%]\n........................................................................ [ 80%]\n....................................................                     [100%]\n268 passed in 5.82s\n"
+    },
+    {
+      "label": "final-offline",
+      "command": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "pytest",
+        "-q"
+      ],
+      "exit_code": 0,
+      "duration_seconds": 54.36,
+      "output_file": "/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llm-gateway-f4o1-b7kksrub/final-offline.txt",
+      "output": "........................................................................ [  8%]\n........................................................................ [ 16%]\n........................................................................ [ 24%]\n........................................................................ [ 32%]\n.ssssss................................................................. [ 40%]\n........................................................................ [ 48%]\n........................................................................ [ 57%]\n........................................................................ [ 65%]\n........................................................................ [ 73%]\n........................................................................ [ 81%]\n........................................................................ [ 89%]\n........................................................................ [ 97%]\n....................                                                     [100%]\n878 passed, 6 skipped in 53.86s\n"
+    },
+    {
+      "label": "static-and-integrity",
+      "command": [
+        "python3",
+        "/tmp/llm-gateway-f4o1-verify.py"
+      ],
+      "exit_code": 0,
+      "duration_seconds": 0.05,
+      "output_file": "/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llm-gateway-f4o1-b7kksrub/static-and-integrity.txt",
+      "output": "10 approved constants and consumers, no bare HTTP status or old JSON imports: PASS\nCodec byte-identical; OpenAPI/Prompt/counter/Schema/JSON snapshots identical: PASS\n43 historical/config/resource hashes unchanged: PASS\n14 current Markdown files / 149 local links / code fences: PASS\n"
+    },
+    {
+      "label": "readme-tree-red",
+      "command": [
+        "python3",
+        "/tmp/llm-gateway-f4o1-verify.py"
+      ],
+      "exit_code": 1,
+      "duration_seconds": 0.057,
+      "output_file": "/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llm-gateway-f4o1-b7kksrub/readme-tree-red.txt",
+      "output": "10 approved constants and consumers, no bare HTTP status or old JSON imports: PASS\nCodec byte-identical; OpenAPI/Prompt/counter/Schema/JSON snapshots identical: PASS\n43 historical/config/resource hashes unchanged: PASS\n16 current Markdown files / 149 local links / code fences: PASS\nTraceback (most recent call last):\n  File \"/tmp/llm-gateway-f4o1-verify.py\", line 48, in <module>\n    assert file.exists(),f'README current tree references missing file: {file.relative_to(root)}'\n           ~~~~~~~~~~~^^\nAssertionError: README current tree references missing file: src/json_codec.py\n"
+    },
+    {
+      "label": "review-document-fixes",
+      "command": [
+        "python3",
+        "/tmp/llm-gateway-f4o1-verify.py"
+      ],
+      "exit_code": 0,
+      "duration_seconds": 0.053,
+      "output_file": "/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llm-gateway-f4o1-b7kksrub/review-document-fixes.txt",
+      "output": "10 approved constants and consumers, no bare HTTP status or old JSON imports: PASS\nCodec byte-identical; OpenAPI/Prompt/counter/Schema/JSON snapshots identical: PASS\n43 historical/config/resource hashes unchanged: PASS\n16 current Markdown files / 152 local links / code fences: PASS\nREADME current source tree: 26 file paths exactly match src: PASS\n"
+    },
+    {
+      "label": "final-document-integrity",
+      "command": [
+        "python3",
+        "/tmp/llm-gateway-f4o1-verify.py"
+      ],
+      "exit_code": 0,
+      "duration_seconds": 0.051,
+      "output_file": "/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llm-gateway-f4o1-b7kksrub/final-document-integrity.txt",
+      "output": "10 approved constants and consumers, no bare HTTP status or old JSON imports: PASS\nCodec byte-identical; OpenAPI/Prompt/counter/Schema/JSON snapshots identical: PASS\n43 historical/config/resource hashes unchanged: PASS\n19 current Markdown files / 163 local links / code fences: PASS\nREADME current source tree: 26 file paths exactly match src: PASS\n"
+    }
+  ],
+  "behavior_snapshot": {
+    "before_sha256": "b193239ee52ef7c99ae359c8e90cd1a4ae77ec399c11f58140332c62f857ae0a",
+    "after_sha256": "b193239ee52ef7c99ae359c8e90cd1a4ae77ec399c11f58140332c62f857ae0a"
+  },
+  "codec": {
+    "before_sha256": "07910b5a075b7c2c4c12e2b18a325d8777d154817bfbc7e18c4ec26980b8998c",
+    "after_sha256": "07910b5a075b7c2c4c12e2b18a325d8777d154817bfbc7e18c4ec26980b8998c"
+  },
+  "protected_files": {
+    "count": 43,
+    "unchanged": true
+  },
+  "changed_source_test_files": [
+    "src/api/errors.py",
+    "src/api/routes.py",
+    "src/constants.py",
+    "src/contracts.py",
+    "src/errors.py",
+    "src/json_codec.py",
+    "src/middleware/request_context.py",
+    "src/providers/base.py",
+    "src/providers/deepseek.py",
+    "src/providers/openai_compatible.py",
+    "src/services/gateway.py",
+    "src/services/models.py",
+    "src/services/prompts.py",
+    "src/services/token_budget.py",
+    "src/services/token_counters/deepseek_v41.py",
+    "src/services/validation.py",
+    "src/utils/__init__.py",
+    "src/utils/json_codec.py",
+    "tests/integration/test_f4o1_boundaries.py",
+    "tests/unit/test_f4_json_codec.py",
+    "tests/unit/test_f4_validation.py"
+  ],
+  "new_real_provider_calls": 0,
+  "review_rounds_completed": 2,
+  "python312_environment": "/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llm-gateway-f4o1-b7kksrub/venv312",
+  "reviews": [
+    {
+      "round": 1,
+      "process": {
+        "command": [
+          "claude",
+          "--print",
+          "--tools",
+          "Read",
+          "--allowedTools",
+          "Read",
+          "--no-session-persistence",
+          "--output-format",
+          "stream-json",
+          "--verbose"
+        ],
+        "exit_code": 0,
+        "duration_seconds": 572.643,
+        "prompt": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/docs/features/F4/optimizations/O1/review-prompt-r1.md",
+        "stdout": "/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llm-gateway-f4o1-b7kksrub/review1.jsonl",
+        "stderr": "/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llm-gateway-f4o1-b7kksrub/review1.stderr"
+      },
+      "is_error": false,
+      "stop_reason": "end_turn",
+      "verdict": "BLOCKED",
+      "p0": 0,
+      "p1": 0,
+      "p2": 1,
+      "p3": 1,
+      "required_read_count": 63,
+      "required_file_count": 64,
+      "unique_read_count": 78,
+      "required_not_explicitly_read": [
+        "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/docs/AGENTS.md"
+      ],
+      "read_errors": [
+        "call_01_tDQCaaRB6l13iOt5F2pv7540"
+      ],
+      "tools": [
+        "Read"
+      ],
+      "source_test_default_config_unchanged": 65,
+      "prompt_sha256": "1d9cbc7fb3d98fbf3ffc289fac0ec40e4d11bc6bf725d41e0380bb5fd55d1df9",
+      "raw_stream_sha256": "d028e68b276ee6ba9d8dfa7193c1aeb4aa61b90ca92c382cf9cce217d759fed9",
+      "raw_result_sha256": "cd28054bab571cc0133f082bdfbbf0e672ef925be0806b5235cbedbf41931140",
+      "read_error_note": "一次误读临时目录下不存在的 evidence.json，随后读取项目内正式工件；CLI最终正常退出，但本轮结论BLOCKED。"
+    },
+    {
+      "round": 2,
+      "process": {
+        "command": [
+          "claude",
+          "--print",
+          "--tools",
+          "Read",
+          "--allowedTools",
+          "Read",
+          "--no-session-persistence",
+          "--output-format",
+          "stream-json",
+          "--verbose"
+        ],
+        "exit_code": 0,
+        "duration_seconds": 308.824,
+        "prompt": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/docs/features/F4/optimizations/O1/review-prompt-r2.md",
+        "stdout": "/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llm-gateway-f4o1-b7kksrub/review2.jsonl",
+        "stderr": "/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llm-gateway-f4o1-b7kksrub/review2.stderr"
+      },
+      "is_error": false,
+      "stop_reason": "end_turn",
+      "verdict": "APPROVED",
+      "p0": 0,
+      "p1": 0,
+      "p2": 0,
+      "p3": 2,
+      "required_read_count": 18,
+      "required_file_count": 18,
+      "unique_read_count": 21,
+      "required_not_explicitly_read": [],
+      "read_errors": [],
+      "tools": [
+        "Read"
+      ],
+      "source_test_default_config_unchanged": 65,
+      "prompt_sha256": "f9a6a9d14f5d464db629035156aa5d793f50c97f82682a880196876667c7d8d7",
+      "raw_stream_sha256": "0563ae0aac7a6964d523e95c8f1ecaf3beaf2f4b82a8d7d1e87954efd4385feb",
+      "raw_result_sha256": "189752e7375b5c68653c39e704007e1ad4fe9ef47e027bf5c1043e9db03c9aea",
+      "original_review_evidence_sha256": "bc2c9624ad721398baebf1a285ec58093ea624bff499d82cbd440ccc1fc5b7b5"
+    }
+  ],
+  "reviewed_source_test_default_config_hashes": {
+    "src/constants.py": "e8f952bd60827794689aa94c2426e27ad6bff8ba50e35c5476c8f30dcf6f0180",
+    "src/contracts.py": "74216de24772b271ac9c2edfac63dcb50f94b1984c2fee800edbdbb6fc3bbecf",
+    "src/settings.py": "2dc76e55cea3a0d84fff6fa71750ef3429678153e784226d1c4d0e60cd2831b3",
+    "src/errors.py": "0c4e8ba7e7e749d253ac74cce7b8a828d0cf24f62881e2b65ece75d62640f34d",
+    "src/main.py": "647be54421236236d8a95b1fc4020def543c3458efc28855499903f81750cc71",
+    "src/middleware/request_context.py": "55dfae6597e544a72eebe5299b9b83359be0e9ac5e43fd796d54cd372711963c",
+    "src/providers/openai_compatible.py": "8d76f1c3237806f81f45456fdc2210960835287e2a75ffce541962d1f9172ec8",
+    "src/providers/factory.py": "e6db8f82f4c9c586fd4b44bb20f3c85541e9323ac560666390da06dcb22a9052",
+    "src/providers/deepseek.py": "ece8ad0210cdf797cd9d82add8e0662aec0331b8034b30b4ba287b6667dc28a3",
+    "src/providers/base.py": "79776a08a68cd8c44ae35a172fb6f1f12508b3e356fffe5951558c71c1af2649",
+    "src/providers/mock.py": "99a17e5dcd13b418fc108d0466314453e500a54f6eea5b2a738d9f3a38949a9f",
+    "src/utils/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/utils/json_codec.py": "07910b5a075b7c2c4c12e2b18a325d8777d154817bfbc7e18c4ec26980b8998c",
+    "src/api/errors.py": "b3af9cfd9608fa439cb142bc051b8d6c964ec0be2a31a25a9be784d8a685560a",
+    "src/api/dependencies.py": "fcc3a723b79083371ebf7818b45d272a7234902d3ce9e8771186669b5d389b58",
+    "src/api/routes.py": "655805dabafcfc0c879b0ce7751d69ca3b5ec7ecdf3263538eafda6d0bd092cc",
+    "src/services/trace.py": "9fb00e801b5159616822e979cb42c72231cd7390fd6eab1d896d92ae44f58dd4",
+    "src/services/gateway.py": "413d8e6e31eee4646c9e61adf1b949dd206fc3f98da718ab9211992e2c29ecde",
+    "src/services/token_budget.py": "4ef87863d5e4841040f173f1db999a1559a240b1250607cde11bb91600d18d33",
+    "src/services/models.py": "c0ec42771755d45bff4805522deacdd9cfd6c6cf35795c8b27606c46fe81cd62",
+    "src/services/credentials.py": "886b780b3b31640985cc8f041167141ab0d846c4441742ff7a0e3748f1de3760",
+    "src/services/prompts.py": "73c69b68733ba8e12d00091e684de0df6a885ac255e6eb4f5d72352c712a2715",
+    "src/services/validation.py": "574dffd1657c634d36ec7dfdb4e9f8f4f223166e975e37a7cf1342b296ba417a",
+    "src/services/token_counters/__init__.py": "126c74feed40ab8f72675fcb055f7150d268a166c11e6c8a8a896a32bc7ea3a8",
+    "src/services/token_counters/deepseek_v41.py": "5030955428bef3b7b2e0d97789bfe15d888d241852d3cc52f3a01dfc9184337c",
+    "src/services/token_counters/base.py": "d2ffd1811bde996b3e5b28c49e500176a9c8517364ee03e3aad14d72f4a385b2",
+    "tests/f4_cases.py": "54d14b1f444d65931b1c4a4c8b0ec09f45590140a39f2efcf84aa94d3e1a0920",
+    "tests/conftest.py": "880665e5878cf076257194ed3dac62924666b03490ca48f5fcf30e95fa136656",
+    "tests/prompt_cases.py": "97358e859d739935dfc669615eb72fb9ff388c2e1f2131285d464609683db9fb",
+    "tests/f3_cases.py": "16cb6cbe46589f051f9e5a31fca001b5172c690ea742e8de035dfcc06e699b03",
+    "tests/smoke/conftest.py": "2595e228cac0a404f20887741261b0744f3b9d55006f727322bf82c24d04b91c",
+    "tests/smoke/test_http_server.py": "cdd0f76b9c8c7a036a150a90919d66ae4371e160cba76e8134dafc8829fe999a",
+    "tests/unit/test_f3_contracts.py": "18f64e9d9cf7bc8b25c2f1d88fef0eca7c7dbf5aea7a78877a2dfbd91eead6d2",
+    "tests/unit/test_f4_contracts.py": "9bbace80f449ce86c2a9b98528e2852348a1c7216a625e5e7864fb711f63424b",
+    "tests/unit/test_app_factory.py": "2b938e557327a4cecabe31c5c882c57eb023a87993a4396bf475797ba219db03",
+    "tests/unit/test_f4_budget.py": "e7abbc715fe3a012cb4d87137edb8427c782f3484cb9f6812335489c1c2ddf45",
+    "tests/unit/test_core.py": "7473e0c5b93ae60a8c50a8dae305a906114e72e64d6701f9b3e5551803cc65c7",
+    "tests/unit/test_prompts.py": "01436fff3deca76dd8feec8198121875dbecd368d79fc368058c81931d8af15e",
+    "tests/unit/test_f3_config.py": "cb07636331aa9bbbc9b86a908b321d46f1aebd1880724364ced04af4095a79da",
+    "tests/unit/test_f3_result_boundaries.py": "402e7f63b50be986cef2cd486db25c4939da0282ce76f2881f0df912323172f4",
+    "tests/unit/test_f3_provider_results.py": "531f12cba0a465994596b4679edd4ad2435ee84f4497986f68c4a5c7ee9eae97",
+    "tests/unit/test_f3_token_budget.py": "c24ced7d3ba66c358e3b5870aa44c53bf70b6824a0333a69ae448469d04e6fcb",
+    "tests/unit/test_f3o1_provider_clients.py": "426f53d798b3447f061cf6c2d8165fbbfac3ea757629492b4a74193fce8c86fd",
+    "tests/unit/test_f4_json_codec.py": "f8542a055436e4038b62e86e93befac4e81f161049b27b91e5caaee1010185c5",
+    "tests/unit/test_f3_app_resources.py": "31ad6599cc31817c38dca4cb7a110fabf1fb9d96af6bba67877bf45cc555c506",
+    "tests/unit/test_f4_prompts.py": "70113f2e1f4b58cc6e6c5f444e32ae4f8320decd85f50f72c4152d8033c3d3fc",
+    "tests/unit/test_f3o1_counters.py": "27a377ef7ac8c4c97ab8d263628a851c6a5d5101e6062008ae588af3ae57e19b",
+    "tests/unit/test_f4_validation.py": "9d48137bc447890f7d2f4aed749a1855f8b0575c94e6168c8a4b86ee36bd12b6",
+    "tests/unit/test_request_context.py": "ef5dbe315d11f154435f916bc717f727f33b09e6c4bc6122aac957900a099ebe",
+    "tests/unit/test_settings.py": "0333b82eeedb26d93e5b53a176955bf18486384841ceef14984c2a9d3ad4f962",
+    "tests/unit/test_f3_config_boundaries.py": "d2d16e071b86dce58e3b89fd22a5f26d968986717d7c72ef56677995e731b9c7",
+    "tests/integration/test_f4o1_boundaries.py": "8da2e38408bdc7684159c8c08f157dc0a5c85402fc51f4426b78a99d89e7ef44",
+    "tests/integration/test_trace_integrity.py": "25753d3935fe6cd70ad2f89f74e4d454bb03a23f870ad078db576b8a66b8e525",
+    "tests/integration/test_f2_prompts.py": "61173b2ade511dd83ac3b4fbd19347846a176e0303abf256d6b0ccff9d110b0a",
+    "tests/integration/test_f4_schema_red.py": "caa470e1f33d0af5ae3bedb730ffcb00d58e483d038a1ff2a1619650954657c5",
+    "tests/integration/test_f3o1_dispatch.py": "4ad5ef482e92b50ff52cf901f73cd27a4ded4b9d3ee99aa8960ac8ed6e0f2a80",
+    "tests/integration/test_http.py": "888cfe595145919f55754ab022029e09a921fcec07ce197ceda4a489423b9bc7",
+    "tests/integration/test_f3_gateway.py": "857236f13dda708b3fe7633841f8c6e8d0eef7f8558f758011d1fe76e90a036e",
+    "tests/integration/test_f4_gateway.py": "474a0f2b7b507c738497fc34eba011ff61a2cecf82abd66d16b707bebcf89d93",
+    "tests/protocol/test_providers.py": "128d25a857d26d2bc8def29361e58e01d2046a7f4b42ddddc6ad348530dd2b3c",
+    "tests/protocol/test_f4_providers.py": "009881ac7eeb65c53219598494ee78749fba99a682d82d5d5e32f1a2201998c7",
+    "tests/protocol/test_f3_prompt_wire.py": "322137241104a2c928cb8b7619f78356680493ced26ba6643d8cc3caf07bfc55",
+    "tests/protocol/test_f3_gateway_probe.py": "4610bf8a8696c46bbc6e014b4e9d95ee301d01da4be62587beb6d3689e014906",
+    "tests/live/test_real_providers.py": "f6ed6b2106a284f3b587942cf14b7d3004a203099a2a96c1f9c5649f361202eb",
+    "config/gateway.yaml": "2f795f1eb993609a0971bcb6f04e20dc6ef72c4f5acb7818c9aa1d15e593f34a"
+  },
+  "source_changes_after_review": 0,
+  "final_checks": {
+    "source_test_default_config_hashes_unchanged": 65,
+    "executed_prompts_unchanged": 2,
+    "all_implementation_steps_completed": true,
+    "real_provider_calls_this_optimization": 0,
+    "latest_static_run": "final-document-integrity"
+  }
+}

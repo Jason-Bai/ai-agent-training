@@ -1,0 +1,26 @@
+{
+  "command": [
+    ".venv/bin/python",
+    "-W",
+    "error",
+    "-m",
+    "pytest",
+    "tests/live/test_f13_models.py::test_three_real_bailian_models_public_operations",
+    "tests/live/test_f13_routing.py::test_real_auto_routing_public_operations",
+    "tests/live/test_f13_classifier_cancel.py::test_real_classifier_http_cancel_closes_response_and_never_starts_generation",
+    "tests/live/test_f13_default_fallback.py::test_controlled_classifier_503_generates_once_with_actual_plus_default",
+    "--run-live",
+    "-ra",
+    "-q",
+    "-o",
+    "junit_family=xunit1",
+    "--junitxml=/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llmgw-f13-work-eifzl4on/trace-fix-live.xml",
+    "--basetemp=/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llmgw-f13-work-eifzl4on/pytest-trace-fix-live"
+  ],
+  "started_at": "2026-11-03T17:50:49.017834+00:00",
+  "manifest": "trace-fix-manifest.json",
+  "scope": "17 actual-provider impacted acceptance nodes, excludes retuning/rerunning formal classification scores or capacity",
+  "ended_at": "2026-11-03T17:51:46.427212+00:00",
+  "elapsed_seconds": 57.409053084033076,
+  "exit_code": 0
+}

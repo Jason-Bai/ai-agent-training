@@ -1,0 +1,14 @@
+{
+  "tests": 2508,
+  "live_nodes": 42,
+  "non_live_nodes": 2466,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "source_files_unchanged": 213,
+  "historical_documents_unchanged": 130,
+  "private_files_unchanged": true,
+  "raw_artifacts": 37966,
+  "runtime_config": "structure migrated, original Mock bindings preserved",
+  "scope": "single worker, isolated test PG/Gateway, two true protocols share DeepSeek; no production or supplier-invoice reconciliation claim"
+}

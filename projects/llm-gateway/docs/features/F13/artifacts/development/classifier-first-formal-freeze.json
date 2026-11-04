@@ -1,0 +1,11 @@
+{
+  "at": "2026-11-03T15:51:08.809467+00:00",
+  "version": "task_router@1.0.0",
+  "assets": {
+    "src/services/classification.py": "ff35bfa2e2d80d42da46d28a0a83bceefac0ea8a807198d42637008056f63a93",
+    "tests/fixtures/f13_routing_development.json": "2f8679f79eea562467b0229310b9bdd7eec3a6561a1530776d72a382872ba589",
+    "tests/fixtures/f13_routing_acceptance.json": "4237bab0402c6643560c23354e1b7859351bbf9ec99cdf5e5073849a429c925b"
+  },
+  "sealed_contents_not_used_for_prompt_tuning": true,
+  "first_formal_acceptance": "upcoming complete --run-live run; original batch retained regardless of result"
+}

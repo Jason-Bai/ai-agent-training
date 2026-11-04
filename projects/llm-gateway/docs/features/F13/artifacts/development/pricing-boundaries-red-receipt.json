@@ -1,0 +1,1 @@
+{"command": [".venv/bin/python", "-W", "error", "-m", "pytest", "tests/unit/test_f13_pricing.py", "-k", "inactive_flat or restore_rejects or snapshot_mutation", "-ra", "-q"], "at": "2026-11-03T15:02:25.416591+00:00", "exit_code": 1}

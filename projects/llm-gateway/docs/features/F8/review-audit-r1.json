@@ -1,0 +1,10 @@
+{
+  "agent": "/root/f8_independent_review",
+  "fork_turns": "none",
+  "readonly": "instruction",
+  "round": 1,
+  "outcome": "BLOCKED",
+  "before_after_manifest_equal": true,
+  "manifest_sha256": "968136a2163b57165498fc6ecc9c966e95ab39fb7ddd72b9f525a18342a3eed7",
+  "prompt_sha256": "adb12228587a927541ff6b13cf1914a9bf8d6fa49bd1f04478952d1566d9950f"
+}

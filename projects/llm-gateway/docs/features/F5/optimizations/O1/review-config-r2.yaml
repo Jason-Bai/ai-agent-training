@@ -1,0 +1,42 @@
+database:
+  host: 127.0.0.1
+  port: 15432
+  name: llm_gateway
+  username: llm_gateway
+  password_file: postgres.password
+providers:
+  mock-main:
+    adapter: mock
+    api_protocol: chat_completions
+  mock-backup:
+    adapter: mock
+    api_protocol: responses
+models:
+  general-primary:
+    provider: mock-main
+    model_id: deepseek-flash
+    thinking_mode: disabled
+    token_counter: deepseek_v41
+    supports_streaming: true
+    structured_output_mode: json_object
+    context_window_tokens: 1048576
+    provider_max_output_tokens: 393216
+    default_output_tokens: 1024
+    max_output_tokens: 4096
+    safety_margin_tokens: 1024
+    default_timeout_seconds: 30
+    max_timeout_seconds: 120
+  general-backup:
+    provider: mock-backup
+    model_id: deepseek-flash
+    thinking_mode: disabled
+    token_counter: deepseek_v41
+    supports_streaming: true
+    structured_output_mode: json_schema
+    context_window_tokens: 1048576
+    provider_max_output_tokens: 393216
+    default_output_tokens: 1024
+    max_output_tokens: 4096
+    safety_margin_tokens: 1024
+    default_timeout_seconds: 30
+    max_timeout_seconds: 120

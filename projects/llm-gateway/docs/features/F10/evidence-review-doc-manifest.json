@@ -1,0 +1,22 @@
+{
+  "docs/features/F10/acceptance-guide.md": "64b8c57509f42100653db750cfef9ef3720a5bb22b2cefa231396f1d3f72e9f0",
+  "docs/features/F10/acceptance-report.md": "aa000ce0de7e3bd12aefb29deb9af0bd63b89a2f1e72b0fc5273be81c1a23b21",
+  "docs/features/F10/design.md": "07ea8dd9fec716583552eba979ff8132c99540197d3b306f70a0700aea54707d",
+  "docs/features/F10/evidence-acceptance-development.xml": "96adebc1ba529f6949d0f343a17ca8d15361e399634af306fc5a435a3c4ce309",
+  "docs/features/F10/evidence-capacity-metrics.json": "5f31301b46748d73b68b0c5d478438aed18143f4c3cce66ca3aff3a5a488298d",
+  "docs/features/F10/evidence-development.json": "108bdae4354c4b946f1d54221cb169c639df846b66d86b66f21e6506bce3653b",
+  "docs/features/F10/evidence-final-all.log": "c6f5edb927dbd5565248ae4c9bb29e11d888464231edafed1cc54dd65a4ad2ca",
+  "docs/features/F10/evidence-final-all.xml.gz": "55eef84caf33307c7494ed4cc0e669cfe5fe131393a56781cc8f3deb137555aa",
+  "docs/features/F10/evidence-final-capacity.json.gz": "452b75e0911dfcceb6e18da0ec75bb1c2b2b13f128a8ba4784a629747dada01d",
+  "docs/features/F10/evidence-final.json": "eeb0a80557b1959fc6c94bfc2087d6b2c145f7da1a2b644b3df18c8bad480b42",
+  "docs/features/F10/evidence-first-full.xml.gz": "f17876f9a16d8d9ca452511452e272d7e72efa2dae07622cfd510252708cd6fd",
+  "docs/features/F10/evidence-investigation.json": "bd38566187cbea470ad45a3c79e01425e5a645f5583d436e4dbc3cb5a523967a",
+  "docs/features/F10/evidence-junit-command-aborted.xml.gz": "d0c1f5f02d6872cbd7fd5152490daa241919f790ad4701ed2684a886e3809eb1",
+  "docs/features/F10/evidence-junit-fix.xml": "d91285906c58275a5ca241d677559e452113cca30c45c21ce456bd808351bd64",
+  "docs/features/F10/evidence-raw-audit.json": "9d592c34236fa96e20f70273bcc703986ba37755583b965d56e647aa5cf8bb4b",
+  "docs/features/F10/implementation-plan.md": "0aa013323bea7ab69c2d9fdce652b0af12ad5e676b54d4348fafe31f7a599e5a",
+  "docs/features/F10/implementation-summary.md": "5bb9327c7eb45270765e631f68456a5facefff657460101631494d9b341a0145",
+  "docs/features/F10/review-material-r1.md": "a76a50b3f0ea08f468dd1424f3d2f801e846cc3475abc1271b9bee514b8c5bdc",
+  "docs/features/F10/review-prompt-r1.md": "2de20a31e12a5d511e9554ef3952df2ed88e7d40ed8f7d851f8cfa5635b4b8cd",
+  "docs/features/F10/test-plan.md": "a65eca042fb522e60e977b227fa0529ecd3df9e0130e87de477ff8ccbb3f1c71"
+}

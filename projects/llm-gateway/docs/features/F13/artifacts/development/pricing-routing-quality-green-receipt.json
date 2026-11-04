@@ -1,0 +1,8 @@
+{
+  "command": [
+    "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/.venv/bin/python",
+    "/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llmgw-f13-work-eifzl4on/pricing-routing-quality-contract.py"
+  ],
+  "returncode": 0,
+  "scope": "offline report control, safe recorded failed Trace, fake PG rows; not real quality/provider evidence"
+}

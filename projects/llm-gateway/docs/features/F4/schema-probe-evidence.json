@@ -1,0 +1,120 @@
+{
+  "scope": "Three isolated technical probes; not Gateway feature acceptance. No prompt, response body or API key stored.",
+  "records": [
+    {
+      "case": "baseline",
+      "endpoint": "/responses",
+      "model_requested": "deepseek-flash",
+      "max_output_tokens": 64,
+      "reasoning_effort": "none",
+      "sdk_max_retries": 0,
+      "candidates": {
+        "messages_only": 45
+      },
+      "http_status": 200,
+      "response_id": "2eb16a00-087f-41a7-8380-c6473eda6ac6",
+      "response_status": "completed",
+      "actual_model": "deepseek-flash",
+      "usage": {
+        "input_tokens": 45,
+        "input_tokens_details": {
+          "cached_tokens": 0
+        },
+        "output_tokens": 25,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 70
+      },
+      "output_item_types": [
+        "message"
+      ],
+      "output_nonblank": true,
+      "json_parse_ok": true,
+      "actual_minus_candidates": {
+        "messages_only": 0
+      },
+      "elapsed_ms": 1039.63
+    },
+    {
+      "case": "flat",
+      "endpoint": "/responses",
+      "model_requested": "deepseek-flash",
+      "max_output_tokens": 64,
+      "reasoning_effort": "none",
+      "sdk_max_retries": 0,
+      "candidates": {
+        "messages_only": 45,
+        "schema_only": 105,
+        "format_envelope": 125
+      },
+      "http_status": 200,
+      "response_id": "613deffb-9e8b-437a-adc8-c7489a2c4bd8",
+      "response_status": "completed",
+      "actual_model": "deepseek-flash",
+      "usage": {
+        "input_tokens": 105,
+        "input_tokens_details": {
+          "cached_tokens": 0
+        },
+        "output_tokens": 15,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 120
+      },
+      "output_item_types": [
+        "message"
+      ],
+      "output_nonblank": true,
+      "json_parse_ok": true,
+      "requested_shape_matches": true,
+      "actual_minus_candidates": {
+        "messages_only": 60,
+        "schema_only": 0,
+        "format_envelope": -20
+      },
+      "elapsed_ms": 528.31
+    },
+    {
+      "case": "nested",
+      "endpoint": "/responses",
+      "model_requested": "deepseek-flash",
+      "max_output_tokens": 64,
+      "reasoning_effort": "none",
+      "sdk_max_retries": 0,
+      "candidates": {
+        "messages_only": 45,
+        "schema_only": 189,
+        "format_envelope": 209
+      },
+      "http_status": 200,
+      "response_id": "3dba2f45-ee8d-4f0e-81d0-65a010a09409",
+      "response_status": "completed",
+      "actual_model": "deepseek-flash",
+      "usage": {
+        "input_tokens": 189,
+        "input_tokens_details": {
+          "cached_tokens": 0
+        },
+        "output_tokens": 29,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 218
+      },
+      "output_item_types": [
+        "message"
+      ],
+      "output_nonblank": true,
+      "json_parse_ok": true,
+      "requested_shape_matches": true,
+      "actual_minus_candidates": {
+        "messages_only": 144,
+        "schema_only": 0,
+        "format_envelope": -20
+      },
+      "elapsed_ms": 1006.21
+    }
+  ]
+}

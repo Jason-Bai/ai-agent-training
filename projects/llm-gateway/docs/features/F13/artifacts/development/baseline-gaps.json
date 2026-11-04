@@ -1,0 +1,38 @@
+{
+  "uncaptured_preexisting_files": [
+    "config/credentials.example.yaml"
+  ],
+  "note": "Its original bytes were not captured in the implementation baseline. Current safe placeholder content is available; a new-file-style textual patch is not proof this file was newly created. All source/test modified-file before images are captured.",
+  "new_files": [
+    "src/providers/bailian.py",
+    "src/services/classification.py",
+    "src/services/auto_routing.py",
+    "src/services/token_counters/qwen_text.py",
+    "tests/f13_cases.py",
+    "tests/f13_real_support.py",
+    "tests/f13_capacity_support.py",
+    "tests/smoke/test_f13_restart.py",
+    "tests/unit/test_f13_configuration.py",
+    "tests/unit/test_f13_auto_routing.py",
+    "tests/unit/test_f13_real_helper.py",
+    "tests/unit/test_f13_estimation.py",
+    "tests/unit/test_f13_pricing.py",
+    "tests/unit/test_f13_auto_planning.py",
+    "tests/unit/test_f13_classification.py",
+    "tests/unit/test_f13_auto_config.py",
+    "tests/unit/test_f13_concurrency.py",
+    "tests/integration/test_f13_lifecycle.py",
+    "tests/integration/test_f13_metering.py",
+    "tests/protocol/test_f13_bailian.py",
+    "tests/live/test_f13_default_fallback.py",
+    "tests/live/test_f13_models.py",
+    "tests/live/test_f13_precision.py",
+    "tests/live/test_f13_routing.py",
+    "tests/live/test_f13_streaming.py",
+    "tests/fixtures/f13_routing_development.json",
+    "tests/fixtures/f13_routing_acceptance.json",
+    "config/prices.bailian.example.yaml",
+    "config/gateway.bailian.example.yaml"
+  ],
+  "agents_unchanged": true
+}

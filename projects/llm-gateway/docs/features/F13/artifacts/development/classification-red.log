@@ -1,0 +1,14 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_________ test_router_asset_has_its_own_rules_and_three_distinct_paths _________
+
+    def test_router_asset_has_its_own_rules_and_three_distinct_paths():
+        template = next((item for item in DEFAULT_TEMPLATES if item.name == 'task_router'), None)
+>       assert template is not None, 'Classification needs an independently controlled task_router asset'
+E       AssertionError: Classification needs an independently controlled task_router asset
+E       assert None is not None
+
+tests/unit/test_f13_classification.py:7: AssertionError
+=========================== short test summary info ============================
+FAILED tests/unit/test_f13_classification.py::test_router_asset_has_its_own_rules_and_three_distinct_paths
+1 failed in 0.06s

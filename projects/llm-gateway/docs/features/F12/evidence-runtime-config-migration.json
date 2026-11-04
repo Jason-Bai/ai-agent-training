@@ -1,0 +1,22 @@
+{
+  "runtime_config": "migrated to three layers",
+  "group_names": [
+    "general-primary",
+    "general-backup"
+  ],
+  "endpoint_names": [
+    "primary-chat",
+    "backup-responses"
+  ],
+  "provider_adapters": {
+    "mock-main": "mock",
+    "mock-backup": "mock"
+  },
+  "provider_bindings_unchanged": true,
+  "database_unchanged": true,
+  "protected_private_files_unchanged": true,
+  "before_hash": "51e96025571119345460385a6a245e1bec7e64e544df1cc9d75e8e5a982396cb",
+  "after_hash": "c792580f3e58b5da774b0070b3c78f1f78c1adbf5488d2efae7887b67b12e92d",
+  "provider_calls": 0,
+  "backup_location": "work/runtime-gateway-before.yaml (private; exclude from review archives)"
+}

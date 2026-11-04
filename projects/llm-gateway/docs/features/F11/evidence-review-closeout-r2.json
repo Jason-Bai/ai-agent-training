@@ -1,0 +1,65 @@
+{
+  "review_round": 2,
+  "verdict": "APPROVED",
+  "code_findings": {
+    "P0": 0,
+    "P1": 0,
+    "P2": 0,
+    "P3": 0
+  },
+  "root_verified_candidate_files": 220,
+  "candidate_drift_before_status_updates": [],
+  "reviewer_verified_readable_files": 218,
+  "r1_baseline_verified_files": 211,
+  "r1_baseline_archived_safe_files": 209,
+  "r1_report_and_prompt_unchanged": true,
+  "old_artifact_changes_only_authorized_active_documents": [
+    "design.md",
+    "implementation-plan.md",
+    "implementation-summary.md",
+    "test-plan.md"
+  ],
+  "protected_files_unchanged": 293,
+  "full_raw": {
+    "tests": 2265,
+    "passed": 2242,
+    "failed": 23,
+    "errors": 0,
+    "skipped": 0,
+    "nonlive_passed": 2231,
+    "live": 34
+  },
+  "supplement": {
+    "tests": 6,
+    "passed": 6,
+    "failed": 0
+  },
+  "acceptance_scope": "F11 Gateway correctness under user-approved layered acceptance; not provider stability",
+  "real_sustained": {
+    "concurrency": 1,
+    "dispatch_seconds": 600,
+    "requests": 50,
+    "successes": 12,
+    "success_rate": 0.24
+  },
+  "limitations_preserved": [
+    "original 23 pytest failures remain",
+    "one final capacity mixed-recovery sample lacks full per-field Trace; original wire/downstream/independent SQL summary retained",
+    "old probe early running/reserved snapshot has no same-request final SQL; controlled same-branch and separate real probe evidence retained",
+    "six old dependency-blocked scenarios not relabeled as successes; six bounded supplemental scenarios completed with final SQL"
+  ],
+  "after_review_changes": [
+    "README.md",
+    "docs/1.7-plan.md",
+    "docs/features/F11/design.md",
+    "docs/features/F11/diagnosis-r2-20261103.md",
+    "docs/features/F11/implementation-plan.md",
+    "docs/features/F11/implementation-summary.md",
+    "docs/features/F11/test-plan.md",
+    "docs/progress.md"
+  ],
+  "change_scope": "active Markdown statuses/indexes/links only; product/tests/config/AGENTS unchanged",
+  "local_links_missing": [],
+  "documentation_files_checked": 15,
+  "final_status": "F11 accepted under user-approved layered criteria"
+}

@@ -1,0 +1,15 @@
+{
+  "command": [
+    ".venv/bin/python",
+    "-W",
+    "error",
+    "-m",
+    "pytest",
+    "tests/live/test_f13_models.py",
+    "--collect-only",
+    "-q"
+  ],
+  "at": "2026-11-03T15:08:05.245594+00:00",
+  "exit_code": 0,
+  "scope": "collection only, no credentials, Provider or PG"
+}

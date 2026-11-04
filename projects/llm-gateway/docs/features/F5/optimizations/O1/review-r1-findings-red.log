@@ -1,0 +1,140 @@
+F.FFF                                                                    [100%]
+=================================== FAILURES ===================================
+________ test_invalid_registry_root_explains_optional_database_section _________
+
+tmp_path = PosixPath('/private/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/pytest-of-baiyu/pytest-136/test_invalid_registry_root_exp0')
+
+    def test_invalid_registry_root_explains_optional_database_section(tmp_path):
+        document = {'providers': {}, 'models': {}, 'databases': {}}
+        (tmp_path/'gateway.yaml').write_text(yaml.safe_dump(document))
+        with pytest.raises(ConfigurationError) as failure:
+            load_registry(tmp_path)
+>       assert '可包含 database' in str(failure.value)
+E       AssertionError: assert '可包含 database' in 'gateway.yaml 必须且只能包含 models、providers'
+E        +  where 'gateway.yaml 必须且只能包含 models、providers' = str(ConfigurationError('gateway.yaml 必须且只能包含 models、providers'))
+E        +    where ConfigurationError('gateway.yaml 必须且只能包含 models、providers') = <ExceptionInfo ConfigurationError('gateway.yaml 必须且只能包含 models、providers') tblen=2>.value
+
+tests/unit/test_f5o1_configuration.py:29: AssertionError
+_ test_special_password_authenticates_without_url_corruption[ a:@/?# %\u7279\u6b8a\u5b57\u7b26 ] _
+
+pg_server = <postgres_support.PostgresServer object at 0x109ffe990>
+persisted = ('case_ef98685abc5349ccb515fe659607a4eb', PosixPath('/private/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/pytest-of-baiyu/pytest-136/test_special_password_authenti1'))
+password = ' a:@/?# %特殊字符 '
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('password', ['a:@/?# %特殊字符', ' a:@/?# %特殊字符 '])
+    async def test_special_password_authenticates_without_url_corruption(pg_server, persisted, password):
+        from psycopg import sql
+        from sqlalchemy import text
+        from persistence.database import Database, load_database_config
+        name, config_dir = persisted
+        role = 'credential_' + uuid.uuid4().hex[:12]
+        with pg_server.connect(autocommit=True) as conn:
+            conn.execute(sql.SQL('CREATE ROLE {} LOGIN PASSWORD {}').format(sql.Identifier(role), sql.Literal(password)))
+        import psycopg
+        with psycopg.connect(host='127.0.0.1', port=pg_server.port, user=role,
+                             password=password, dbname=name, connect_timeout=5) as control:
+            assert control.execute('SELECT current_user').fetchone() == (role,)
+        (config_dir/'special.password').write_text(password+'\n')
+        config = load_database_config(config_dir).model_copy(update={'username': role, 'password_file': 'special.password'})
+        db = Database(config, config_dir)
+        try:
+>           async with db.transaction() as session:
+                       ^^^^^^^^^^^^^^^^
+
+tests/postgres/test_f5o1_persistence.py:70: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Users/baiyu/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/contextlib.py:231: in __aexit__
+    await self.gen.athrow(value)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <persistence.database.Database object at 0x10b173680>, deadline = None
+
+    @asynccontextmanager
+    async def transaction(self, *, deadline=None):
+        limit = asyncio.get_running_loop().time() + DATABASE_OPERATION_TIMEOUT_SECONDS
+        if deadline is not None:
+            limit = min(limit, deadline)
+        committing = False
+        try:
+            async with asyncio.timeout_at(limit):
+                async with self.sessions() as session:
+                    async with session.begin():
+                        yield session
+                        committing = True
+        # External cancellation propagates, including during commit. The caller
+        # must reconcile the stopped request rather than infer its commit result.
+        # asyncio.timeout_at converts only its own cancellation to TimeoutError.
+        except (DBAPIError, DisconnectionError, PoolTimeoutError, OSError, TimeoutError):
+>           raise StorageUnavailable(uncertain=committing) from None
+E           persistence.database.StorageUnavailable: 持久化存储暂时不可用
+
+src/persistence/database.py:72: StorageUnavailable
+_ test_final_empty_transport_frame_failure_has_persisted_diagnostic[failure0-client_disconnected] _
+
+pg_server = <postgres_support.PostgresServer object at 0x10a1f2f30>
+pg_config = ('case_9cc2fccf18dd49f690a73df95574f7f3', PosixPath('/private/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/pytest-of-baiyu/pytest-136/test_final_empty_transport_fra0/config'))
+failure = OSError('controlled EOF disconnect'), code = 'client_disconnected'
+
+    @pytest.mark.parametrize('failure,code', [(OSError('controlled EOF disconnect'), 'client_disconnected'),
+                                           (TimeoutError(), 'request_timeout')])
+    async def test_final_empty_transport_frame_failure_has_persisted_diagnostic(pg_server, pg_config, failure, code):
+        name, config_dir = pg_config
+        await asyncio.to_thread(migrate, config_dir)
+        provider = MockProvider(text='正文')
+        app = make_app(config_dir, provider)
+    
+        async def send(message):
+            if message['type'] == 'http.response.body' and not message.get('more_body', False):
+                assert message.get('body') == b''
+                raise failure
+    
+        async with app.router.lifespan_context(app):
+            request_id = await invoke_stream(app, body(), send)
+            for _ in range(100):
+                request, attempts, events = observe(pg_server, name, request_id)
+                if loads(request['timing_snapshot'] or '{}').get('delivery_error_code'):
+                    break
+                await asyncio.sleep(.02)
+            assert request['status'] == attempts[0]['status'] == 'completed'
+>           assert loads(request['timing_snapshot'])['delivery_error_code'] == code
+E           AssertionError: assert None == 'client_disconnected'
+
+tests/integration/test_f5o1_http.py:871: AssertionError
+_ test_final_empty_transport_frame_failure_has_persisted_diagnostic[failure1-request_timeout] _
+
+pg_server = <postgres_support.PostgresServer object at 0x10a1f2f30>
+pg_config = ('case_6a0d2ce9efb14edca3597fdd0afa3aa2', PosixPath('/private/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/pytest-of-baiyu/pytest-136/test_final_empty_transport_fra1/config'))
+failure = TimeoutError(), code = 'request_timeout'
+
+    @pytest.mark.parametrize('failure,code', [(OSError('controlled EOF disconnect'), 'client_disconnected'),
+                                           (TimeoutError(), 'request_timeout')])
+    async def test_final_empty_transport_frame_failure_has_persisted_diagnostic(pg_server, pg_config, failure, code):
+        name, config_dir = pg_config
+        await asyncio.to_thread(migrate, config_dir)
+        provider = MockProvider(text='正文')
+        app = make_app(config_dir, provider)
+    
+        async def send(message):
+            if message['type'] == 'http.response.body' and not message.get('more_body', False):
+                assert message.get('body') == b''
+                raise failure
+    
+        async with app.router.lifespan_context(app):
+            request_id = await invoke_stream(app, body(), send)
+            for _ in range(100):
+                request, attempts, events = observe(pg_server, name, request_id)
+                if loads(request['timing_snapshot'] or '{}').get('delivery_error_code'):
+                    break
+                await asyncio.sleep(.02)
+            assert request['status'] == attempts[0]['status'] == 'completed'
+>           assert loads(request['timing_snapshot'])['delivery_error_code'] == code
+E           AssertionError: assert None == 'request_timeout'
+
+tests/integration/test_f5o1_http.py:871: AssertionError
+=========================== short test summary info ============================
+FAILED tests/unit/test_f5o1_configuration.py::test_invalid_registry_root_explains_optional_database_section
+FAILED tests/postgres/test_f5o1_persistence.py::test_special_password_authenticates_without_url_corruption[ a:@/?# %\u7279\u6b8a\u5b57\u7b26 ]
+FAILED tests/integration/test_f5o1_http.py::test_final_empty_transport_frame_failure_has_persisted_diagnostic[failure0-client_disconnected]
+FAILED tests/integration/test_f5o1_http.py::test_final_empty_transport_frame_failure_has_persisted_diagnostic[failure1-request_timeout]
+4 failed, 1 passed, 113 deselected in 35.79s

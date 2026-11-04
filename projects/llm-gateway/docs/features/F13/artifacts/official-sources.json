@@ -1,0 +1,89 @@
+{
+  "checked_at": "2026-11-03T16:11:14.185782+00:00",
+  "source_type": "official primary pages fetched with web tools; fact summary, not supplier invoice",
+  "region": "cn-beijing",
+  "unit": "CNY per 1,000,000 tokens",
+  "models": {
+    "qwen3.8-flash": {
+      "url": "https://help.aliyun.com/zh/model-studio/qwen3-8-flash",
+      "context_tokens": 1000000,
+      "max_output_tokens": 131072,
+      "cache_hit": "0.1",
+      "cache_miss": "0.8",
+      "output": "2.7",
+      "page_locations": "context110-116; Beijing pricing121-127"
+    },
+    "qwen3.8-max": {
+      "url": "https://help.aliyun.com/zh/model-studio/qwen3-8-max",
+      "context_tokens": 1000000,
+      "max_output_tokens": 131072,
+      "cache_hit": "1.5",
+      "cache_miss": "12",
+      "output": "36",
+      "page_locations": "context112-118; Beijing pricing125-131"
+    },
+    "qwen3.7-plus": {
+      "url": "https://help.aliyun.com/zh/model-studio/qwen3-7-plus",
+      "context_tokens": 1000000,
+      "max_output_tokens": 131072,
+      "base_tiers": [
+        {
+          "max_input_tokens": 256000,
+          "cache_hit": "0.4",
+          "cache_miss": "2",
+          "output": "8"
+        },
+        {
+          "max_input_tokens": 1000000,
+          "cache_hit": "1.2",
+          "cache_miss": "6",
+          "output": "24"
+        }
+      ],
+      "page_locations": "context111-117; Beijing tier pricing122-147"
+    }
+  },
+  "price_promotion": {
+    "url": "https://help.aliyun.com/zh/model-studio/model-pricing",
+    "page_locations": "Beijing Plus253-262",
+    "short_source_excerpt": "限时8折",
+    "multiplier": "0.8",
+    "computed_plus_tiers": [
+      {
+        "max_input_tokens": 256000,
+        "hit": "0.32",
+        "miss": "1.6",
+        "output": "6.4"
+      },
+      {
+        "max_input_tokens": 1000000,
+        "hit": "0.96",
+        "miss": "4.8",
+        "output": "19.2"
+      }
+    ],
+    "basis": "Plus miss/output derived from current listed 80% promotion; cache hit derived by generic implicit-cache20% rule applied to promotional input. Final promotional cache amounts are arithmetic deductions, not separately quoted account-specific fees."
+  },
+  "implicit_cache": {
+    "url": "https://help.aliyun.com/zh/model-studio/context-cache",
+    "page_locations": "1035-1044",
+    "plus_ratio": "0.2",
+    "flash_max": "explicit exceptions; use their own model-page fixed rates, do not multiply generic20%"
+  },
+  "protocol": {
+    "url": "https://help.aliyun.com/zh/model-studio/qwen-api-via-openai-responses",
+    "safe_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "notes": [
+      "Old shared host still usable and has actual200 evidence; new workspace host requires verified workspace ID",
+      "Nested text.format.json_schema{name,schema,strict}",
+      "Minimum max_output_tokens16",
+      "queued created may omit actual model",
+      "Documented approximately80% input auto-truncation; project uses200000 platform window"
+    ]
+  },
+  "not_verified": [
+    "account-specific invoice agreement",
+    "promotion expiry not separately provided in these excerpts",
+    "generic hard upper bound of estimator"
+  ]
+}

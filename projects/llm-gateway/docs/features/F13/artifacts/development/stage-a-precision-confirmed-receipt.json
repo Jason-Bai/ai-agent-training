@@ -1,0 +1,22 @@
+{
+  "command": [
+    ".venv/bin/python",
+    "-W",
+    "error",
+    "-m",
+    "pytest",
+    "tests/live/test_f13_precision.py",
+    "tests/unit/test_f13_configuration.py",
+    "--run-live",
+    "-ra",
+    "-q",
+    "-o",
+    "junit_family=xunit1",
+    "--junitxml=/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llmgw-f13-work-eifzl4on/stage-a-precision-confirmed.xml",
+    "--basetemp=/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llmgw-f13-work-eifzl4on/pytest-stage-a-precision-confirmed"
+  ],
+  "started_at": "2026-11-03T15:17:42.792422+00:00",
+  "ended_at": "2026-11-03T15:18:19.493933+00:00",
+  "elapsed_seconds": 36.70150345796719,
+  "exit_code": 0
+}

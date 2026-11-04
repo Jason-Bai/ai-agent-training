@@ -1,0 +1,764 @@
+{
+  "runs": [
+    {
+      "phase": "red-explicit-counter",
+      "command": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "pytest",
+        "tests/unit/test_f3o1_counters.py",
+        "-q"
+      ],
+      "exit_code": 1,
+      "output": "F.....                                                                   [100%]\n=================================== FAILURES ===================================\n_________ test_counter_reference_is_explicit_nonblank_string[omitted] __________\n\nvalue = 'omitted'\n\n    @pytest.mark.parametrize('value', ['omitted', '', ' ', None, True, 1])\n    def test_counter_reference_is_explicit_nonblank_string(value):\n        values = dict(MODEL_VALUES)\n        if value == 'omitted':\n            del values['token_counter']\n        else:\n            values['token_counter'] = value\n>       with pytest.raises(ValidationError):\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE       Failed: DID NOT RAISE ValidationError\n\ntests/unit/test_f3o1_counters.py:16: Failed\n=========================== short test summary info ============================\nFAILED tests/unit/test_f3o1_counters.py::test_counter_reference_is_explicit_nonblank_string[omitted]\n1 failed, 5 passed in 0.04s\n"
+    },
+    {
+      "phase": "baseline",
+      "command": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "pytest",
+        "-q"
+      ],
+      "exit_code": 0,
+      "output": "........................................................................ [ 12%]\n........................................................................ [ 25%]\n........................................................ssss............ [ 37%]\n........................................................................ [ 50%]\n........................................................................ [ 62%]\n........................................................................ [ 75%]\n........................................................................ [ 87%]\n......................................................................   [100%]\n570 passed, 4 skipped in 48.60s\n"
+    },
+    {
+      "phase": "green-explicit-counter",
+      "command": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "pytest",
+        "tests/unit/test_f3o1_counters.py",
+        "-q"
+      ],
+      "exit_code": 0,
+      "output": "......                                                                   [100%]\n6 passed in 0.01s\n"
+    },
+    {
+      "phase": "red-generic-budget",
+      "command": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "pytest",
+        "tests/unit/test_f3o1_counters.py",
+        "-q",
+        "-k",
+        "not production_strategy"
+      ],
+      "exit_code": 1,
+      "output": "......FFFF                                                               [100%]\n=================================== FAILURES ===================================\n______ test_generic_budget_selects_registered_strategy_and_copies_mapping ______\n\n    def test_generic_budget_selects_registered_strategy_and_copies_mapping():\n        counter = FixtureCounter()\n        counters = {'fixture': counter}\n>       budget = TokenBudget(counters)\n                 ^^^^^^^^^^^^^^^^^^^^^\n\ntests/unit/test_f3o1_counters.py:41: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nself = <services.token_budget.TokenBudget object at 0x10a42b4d0>\nasset_dir = {'fixture': FixtureCounter(version='fixture-v1', tokens=24)}\n\n    def __init__(self, asset_dir: Path = DEFAULT_ASSET_DIR):\n        try:\n            manifest = json.loads((asset_dir / \"manifest.json\").read_text())\n            if manifest[\"revision\"] != REVISION or manifest[\"model\"] != \"deepseek-flash\" or manifest[\"mode\"] != \"chat\":\n                raise ValueError\n            for name, digest in RESOURCE_HASHES.items():\n                if manifest[\"files\"][name][\"sha256\"] != digest or hashlib.sha256((asset_dir / name).read_bytes()).hexdigest() != digest:\n                    raise ValueError\n            self._tokenizer = Tokenizer.from_file(str(asset_dir / \"tokenizer.json\"))\n        except Exception:\n>           raise ValueError(\"计数资源缺失、损坏或版本不匹配\") from None\nE           ValueError: 计数资源缺失、损坏或版本不匹配\n\nsrc/services/token_budget.py:31: ValueError\n_________ test_unknown_or_incompatible_strategy_is_rejected[changes0] __________\n\nchanges = {'token_counter': 'missing'}\n\n    @pytest.mark.parametrize('changes', [dict(token_counter='missing'), dict(model_id='other-model'), dict(thinking_mode='enabled')])\n    def test_unknown_or_incompatible_strategy_is_rejected(changes):\n>       budget = TokenBudget({'fixture': FixtureCounter()})\n                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\ntests/unit/test_f3o1_counters.py:52: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nself = <services.token_budget.TokenBudget object at 0x10a5302d0>\nasset_dir = {'fixture': FixtureCounter(version='fixture-v1', tokens=24)}\n\n    def __init__(self, asset_dir: Path = DEFAULT_ASSET_DIR):\n        try:\n            manifest = json.loads((asset_dir / \"manifest.json\").read_text())\n            if manifest[\"revision\"] != REVISION or manifest[\"model\"] != \"deepseek-flash\" or manifest[\"mode\"] != \"chat\":\n                raise ValueError\n            for name, digest in RESOURCE_HASHES.items():\n                if manifest[\"files\"][name][\"sha256\"] != digest or hashlib.sha256((asset_dir / name).read_bytes()).hexdigest() != digest:\n                    raise ValueError\n            self._tokenizer = Tokenizer.from_file(str(asset_dir / \"tokenizer.json\"))\n        except Exception:\n>           raise ValueError(\"计数资源缺失、损坏或版本不匹配\") from None\nE           ValueError: 计数资源缺失、损坏或版本不匹配\n\nsrc/services/token_budget.py:31: ValueError\n_________ test_unknown_or_incompatible_strategy_is_rejected[changes1] __________\n\nchanges = {'model_id': 'other-model'}\n\n    @pytest.mark.parametrize('changes', [dict(token_counter='missing'), dict(model_id='other-model'), dict(thinking_mode='enabled')])\n    def test_unknown_or_incompatible_strategy_is_rejected(changes):\n>       budget = TokenBudget({'fixture': FixtureCounter()})\n                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\ntests/unit/test_f3o1_counters.py:52: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nself = <services.token_budget.TokenBudget object at 0x10a530b90>\nasset_dir = {'fixture': FixtureCounter(version='fixture-v1', tokens=24)}\n\n    def __init__(self, asset_dir: Path = DEFAULT_ASSET_DIR):\n        try:\n            manifest = json.loads((asset_dir / \"manifest.json\").read_text())\n            if manifest[\"revision\"] != REVISION or manifest[\"model\"] != \"deepseek-flash\" or manifest[\"mode\"] != \"chat\":\n                raise ValueError\n            for name, digest in RESOURCE_HASHES.items():\n                if manifest[\"files\"][name][\"sha256\"] != digest or hashlib.sha256((asset_dir / name).read_bytes()).hexdigest() != digest:\n                    raise ValueError\n            self._tokenizer = Tokenizer.from_file(str(asset_dir / \"tokenizer.json\"))\n        except Exception:\n>           raise ValueError(\"计数资源缺失、损坏或版本不匹配\") from None\nE           ValueError: 计数资源缺失、损坏或版本不匹配\n\nsrc/services/token_budget.py:31: ValueError\n_________ test_unknown_or_incompatible_strategy_is_rejected[changes2] __________\n\nchanges = {'thinking_mode': 'enabled'}\n\n    @pytest.mark.parametrize('changes', [dict(token_counter='missing'), dict(model_id='other-model'), dict(thinking_mode='enabled')])\n    def test_unknown_or_incompatible_strategy_is_rejected(changes):\n>       budget = TokenBudget({'fixture': FixtureCounter()})\n                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\ntests/unit/test_f3o1_counters.py:52: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nself = <services.token_budget.TokenBudget object at 0x10a3a3bb0>\nasset_dir = {'fixture': FixtureCounter(version='fixture-v1', tokens=24)}\n\n    def __init__(self, asset_dir: Path = DEFAULT_ASSET_DIR):\n        try:\n            manifest = json.loads((asset_dir / \"manifest.json\").read_text())\n            if manifest[\"revision\"] != REVISION or manifest[\"model\"] != \"deepseek-flash\" or manifest[\"mode\"] != \"chat\":\n                raise ValueError\n            for name, digest in RESOURCE_HASHES.items():\n                if manifest[\"files\"][name][\"sha256\"] != digest or hashlib.sha256((asset_dir / name).read_bytes()).hexdigest() != digest:\n                    raise ValueError\n            self._tokenizer = Tokenizer.from_file(str(asset_dir / \"tokenizer.json\"))\n        except Exception:\n>           raise ValueError(\"计数资源缺失、损坏或版本不匹配\") from None\nE           ValueError: 计数资源缺失、损坏或版本不匹配\n\nsrc/services/token_budget.py:31: ValueError\n=========================== short test summary info ============================\nFAILED tests/unit/test_f3o1_counters.py::test_generic_budget_selects_registered_strategy_and_copies_mapping\nFAILED tests/unit/test_f3o1_counters.py::test_unknown_or_incompatible_strategy_is_rejected[changes0]\nFAILED tests/unit/test_f3o1_counters.py::test_unknown_or_incompatible_strategy_is_rejected[changes1]\nFAILED tests/unit/test_f3o1_counters.py::test_unknown_or_incompatible_strategy_is_rejected[changes2]\n4 failed, 6 passed, 1 deselected in 0.04s\n"
+    },
+    {
+      "phase": "green-generic-budget",
+      "command": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "pytest",
+        "tests/unit/test_f3o1_counters.py",
+        "-q"
+      ],
+      "exit_code": 0,
+      "output": "...........                                                              [100%]\n11 passed in 0.01s\n"
+    },
+    {
+      "phase": "green-counter-goldens",
+      "command": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "pytest",
+        "tests/unit/test_f3o1_counters.py",
+        "tests/unit/test_f3_token_budget.py",
+        "tests/unit/test_f3_config.py",
+        "-q"
+      ],
+      "exit_code": 1,
+      "output": "...........FFFF.FFF..................................................... [ 72%]\n...........................                                              [100%]\n=================================== FAILURES ===================================\n__________ test_counter_matches_independent_official_encoding[basic] ___________\n\ncase = {'name': 'basic', 'messages': [{'role': 'system', 'content': '你是 LLM Gateway 学习项目中的单轮文本回答助手，\\n负责理解本次用户问题，并生成供调用方阅读的文本回...way 程序生成，不由你生成。<｜User｜>Explain TTFT<｜Assistant｜></think>', 'token_ids': [0, 128799, 15061, 33792, 47, 67553, ...], ...}\n\n    @pytest.mark.parametrize(\"case\", GOLDENS[\"cases\"], ids=lambda case: case[\"name\"])\n    def test_counter_matches_independent_official_encoding(case):\n>       counter = DeepSeekV41Counter()\n                  ^^^^^^^^^^^^^^^^^^^^\n\ntests/unit/test_f3_token_budget.py:19: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nself = <services.token_counters.deepseek_v41.DeepSeekV41Counter object at 0x10b9cb380>\nasset_dir = PosixPath('/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/src/assets/tokenizers/deepseek-v4.1-flash')\n\n    def __init__(self, asset_dir: Path = DEFAULT_ASSET_DIR):\n        try:\n            manifest = json.loads((asset_dir / \"manifest.json\").read_text())\n            if manifest[\"revision\"] != REVISION or manifest[\"model\"] != \"deepseek-flash\" or manifest[\"mode\"] != \"chat\":\n                raise ValueError\n            for name, digest in RESOURCE_HASHES.items():\n                if manifest[\"files\"][name][\"sha256\"] != digest or hashlib.sha256((asset_dir / name).read_bytes()).hexdigest() != digest:\n                    raise ValueError\n            self._tokenizer = Tokenizer.from_file(str(asset_dir / \"tokenizer.json\"))\n        except Exception:\n>           raise ValueError(\"计数资源缺失、损坏或版本不匹配\") from None\nE           ValueError: 计数资源缺失、损坏或版本不匹配\n\nsrc/services/token_counters/deepseek_v41.py:31: ValueError\n_______ test_counter_matches_independent_official_encoding[context_1.0] ________\n\ncase = {'name': 'context_1.0', 'messages': [{'role': 'system', 'content': '你是基于所提供资料回答问题的文本助手，负责理解本次用户问题，\\n依据本次资料生成供调用方阅读的回答。...A123 的商品为充电器。\\n</untrusted_context><｜Assistant｜></think>', 'token_ids': [0, 128799, 15061, 11799, 898, 3796, ...], ...}\n\n    @pytest.mark.parametrize(\"case\", GOLDENS[\"cases\"], ids=lambda case: case[\"name\"])\n    def test_counter_matches_independent_official_encoding(case):\n>       counter = DeepSeekV41Counter()\n                  ^^^^^^^^^^^^^^^^^^^^\n\ntests/unit/test_f3_token_budget.py:19: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nself = <services.token_counters.deepseek_v41.DeepSeekV41Counter object at 0x10ba5cb90>\nasset_dir = PosixPath('/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/src/assets/tokenizers/deepseek-v4.1-flash')\n\n    def __init__(self, asset_dir: Path = DEFAULT_ASSET_DIR):\n        try:\n            manifest = json.loads((asset_dir / \"manifest.json\").read_text())\n            if manifest[\"revision\"] != REVISION or manifest[\"model\"] != \"deepseek-flash\" or manifest[\"mode\"] != \"chat\":\n                raise ValueError\n            for name, digest in RESOURCE_HASHES.items():\n                if manifest[\"files\"][name][\"sha256\"] != digest or hashlib.sha256((asset_dir / name).read_bytes()).hexdigest() != digest:\n                    raise ValueError\n            self._tokenizer = Tokenizer.from_file(str(asset_dir / \"tokenizer.json\"))\n        except Exception:\n>           raise ValueError(\"计数资源缺失、损坏或版本不匹配\") from None\nE           ValueError: 计数资源缺失、损坏或版本不匹配\n\nsrc/services/token_counters/deepseek_v41.py:31: ValueError\n_______ test_counter_matches_independent_official_encoding[context_1.1] ________\n\ncase = {'name': 'context_1.1', 'messages': [{'role': 'system', 'content': '你是基于所提供资料回答问题的文本助手，负责理解本次用户问题，\\n依据本次资料生成供调用方阅读的回答。...A123 的商品为充电器。\\n</untrusted_context><｜Assistant｜></think>', 'token_ids': [0, 128799, 15061, 11799, 898, 3796, ...], ...}\n\n    @pytest.mark.parametrize(\"case\", GOLDENS[\"cases\"], ids=lambda case: case[\"name\"])\n    def test_counter_matches_independent_official_encoding(case):\n>       counter = DeepSeekV41Counter()\n                  ^^^^^^^^^^^^^^^^^^^^\n\ntests/unit/test_f3_token_budget.py:19: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nself = <services.token_counters.deepseek_v41.DeepSeekV41Counter object at 0x10ba5ce10>\nasset_dir = PosixPath('/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/src/assets/tokenizers/deepseek-v4.1-flash')\n\n    def __init__(self, asset_dir: Path = DEFAULT_ASSET_DIR):\n        try:\n            manifest = json.loads((asset_dir / \"manifest.json\").read_text())\n            if manifest[\"revision\"] != REVISION or manifest[\"model\"] != \"deepseek-flash\" or manifest[\"mode\"] != \"chat\":\n                raise ValueError\n            for name, digest in RESOURCE_HASHES.items():\n                if manifest[\"files\"][name][\"sha256\"] != digest or hashlib.sha256((asset_dir / name).read_bytes()).hexdigest() != digest:\n                    raise ValueError\n            self._tokenizer = Tokenizer.from_file(str(asset_dir / \"tokenizer.json\"))\n        except Exception:\n>           raise ValueError(\"计数资源缺失、损坏或版本不匹配\") from None\nE           ValueError: 计数资源缺失、损坏或版本不匹配\n\nsrc/services/token_counters/deepseek_v41.py:31: ValueError\n_________ test_counter_matches_independent_official_encoding[unicode] __________\n\ncase = {'name': 'unicode', 'messages': [{'role': 'system', 'content': '固定规则。'}, {'role': 'user', 'content': '订单 A123\\nHello，🙂...m｜>固定规则。<｜User｜>订单 A123\\nHello，🙂。<｜Assistant｜></think>', 'token_ids': [0, 128799, 10282, 11870, 320, 128803, ...], ...}\n\n    @pytest.mark.parametrize(\"case\", GOLDENS[\"cases\"], ids=lambda case: case[\"name\"])\n    def test_counter_matches_independent_official_encoding(case):\n>       counter = DeepSeekV41Counter()\n                  ^^^^^^^^^^^^^^^^^^^^\n\ntests/unit/test_f3_token_budget.py:19: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nself = <services.token_counters.deepseek_v41.DeepSeekV41Counter object at 0x10b93eb10>\nasset_dir = PosixPath('/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/src/assets/tokenizers/deepseek-v4.1-flash')\n\n    def __init__(self, asset_dir: Path = DEFAULT_ASSET_DIR):\n        try:\n            manifest = json.loads((asset_dir / \"manifest.json\").read_text())\n            if manifest[\"revision\"] != REVISION or manifest[\"model\"] != \"deepseek-flash\" or manifest[\"mode\"] != \"chat\":\n                raise ValueError\n            for name, digest in RESOURCE_HASHES.items():\n                if manifest[\"files\"][name][\"sha256\"] != digest or hashlib.sha256((asset_dir / name).read_bytes()).hexdigest() != digest:\n                    raise ValueError\n            self._tokenizer = Tokenizer.from_file(str(asset_dir / \"tokenizer.json\"))\n        except Exception:\n>           raise ValueError(\"计数资源缺失、损坏或版本不匹配\") from None\nE           ValueError: 计数资源缺失、损坏或版本不匹配\n\nsrc/services/token_counters/deepseek_v41.py:31: ValueError\n_______ test_counter_rejects_missing_or_tampered_assets[tokenizer.json] ________\n\ntmp_path = PosixPath('/private/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/pytest-of-baiyu/pytest-45/test_counter_rejects_missing_o1')\ndamage = 'tokenizer.json'\n\n    @pytest.mark.parametrize(\"damage\", [\"missing\", \"tokenizer.json\", \"reference_encoding.py\", \"manifest.json\"])\n    def test_counter_rejects_missing_or_tampered_assets(tmp_path, damage):\n        directory = tmp_path / \"assets\"\n        if damage != \"missing\":\n>           shutil.copytree(DEFAULT_ASSET_DIR, directory)\n\ntests/unit/test_f3_token_budget.py:30: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nsrc = PosixPath('/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/src/assets/tokenizers/deepseek-v4.1-flash')\ndst = PosixPath('/private/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/pytest-of-baiyu/pytest-45/test_counter_rejects_missing_o1/assets')\nsymlinks = False, ignore = None, copy_function = <function copy2 at 0x108351c70>\nignore_dangling_symlinks = False, dirs_exist_ok = False\n\n    def copytree(src, dst, symlinks=False, ignore=None, copy_function=copy2,\n                 ignore_dangling_symlinks=False, dirs_exist_ok=False):\n        \"\"\"Recursively copy a directory tree and return the destination directory.\n    \n        If exception(s) occur, an Error is raised with a list of reasons.\n    \n        If the optional symlinks flag is true, symbolic links in the\n        source tree result in symbolic links in the destination tree; if\n        it is false, the contents of the files pointed to by symbolic\n        links are copied. If the file pointed to by the symlink doesn't\n        exist, an exception will be added in the list of errors raised in\n        an Error exception at the end of the copy process.\n    \n        You can set the optional ignore_dangling_symlinks flag to true if you\n        want to silence this exception. Notice that this has no effect on\n        platforms that don't support os.symlink.\n    \n        The optional ignore argument is a callable. If given, it\n        is called with the `src` parameter, which is the directory\n        being visited by copytree(), and `names` which is the list of\n        `src` contents, as returned by os.listdir():\n    \n            callable(src, names) -> ignored_names\n    \n        Since copytree() is called recursively, the callable will be\n        called once for each directory that is copied. It returns a\n        list of names relative to the `src` directory that should\n        not be copied.\n    \n        The optional copy_function argument is a callable that will be used\n        to copy each file. It will be called with the source path and the\n        destination path as arguments. By default, copy2() is used, but any\n        function that supports the same signature (like copy()) can be used.\n    \n        If dirs_exist_ok is false (the default) and `dst` already exists, a\n        `FileExistsError` is raised. If `dirs_exist_ok` is true, the copying\n        operation will continue if it encounters existing directories, and files\n        within the `dst` tree will be overwritten by corresponding files from the\n        `src` tree.\n        \"\"\"\n        sys.audit(\"shutil.copytree\", src, dst)\n>       with os.scandir(src) as itr:\n             ^^^^^^^^^^^^^^^\nE       FileNotFoundError: [Errno 2] No such file or directory: '/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/src/assets/tokenizers/deepseek-v4.1-flash'\n\n/Users/baiyu/.local/share/uv/python/cpython-3.14.7-macos-aarch64-none/lib/python3.14/shutil.py:652: FileNotFoundError\n____ test_counter_rejects_missing_or_tampered_assets[reference_encoding.py] ____\n\ntmp_path = PosixPath('/private/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/pytest-of-baiyu/pytest-45/test_counter_rejects_missing_o2')\ndamage = 'reference_encoding.py'\n\n    @pytest.mark.parametrize(\"damage\", [\"missing\", \"tokenizer.json\", \"reference_encoding.py\", \"manifest.json\"])\n    def test_counter_rejects_missing_or_tampered_assets(tmp_path, damage):\n        directory = tmp_path / \"assets\"\n        if damage != \"missing\":\n>           shutil.copytree(DEFAULT_ASSET_DIR, directory)\n\ntests/unit/test_f3_token_budget.py:30: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nsrc = PosixPath('/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/src/assets/tokenizers/deepseek-v4.1-flash')\ndst = PosixPath('/private/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/pytest-of-baiyu/pytest-45/test_counter_rejects_missing_o2/assets')\nsymlinks = False, ignore = None, copy_function = <function copy2 at 0x108351c70>\nignore_dangling_symlinks = False, dirs_exist_ok = False\n\n    def copytree(src, dst, symlinks=False, ignore=None, copy_function=copy2,\n                 ignore_dangling_symlinks=False, dirs_exist_ok=False):\n        \"\"\"Recursively copy a directory tree and return the destination directory.\n    \n        If exception(s) occur, an Error is raised with a list of reasons.\n    \n        If the optional symlinks flag is true, symbolic links in the\n        source tree result in symbolic links in the destination tree; if\n        it is false, the contents of the files pointed to by symbolic\n        links are copied. If the file pointed to by the symlink doesn't\n        exist, an exception will be added in the list of errors raised in\n        an Error exception at the end of the copy process.\n    \n        You can set the optional ignore_dangling_symlinks flag to true if you\n        want to silence this exception. Notice that this has no effect on\n        platforms that don't support os.symlink.\n    \n        The optional ignore argument is a callable. If given, it\n        is called with the `src` parameter, which is the directory\n        being visited by copytree(), and `names` which is the list of\n        `src` contents, as returned by os.listdir():\n    \n            callable(src, names) -> ignored_names\n    \n        Since copytree() is called recursively, the callable will be\n        called once for each directory that is copied. It returns a\n        list of names relative to the `src` directory that should\n        not be copied.\n    \n        The optional copy_function argument is a callable that will be used\n        to copy each file. It will be called with the source path and the\n        destination path as arguments. By default, copy2() is used, but any\n        function that supports the same signature (like copy()) can be used.\n    \n        If dirs_exist_ok is false (the default) and `dst` already exists, a\n        `FileExistsError` is raised. If `dirs_exist_ok` is true, the copying\n        operation will continue if it encounters existing directories, and files\n        within the `dst` tree will be overwritten by corresponding files from the\n        `src` tree.\n        \"\"\"\n        sys.audit(\"shutil.copytree\", src, dst)\n>       with os.scandir(src) as itr:\n             ^^^^^^^^^^^^^^^\nE       FileNotFoundError: [Errno 2] No such file or directory: '/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/src/assets/tokenizers/deepseek-v4.1-flash'\n\n/Users/baiyu/.local/share/uv/python/cpython-3.14.7-macos-aarch64-none/lib/python3.14/shutil.py:652: FileNotFoundError\n________ test_counter_rejects_missing_or_tampered_assets[manifest.json] ________\n\ntmp_path = PosixPath('/private/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/pytest-of-baiyu/pytest-45/test_counter_rejects_missing_o3')\ndamage = 'manifest.json'\n\n    @pytest.mark.parametrize(\"damage\", [\"missing\", \"tokenizer.json\", \"reference_encoding.py\", \"manifest.json\"])\n    def test_counter_rejects_missing_or_tampered_assets(tmp_path, damage):\n        directory = tmp_path / \"assets\"\n        if damage != \"missing\":\n>           shutil.copytree(DEFAULT_ASSET_DIR, directory)\n\ntests/unit/test_f3_token_budget.py:30: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nsrc = PosixPath('/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/src/assets/tokenizers/deepseek-v4.1-flash')\ndst = PosixPath('/private/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/pytest-of-baiyu/pytest-45/test_counter_rejects_missing_o3/assets')\nsymlinks = False, ignore = None, copy_function = <function copy2 at 0x108351c70>\nignore_dangling_symlinks = False, dirs_exist_ok = False\n\n    def copytree(src, dst, symlinks=False, ignore=None, copy_function=copy2,\n                 ignore_dangling_symlinks=False, dirs_exist_ok=False):\n        \"\"\"Recursively copy a directory tree and return the destination directory.\n    \n        If exception(s) occur, an Error is raised with a list of reasons.\n    \n        If the optional symlinks flag is true, symbolic links in the\n        source tree result in symbolic links in the destination tree; if\n        it is false, the contents of the files pointed to by symbolic\n        links are copied. If the file pointed to by the symlink doesn't\n        exist, an exception will be added in the list of errors raised in\n        an Error exception at the end of the copy process.\n    \n        You can set the optional ignore_dangling_symlinks flag to true if you\n        want to silence this exception. Notice that this has no effect on\n        platforms that don't support os.symlink.\n    \n        The optional ignore argument is a callable. If given, it\n        is called with the `src` parameter, which is the directory\n        being visited by copytree(), and `names` which is the list of\n        `src` contents, as returned by os.listdir():\n    \n            callable(src, names) -> ignored_names\n    \n        Since copytree() is called recursively, the callable will be\n        called once for each directory that is copied. It returns a\n        list of names relative to the `src` directory that should\n        not be copied.\n    \n        The optional copy_function argument is a callable that will be used\n        to copy each file. It will be called with the source path and the\n        destination path as arguments. By default, copy2() is used, but any\n        function that supports the same signature (like copy()) can be used.\n    \n        If dirs_exist_ok is false (the default) and `dst` already exists, a\n        `FileExistsError` is raised. If `dirs_exist_ok` is true, the copying\n        operation will continue if it encounters existing directories, and files\n        within the `dst` tree will be overwritten by corresponding files from the\n        `src` tree.\n        \"\"\"\n        sys.audit(\"shutil.copytree\", src, dst)\n>       with os.scandir(src) as itr:\n             ^^^^^^^^^^^^^^^\nE       FileNotFoundError: [Errno 2] No such file or directory: '/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/src/assets/tokenizers/deepseek-v4.1-flash'\n\n/Users/baiyu/.local/share/uv/python/cpython-3.14.7-macos-aarch64-none/lib/python3.14/shutil.py:652: FileNotFoundError\n=========================== short test summary info ============================\nFAILED tests/unit/test_f3_token_budget.py::test_counter_matches_independent_official_encoding[basic]\nFAILED tests/unit/test_f3_token_budget.py::test_counter_matches_independent_official_encoding[context_1.0]\nFAILED tests/unit/test_f3_token_budget.py::test_counter_matches_independent_official_encoding[context_1.1]\nFAILED tests/unit/test_f3_token_budget.py::test_counter_matches_independent_official_encoding[unicode]\nFAILED tests/unit/test_f3_token_budget.py::test_counter_rejects_missing_or_tampered_assets[tokenizer.json]\nFAILED tests/unit/test_f3_token_budget.py::test_counter_rejects_missing_or_tampered_assets[reference_encoding.py]\nFAILED tests/unit/test_f3_token_budget.py::test_counter_rejects_missing_or_tampered_assets[manifest.json]\n7 failed, 92 passed in 0.13s\n"
+    },
+    {
+      "phase": "green-counter-goldens-corrected",
+      "command": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "pytest",
+        "tests/unit/test_f3o1_counters.py",
+        "tests/unit/test_f3_token_budget.py",
+        "tests/unit/test_f3_config.py",
+        "-q"
+      ],
+      "exit_code": 0,
+      "output": "........................................................................ [ 72%]\n...........................                                              [100%]\n99 passed in 0.43s\n"
+    },
+    {
+      "phase": "red-model-strategy-dispatch",
+      "command": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "pytest",
+        "tests/integration/test_f3o1_dispatch.py",
+        "-q",
+        "--tb=short"
+      ],
+      "exit_code": 1,
+      "output": "FFFFFF                                                                   [100%]\n=================================== FAILURES ===================================\n__________ test_counter_choice_follows_model_not_provider[True-False] __________\ntests/integration/test_f3o1_dispatch.py:52: in test_counter_choice_follows_model_not_provider\n    app,clients,a,b=application(shared_provider=shared_provider,shared_counter=shared_counter)\n                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests/integration/test_f3o1_dispatch.py:42: in application\n    app=create_app(settings=Settings(env='test',_env_file=None),model_registry=registry,providers=clients,token_budget=budget)\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nsrc/main.py:32: in create_app\n    raise ValueError(\"计数资源与配置模型不匹配\")\nE   ValueError: 计数资源与配置模型不匹配\n__________ test_counter_choice_follows_model_not_provider[False-True] __________\ntests/integration/test_f3o1_dispatch.py:52: in test_counter_choice_follows_model_not_provider\n    app,clients,a,b=application(shared_provider=shared_provider,shared_counter=shared_counter)\n                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests/integration/test_f3o1_dispatch.py:42: in application\n    app=create_app(settings=Settings(env='test',_env_file=None),model_registry=registry,providers=clients,token_budget=budget)\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nsrc/main.py:32: in create_app\n    raise ValueError(\"计数资源与配置模型不匹配\")\nE   ValueError: 计数资源与配置模型不匹配\n_________ test_counter_choice_follows_model_not_provider[False-False] __________\ntests/integration/test_f3o1_dispatch.py:52: in test_counter_choice_follows_model_not_provider\n    app,clients,a,b=application(shared_provider=shared_provider,shared_counter=shared_counter)\n                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests/integration/test_f3o1_dispatch.py:42: in application\n    app=create_app(settings=Settings(env='test',_env_file=None),model_registry=registry,providers=clients,token_budget=budget)\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nsrc/main.py:32: in create_app\n    raise ValueError(\"计数资源与配置模型不匹配\")\nE   ValueError: 计数资源与配置模型不匹配\n________ test_strategy_budget_preserves_count_before_rejection[48-200] _________\ntests/integration/test_f3o1_dispatch.py:67: in test_strategy_budget_preserves_count_before_rejection\n    app,clients,a,_=application(window=window)\n                    ^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests/integration/test_f3o1_dispatch.py:42: in application\n    app=create_app(settings=Settings(env='test',_env_file=None),model_registry=registry,providers=clients,token_budget=budget)\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nsrc/main.py:32: in create_app\n    raise ValueError(\"计数资源与配置模型不匹配\")\nE   ValueError: 计数资源与配置模型不匹配\n________ test_strategy_budget_preserves_count_before_rejection[47-400] _________\ntests/integration/test_f3o1_dispatch.py:67: in test_strategy_budget_preserves_count_before_rejection\n    app,clients,a,_=application(window=window)\n                    ^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests/integration/test_f3o1_dispatch.py:42: in application\n    app=create_app(settings=Settings(env='test',_env_file=None),model_registry=registry,providers=clients,token_budget=budget)\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nsrc/main.py:32: in create_app\n    raise ValueError(\"计数资源与配置模型不匹配\")\nE   ValueError: 计数资源与配置模型不匹配\n_______ test_interleaved_requests_keep_model_counter_version_and_result ________\ntests/integration/test_f3o1_dispatch.py:81: in test_interleaved_requests_keep_model_counter_version_and_result\n    app,clients,a,b=application()\n                    ^^^^^^^^^^^^^\ntests/integration/test_f3o1_dispatch.py:42: in application\n    app=create_app(settings=Settings(env='test',_env_file=None),model_registry=registry,providers=clients,token_budget=budget)\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nsrc/main.py:32: in create_app\n    raise ValueError(\"计数资源与配置模型不匹配\")\nE   ValueError: 计数资源与配置模型不匹配\n=========================== short test summary info ============================\nFAILED tests/integration/test_f3o1_dispatch.py::test_counter_choice_follows_model_not_provider[True-False]\nFAILED tests/integration/test_f3o1_dispatch.py::test_counter_choice_follows_model_not_provider[False-True]\nFAILED tests/integration/test_f3o1_dispatch.py::test_counter_choice_follows_model_not_provider[False-False]\nFAILED tests/integration/test_f3o1_dispatch.py::test_strategy_budget_preserves_count_before_rejection[48-200]\nFAILED tests/integration/test_f3o1_dispatch.py::test_strategy_budget_preserves_count_before_rejection[47-400]\nFAILED tests/integration/test_f3o1_dispatch.py::test_interleaved_requests_keep_model_counter_version_and_result\n6 failed in 0.06s\n"
+    },
+    {
+      "phase": "green-core-with-counter",
+      "command": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "pytest",
+        "tests/unit/test_core.py",
+        "tests/unit/test_f3o1_counters.py",
+        "tests/unit/test_f3_token_budget.py",
+        "-q"
+      ],
+      "exit_code": 0,
+      "output": ".........................                                                [100%]\n25 passed in 0.49s\n"
+    },
+    {
+      "phase": "green-model-strategy-dispatch",
+      "command": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "pytest",
+        "tests/integration/test_f3o1_dispatch.py",
+        "tests/integration/test_f3_gateway.py",
+        "tests/unit/test_f3o1_counters.py",
+        "-q",
+        "--tb=short"
+      ],
+      "exit_code": 0,
+      "output": "........................................................................ [ 93%]\n.....                                                                    [100%]\n77 passed in 5.64s\n"
+    },
+    {
+      "phase": "strategy-startup-and-dispatch",
+      "command": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "pytest",
+        "tests/unit/test_f3o1_counters.py",
+        "tests/integration/test_f3o1_dispatch.py",
+        "tests/unit/test_f3_token_budget.py",
+        "-q"
+      ],
+      "exit_code": 0,
+      "output": "..................................                                       [100%]\n34 passed in 0.51s\n"
+    },
+    {
+      "phase": "full-offline",
+      "command": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "--tb=short"
+      ],
+      "exit_code": 1,
+      "output": "............................................................F........... [ 11%]\n........................................................................ [ 23%]\n..............................................................ssss...... [ 35%]\n........................................................................ [ 47%]\n........................................................................ [ 59%]\n........................................................................ [ 71%]\n........................................................................ [ 83%]\n........................................................................ [ 95%]\n.............................                                            [100%]\n=================================== FAILURES ===================================\n______________ test_invalid_assets_abort_before_provider_factory _______________\ntests/integration/test_f2_prompts.py:324: in test_invalid_assets_abort_before_provider_factory\n    monkeypatch.setattr(main, \"create_provider\", lambda settings: calls.append(settings))\nE   AttributeError: <module 'main' from '/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/src/main.py'> has no attribute 'create_provider'\n=========================== short test summary info ============================\nFAILED tests/integration/test_f2_prompts.py::test_invalid_assets_abort_before_provider_factory\n1 failed, 600 passed, 4 skipped in 49.64s\n"
+    },
+    {
+      "phase": "resource-metadata-coverage",
+      "command": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "pytest",
+        "tests/unit/test_f3o1_counters.py",
+        "tests/unit/test_f3_token_budget.py",
+        "-q"
+      ],
+      "exit_code": 0,
+      "output": ".................................                                        [100%]\n33 passed in 0.48s\n"
+    },
+    {
+      "phase": "real-four-cases",
+      "command": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "pytest",
+        "tests/live",
+        "--run-live",
+        "-q",
+        "--tb=short",
+        "-o",
+        "junit_family=legacy",
+        "--junitxml=docs/features/F3/optimizations/O1/live-results.xml"
+      ],
+      "exit_code": 0,
+      "output": "....                                                                     [100%]\n4 passed in 4.65s\n"
+    },
+    {
+      "phase": "full-offline-corrected",
+      "command": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "--tb=short"
+      ],
+      "exit_code": 0,
+      "output": "........................................................................ [ 11%]\n........................................................................ [ 23%]\n..............................................................ssss...... [ 35%]\n........................................................................ [ 47%]\n........................................................................ [ 59%]\n........................................................................ [ 70%]\n........................................................................ [ 82%]\n........................................................................ [ 94%]\n..................................                                       [100%]\n606 passed, 4 skipped in 49.93s\n"
+    },
+    {
+      "phase": "document-contract-verification",
+      "command": [
+        "uv",
+        "run",
+        "python",
+        "/tmp/f3o1-document-check.py"
+      ],
+      "exit_code": 0,
+      "output": "PASS: 10 current documents/103 local links; guide symbols and generic model independence; 16 historical hashes and runtime Mock YAML unchanged.\n"
+    },
+    {
+      "phase": "final-document-contract-verification",
+      "command": [
+        "uv",
+        "run",
+        "python",
+        "/tmp/f3o1-document-check.py"
+      ],
+      "exit_code": 0,
+      "output": "PASS: 11 current documents/108 local links; guide symbols and generic model independence; 16 historical hashes and runtime Mock YAML unchanged.\n"
+    }
+  ],
+  "provider_task_runs": {
+    "runs": [
+      {
+        "phase": "red-provider-clients",
+        "command": [
+          "uv",
+          "run",
+          "python",
+          "-m",
+          "pytest",
+          "tests/unit/test_f3o1_provider_clients.py",
+          "-q"
+        ],
+        "exit_code": 1,
+        "output": "FFFFFFF                                                                  [100%]\n=================================== FAILURES ===================================\n________ test_injected_clients_are_snapshotted_and_never_owned[single] _________\n\nmonkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10df729e0>\nkind = 'single'\n\n    @pytest.mark.parametrize('kind', ['single', 'mapping'])\n    async def test_injected_clients_are_snapshotted_and_never_owned(monkeypatch, kind):\n        first, second = MockProvider(), MockProvider()\n        supplied = {'mock-main': first, 'mock-backup': second}\n        def forbidden(*args, **kwargs):\n            pytest.fail('injection must skip credential loading and construction')\n        monkeypatch.setattr(factory, 'create_provider', forbidden)\n        monkeypatch.setattr(factory, 'load_credentials', forbidden, raising=False)\n        clients = factory.ProviderClients(registry(), **({'provider': first} if kind == 'single' else {'providers': supplied}))\n        supplied.clear()\n>       assert set(clients.instances) == {'mock-main', 'mock-backup'}\nE       AssertionError: assert set() == {'mock-backup', 'mock-main'}\nE         \nE         Extra items in the right set:\nE         'mock-main'\nE         'mock-backup'\nE         Use -v to get more diff\n\ntests/unit/test_f3o1_provider_clients.py:21: AssertionError\n________ test_injected_clients_are_snapshotted_and_never_owned[mapping] ________\n\nmonkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10df93650>\nkind = 'mapping'\n\n    @pytest.mark.parametrize('kind', ['single', 'mapping'])\n    async def test_injected_clients_are_snapshotted_and_never_owned(monkeypatch, kind):\n        first, second = MockProvider(), MockProvider()\n        supplied = {'mock-main': first, 'mock-backup': second}\n        def forbidden(*args, **kwargs):\n            pytest.fail('injection must skip credential loading and construction')\n        monkeypatch.setattr(factory, 'create_provider', forbidden)\n        monkeypatch.setattr(factory, 'load_credentials', forbidden, raising=False)\n        clients = factory.ProviderClients(registry(), **({'provider': first} if kind == 'single' else {'providers': supplied}))\n        supplied.clear()\n>       assert set(clients.instances) == {'mock-main', 'mock-backup'}\nE       AssertionError: assert set() == {'mock-backup', 'mock-main'}\nE         \nE         Extra items in the right set:\nE         'mock-main'\nE         'mock-backup'\nE         Use -v to get more diff\n\ntests/unit/test_f3o1_provider_clients.py:21: AssertionError\n__________ test_invalid_injection_is_rejected_before_factory[kwargs0] __________\n\nmonkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10dfee9c0>\nkwargs = {'providers': {}}\n\n    @pytest.mark.parametrize('kwargs', [\n        {'providers': {}},\n        {'providers': {'wrong': MockProvider()}},\n        {'provider': MockProvider(), 'providers': {}},\n    ])\n    def test_invalid_injection_is_rejected_before_factory(monkeypatch, kwargs):\n        calls = []\n        monkeypatch.setattr(factory, 'create_provider', lambda *args: calls.append(args))\n>       with pytest.raises(ValueError):\n             ^^^^^^^^^^^^^^^^^^^^^^^^^\nE       Failed: DID NOT RAISE ValueError\n\ntests/unit/test_f3o1_provider_clients.py:39: Failed\n__________ test_invalid_injection_is_rejected_before_factory[kwargs1] __________\n\nmonkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10e0c5350>\nkwargs = {'providers': {'wrong': <providers.mock.MockProvider object at 0x10dffef90>}}\n\n    @pytest.mark.parametrize('kwargs', [\n        {'providers': {}},\n        {'providers': {'wrong': MockProvider()}},\n        {'provider': MockProvider(), 'providers': {}},\n    ])\n    def test_invalid_injection_is_rejected_before_factory(monkeypatch, kwargs):\n        calls = []\n        monkeypatch.setattr(factory, 'create_provider', lambda *args: calls.append(args))\n>       with pytest.raises(ValueError):\n             ^^^^^^^^^^^^^^^^^^^^^^^^^\nE       Failed: DID NOT RAISE ValueError\n\ntests/unit/test_f3o1_provider_clients.py:39: Failed\n__________ test_invalid_injection_is_rejected_before_factory[kwargs2] __________\n\nmonkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10e0c5e50>\nkwargs = {'provider': <providers.mock.MockProvider object at 0x10df13890>, 'providers': {}}\n\n    @pytest.mark.parametrize('kwargs', [\n        {'providers': {}},\n        {'providers': {'wrong': MockProvider()}},\n        {'provider': MockProvider(), 'providers': {}},\n    ])\n    def test_invalid_injection_is_rejected_before_factory(monkeypatch, kwargs):\n        calls = []\n        monkeypatch.setattr(factory, 'create_provider', lambda *args: calls.append(args))\n>       with pytest.raises(ValueError):\n             ^^^^^^^^^^^^^^^^^^^^^^^^^\nE       Failed: DID NOT RAISE ValueError\n\ntests/unit/test_f3o1_provider_clients.py:39: Failed\n___________ test_owned_clients_are_lazy_closed_and_rebuilt_per_open ____________\n\nmonkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10e120320>\n\n    async def test_owned_clients_are_lazy_closed_and_rebuilt_per_open(monkeypatch):\n        created = []\n        def build(*args):\n            result = MockProvider()\n            created.append(result)\n            return result\n        monkeypatch.setattr(factory, 'create_provider', build)\n        clients = factory.ProviderClients(registry())\n        assert created == [] and clients.instances == {}\n        for expected in (2, 4):\n>           async with clients.open() as opened:\n                       ^^^^^^^^^^^^\nE           AttributeError: 'ProviderClients' object has no attribute 'open'\n\ntests/unit/test_f3o1_provider_clients.py:54: AttributeError\n___________ test_partial_construction_closes_already_created_client ____________\n\nmonkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10e0660b0>\n\n    async def test_partial_construction_closes_already_created_client(monkeypatch):\n        first = MockProvider()\n        calls = []\n        def build(*args):\n            calls.append(args)\n            if len(calls) == 2:\n                raise RuntimeError('construction failed')\n            return first\n        monkeypatch.setattr(factory, 'create_provider', build)\n        clients = factory.ProviderClients(registry())\n        with pytest.raises(RuntimeError, match='construction failed'):\n>           async with clients.open():\n                       ^^^^^^^^^^^^\nE           AttributeError: 'ProviderClients' object has no attribute 'open'\n\ntests/unit/test_f3o1_provider_clients.py:72: AttributeError\n=========================== short test summary info ============================\nFAILED tests/unit/test_f3o1_provider_clients.py::test_injected_clients_are_snapshotted_and_never_owned[single]\nFAILED tests/unit/test_f3o1_provider_clients.py::test_injected_clients_are_snapshotted_and_never_owned[mapping]\nFAILED tests/unit/test_f3o1_provider_clients.py::test_invalid_injection_is_rejected_before_factory[kwargs0]\nFAILED tests/unit/test_f3o1_provider_clients.py::test_invalid_injection_is_rejected_before_factory[kwargs1]\nFAILED tests/unit/test_f3o1_provider_clients.py::test_invalid_injection_is_rejected_before_factory[kwargs2]\nFAILED tests/unit/test_f3o1_provider_clients.py::test_owned_clients_are_lazy_closed_and_rebuilt_per_open\nFAILED tests/unit/test_f3o1_provider_clients.py::test_partial_construction_closes_already_created_client\n7 failed in 0.06s\n"
+      },
+      {
+        "phase": "green-provider-clients",
+        "command": [
+          "uv",
+          "run",
+          "python",
+          "-m",
+          "pytest",
+          "tests/unit/test_f3o1_provider_clients.py",
+          "-q"
+        ],
+        "exit_code": 0,
+        "output": ".......                                                                  [100%]\n7 passed in 0.01s\n"
+      },
+      {
+        "phase": "migrated-provider-application-regression",
+        "command": [
+          "uv",
+          "run",
+          "python",
+          "-m",
+          "pytest",
+          "tests/unit/test_app_factory.py",
+          "tests/unit/test_f3_app_resources.py",
+          "tests/unit/test_f3o1_provider_clients.py",
+          "-q"
+        ],
+        "exit_code": 0,
+        "output": "..................................                                       [100%]\n34 passed in 2.28s\n"
+      },
+      {
+        "phase": "final-provider-application-regression",
+        "command": [
+          "uv",
+          "run",
+          "python",
+          "-m",
+          "pytest",
+          "tests/unit/test_app_factory.py",
+          "tests/unit/test_f3_app_resources.py",
+          "tests/unit/test_f3o1_provider_clients.py",
+          "-q"
+        ],
+        "exit_code": 0,
+        "output": "..................................                                       [100%]\n34 passed in 2.26s\n"
+      }
+    ]
+  },
+  "migration_audit": {
+    "original_test_functions_retained": 156,
+    "changed_functions": [
+      "tests/unit/test_app_factory.py::test_default_app_constructs_provider_once",
+      "tests/unit/test_app_factory.py::test_invalid_settings_fail_before_provider_construction",
+      "tests/unit/test_app_factory.py::test_injected_provider_skips_factory",
+      "tests/unit/test_app_factory.py::test_factory_error_aborts_application",
+      "tests/unit/test_app_factory.py::test_import_main_does_not_create_provider_or_app",
+      "tests/unit/test_app_factory.py::test_import_main_does_not_load_settings_or_call_factory",
+      "tests/unit/test_core.py::test_gateway_calls_only_provider_and_tracks_attempt",
+      "tests/unit/test_f3_config.py::test_model_cross_constraints",
+      "tests/unit/test_f3_token_budget.py::test_counter_matches_independent_official_encoding",
+      "tests/unit/test_f3_token_budget.py::test_counter_rejects_missing_or_tampered_assets",
+      "tests/unit/test_f3_token_budget.py::test_token_window_exact_boundary_and_one_over",
+      "tests/unit/test_f3_app_resources.py::test_incompatible_model_is_rejected_before_provider_factory",
+      "tests/unit/test_f3_app_resources.py::test_later_factory_failure_closes_first_owned_client",
+      "tests/unit/test_f3_app_resources.py::test_one_close_failure_does_not_skip_other_owned_clients",
+      "tests/unit/test_f3_app_resources.py::test_explicit_dependencies_do_not_load_env_registry_or_credentials",
+      "tests/integration/test_f2_prompts.py::test_invalid_assets_abort_before_provider_factory"
+    ],
+    "historical_hashes_unchanged": {
+      "docs/features/F3/evidence.json": "94ccc99f24ac034f4e8e65f77a399df4580812fb86990dfbc3ad2b8046bfd17d",
+      "docs/features/F3/live-results.xml": "36115059be4f3b03bd6851ede1815617a3cade24ccc7d856eebe4f0bbb495059",
+      "docs/features/F3/design.md": "b601c3378b01c0c6996a426fb435897a159ac9b990a7a448a3e5deb5740f4b87",
+      "docs/features/F3/review.md": "adc8a02dc9fe81005967ee27297926f4733dc285d3c52d71b3e3fcc02623a24b",
+      "docs/features/F3/test-plan.md": "0619021cbd1e3dd6746b2e9d90f9de955097c84ac18a890c0431ecec8dad0183",
+      "docs/features/F2/evidence.json": "53c25e2bc5f7a1cb6d0ec658be2f7e2f0655e28304908e60d450a48eefec76f5",
+      "docs/features/F2/design.md": "b08f36a550425746fda9121c4638a864ca6cdca5985bf997ddbc631856e58cb2",
+      "docs/features/F2/review.md": "538b169ba2ce17e7560b18fdd11bce309c7d94967eb51ba933621f2055e7018a",
+      "docs/features/F2/test-plan.md": "5b5c32f26778b72dc4086285d17363a12070d3886f617b1dbfe371592e8d3893",
+      "docs/features/F1/design.md": "ba1af68f116ae9924031dc48021dc48502f76b6701b0cdcb3c81f61efabbcd61",
+      "docs/features/F1/review.md": "eb52129659e66697e2a10e58cc1754d7e48f819256b4b7850b6491a8121cff8b",
+      "docs/features/F1/test-plan.md": "3ded9e41c95fd413830d6eaeebb6779e234935204e7ee674dcd5a465ca0997e0",
+      "docs/features/F1/optimizations/O1/evidence.json": "1d481081c04a3ef4d7c003dd0410290ebb0371d3e1e9a4d8125b9f6248649229",
+      "docs/features/F1/optimizations/O1/design.md": "94288c3a4555f6a1c5fcb87c5be4bb1d1ee97fecedd8dd3746c050bc97e0592d",
+      "docs/features/F1/optimizations/O1/review.md": "a9867dd0434063532166760c137b3c5e56a0d8d5689049baec2ffe2337e3ef78",
+      "docs/features/F1/optimizations/O1/test-plan.md": "4388a5d1ba44bb751d930aa228139abdc808a87e216dd14ad027193d1e43d21e"
+    },
+    "runtime_config_hash": "3d0fb2dc3fa6bf69d79f7de52cff89cdc37c54cbb9280b6061e7863e99b5366f",
+    "runtime_config_unchanged": true
+  },
+  "live_metadata": {
+    "cases": [
+      {
+        "name": "test_real_provider_case[F3-L01-primary-completion]",
+        "metadata": {
+          "request_id": "dfcc7644-1b9e-42eb-905c-30f3006e9026",
+          "provider": "deepseek-main",
+          "adapter": "deepseek",
+          "actual_model": "deepseek-flash",
+          "counter_version": "314113f8a7dadb388215396ba5fbee2c610a04d6",
+          "local_input_tokens": "358",
+          "input_delta": "0",
+          "input_tokens": "358",
+          "output_tokens": "14",
+          "total_tokens": "372",
+          "latency_ms": "967.0820839819498"
+        }
+      },
+      {
+        "name": "test_real_provider_case[F3-L02-backup-completion]",
+        "metadata": {
+          "request_id": "6a871306-d7f3-4c63-bdaf-f3b36652cd44",
+          "provider": "openai-main",
+          "adapter": "openai_compatible",
+          "actual_model": "deepseek-flash",
+          "counter_version": "314113f8a7dadb388215396ba5fbee2c610a04d6",
+          "local_input_tokens": "515",
+          "input_delta": "0",
+          "input_tokens": "515",
+          "output_tokens": "13",
+          "total_tokens": "528",
+          "latency_ms": "946.3652500126045"
+        }
+      },
+      {
+        "name": "test_real_provider_case[F3-L03-primary-probe]",
+        "metadata": {
+          "request_id": "278aa69d-2358-4ccf-a683-213b34f72c0d",
+          "provider": "deepseek-main",
+          "adapter": "deepseek",
+          "actual_model": "deepseek-flash",
+          "counter_version": "314113f8a7dadb388215396ba5fbee2c610a04d6",
+          "local_input_tokens": "237",
+          "input_delta": "0",
+          "input_tokens": "237",
+          "output_tokens": "1",
+          "total_tokens": "238",
+          "latency_ms": "905.6224999949336"
+        }
+      },
+      {
+        "name": "test_real_provider_case[F3-L04-backup-probe]",
+        "metadata": {
+          "request_id": "f72f14bf-e909-4fb8-b8c5-ac026eff20b3",
+          "provider": "openai-main",
+          "adapter": "openai_compatible",
+          "actual_model": "deepseek-flash",
+          "counter_version": "314113f8a7dadb388215396ba5fbee2c610a04d6",
+          "local_input_tokens": "237",
+          "input_delta": "0",
+          "input_tokens": "237",
+          "output_tokens": "1",
+          "total_tokens": "238",
+          "latency_ms": "750.1890000130516"
+        }
+      }
+    ],
+    "xml_sha256": "10cff2ac96f4ebca05ca61e6c214fc31f95d1b7e52378eac7f1c8f5f0f09897a"
+  },
+  "implementation_review": {
+    "round": 1,
+    "command": "CLAUDE_CODE_INLINE_TOOLS=false claude --print --tools Read --allowedTools Read --no-session-persistence --output-format stream-json --verbose",
+    "exit_code": 0,
+    "result": {
+      "type": "result",
+      "subtype": "success",
+      "is_error": false,
+      "stop_reason": "end_turn",
+      "duration_ms": 364723,
+      "num_turns": 43,
+      "session_id": "7649156d-c20d-4b40-92f2-4d4e273db2bb"
+    },
+    "read_calls": [
+      {
+        "file_path": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/AGENTS.md",
+        "is_error": false
+      },
+      {
+        "file_path": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/docs/AGENTS.md",
+        "is_error": false
+      },
+      {
+        "file_path": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/docs/references/claude-code-review.md",
+        "is_error": false
+      },
+      {
+        "file_path": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/docs/templates/代码实现导读模板.md",
+        "is_error": false
+      },
+      {
+        "file_path": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/docs/features/F3/optimizations/O1/design.md",
+        "is_error": false
+      },
+      {
+        "file_path": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/docs/features/F3/optimizations/O1/test-plan.md",
+        "is_error": false
+      },
+      {
+        "file_path": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/docs/features/F3/optimizations/O1/implementation-summary.md",
+        "is_error": false
+      },
+      {
+        "file_path": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/docs/features/F3/implementation-summary.md",
+        "is_error": false
+      },
+      {
+        "file_path": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/README.md",
+        "is_error": false
+      },
+      {
+        "file_path": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/docs/progress.md",
+        "is_error": false
+      },
+      {
+        "file_path": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/docs/features/F3/optimizations/O1/live-results.xml",
+        "is_error": false
+      },
+      {
+        "file_path": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/docs/features/F3/optimizations/O1/evidence.json",
+        "limit": 40,
+        "is_error": false
+      },
+      {
+        "file_path": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/docs/architecture.md",
+        "is_error": false
+      },
+      {
+        "file_path": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/docs/features/F3/optimizations/O1/evidence.json",
+        "offset": 40,
+        "limit": 180,
+        "is_error": false
+      },
+      {
+        "file_path": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/docs/features/F3/optimizations/O1/evidence.json",
+        "limit": 300,
+        "offset": 219,
+        "is_error": false
+      },
+      {
+        "file_path": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/src/main.py",
+        "is_error": false
+      },
+      {
+        "file_path": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/src/providers/factory.py",
+        "is_error": false
+      },
+      {
+        "file_path": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/src/services/gateway.py",
+        "is_error": false
+      },
+      {
+        "file_path": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/src/services/token_budget.py",
+        "is_error": false
+      },
+      {
+        "file_path": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/src/services/models.py",
+        "is_error": false
+      },
+      {
+        "file_path": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/src/services/token_counters/__init__.py",
+        "is_error": false
+      },
+      {
+        "file_path": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/src/services/token_counters/base.py",
+        "is_error": false
+      },
+      {
+        "file_path": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/src/services/token_counters/deepseek_v41.py",
+        "is_error": false
+      },
+      {
+        "file_path": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/src/services/credentials.py",
+        "is_error": false
+      },
+      {
+        "file_path": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/tests/unit/test_f3o1_counters.py",
+        "is_error": false
+      },
+      {
+        "file_path": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/tests/unit/test_f3o1_provider_clients.py",
+        "is_error": false
+      },
+      {
+        "file_path": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/tests/integration/test_f3o1_dispatch.py",
+        "is_error": false
+      },
+      {
+        "file_path": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/tests/f3_cases.py",
+        "is_error": false
+      },
+      {
+        "file_path": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/tests/unit/test_f3_app_resources.py",
+        "is_error": false
+      },
+      {
+        "file_path": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/tests/unit/test_app_factory.py",
+        "is_error": false
+      },
+      {
+        "file_path": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/tests/unit/test_f3_token_budget.py",
+        "is_error": false
+      },
+      {
+        "file_path": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/tests/unit/test_core.py",
+        "is_error": false
+      },
+      {
+        "file_path": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/tests/unit/test_f3_config.py",
+        "is_error": false
+      },
+      {
+        "file_path": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/tests/integration/test_f2_prompts.py",
+        "offset": 290,
+        "limit": 60,
+        "is_error": false
+      },
+      {
+        "file_path": "/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llm-gateway-f3o1-8_dncu84/source-tests.diff",
+        "limit": 250,
+        "is_error": false
+      },
+      {
+        "file_path": "/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llm-gateway-f3o1-8_dncu84/source-tests.diff",
+        "limit": 250,
+        "offset": 250,
+        "is_error": false
+      },
+      {
+        "file_path": "/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llm-gateway-f3o1-8_dncu84/source-tests.diff",
+        "offset": 500,
+        "is_error": false
+      },
+      {
+        "file_path": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/tests/integration/test_f2_prompts.py",
+        "limit": 80,
+        "is_error": false
+      },
+      {
+        "file_path": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/tests/integration/conftest.py",
+        "is_error": true
+      },
+      {
+        "file_path": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/tests/conftest.py",
+        "is_error": false
+      },
+      {
+        "file_path": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/tests/integration/test_f2_prompts.py",
+        "limit": 210,
+        "offset": 80,
+        "is_error": false
+      },
+      {
+        "file_path": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/tests/live/test_real_providers.py",
+        "is_error": false
+      }
+    ],
+    "source_hashes_before": {
+      "src/contracts.py": "5be69f6e31925b607d4827e1063577ac59765ab3b641cbdfee534a8fd5862d50",
+      "src/settings.py": "2dc76e55cea3a0d84fff6fa71750ef3429678153e784226d1c4d0e60cd2831b3",
+      "src/errors.py": "4d59be3bafae124111fba8c07c977a5ce100c7280d3ed6ec3da9c3f9c7de4e2f",
+      "src/main.py": "647be54421236236d8a95b1fc4020def543c3458efc28855499903f81750cc71",
+      "src/middleware/request_context.py": "c1babe3ab5c505bfc0550ec53f0b08bc69a370926a62da161beaaa1d9d71b4d2",
+      "src/providers/openai_compatible.py": "f63a898b4d78cb495f1da5091f99ea2fd0b8a4300a61b6731c75e7b4b28bb9ca",
+      "src/providers/factory.py": "e6db8f82f4c9c586fd4b44bb20f3c85541e9323ac560666390da06dcb22a9052",
+      "src/providers/deepseek.py": "0d8bcf1f170ee2bd4ac6907ad847a767c41ecbbbd34571040b52116f27b04097",
+      "src/providers/base.py": "220fbb7eb8ab24ca96b3a09f07dc1efe2726eb4690dbb893fb318f3406fae236",
+      "src/providers/mock.py": "5f1611fc89aff0b050e75f550dd7aa07a961ee99b6d7c0b9882b44fe28771b8e",
+      "src/api/errors.py": "dc85ba95d865b1eba3973ea6100bab3cfbcdc1950832b9ac9d8d97daeb0c9172",
+      "src/api/dependencies.py": "fcc3a723b79083371ebf7818b45d272a7234902d3ce9e8771186669b5d389b58",
+      "src/api/routes.py": "0ff1ad28422f174ee8fc2db3238b6a1b67d8e27feabe9e27de38c6b8aa5316d3",
+      "src/services/trace.py": "55a89ce7a626f82b3f8404c9188d224dc4e49025cb8a0860c017a472c71ff48a",
+      "src/services/gateway.py": "ef1dce55f11dce5a18473ec27877721cdcfef5675240a653871028c5cfe941cf",
+      "src/services/token_budget.py": "9e988307062fc17fe3313afd74f67523dff598d3d0d6174661641fceb25257b0",
+      "src/services/models.py": "5c639035623ef2a4723f25f833c0cd3eb5bc22790f6f19451891b9799055bd1b",
+      "src/services/credentials.py": "886b780b3b31640985cc8f041167141ab0d846c4441742ff7a0e3748f1de3760",
+      "src/services/prompts.py": "3f9cbf57d97541e12ffbc4ea590e2478b828420bf4cd3598c616173b4df8d3dc",
+      "src/services/token_counters/__init__.py": "126c74feed40ab8f72675fcb055f7150d268a166c11e6c8a8a896a32bc7ea3a8",
+      "src/services/token_counters/deepseek_v41.py": "b80af6c0ce80a9578e6a9df4952303107e8f3f779cf4fdff21b1f2139ff473e2",
+      "src/services/token_counters/base.py": "f6919c6f8737800cb3bb6f6afb1ed6f0c4a8b46de39701eefcd5f09afec13e73",
+      "tests/conftest.py": "880665e5878cf076257194ed3dac62924666b03490ca48f5fcf30e95fa136656",
+      "tests/prompt_cases.py": "97358e859d739935dfc669615eb72fb9ff388c2e1f2131285d464609683db9fb",
+      "tests/f3_cases.py": "7efdb1a657bbcfba90663a74753b01e451c9ebdc27637f90684a7494047e3240",
+      "tests/smoke/conftest.py": "2595e228cac0a404f20887741261b0744f3b9d55006f727322bf82c24d04b91c",
+      "tests/smoke/test_http_server.py": "cf89c35c992a03102f88ebd2cb19c40f771834282f8413693d4afaea68fa5ce4",
+      "tests/unit/test_f3_contracts.py": "18f64e9d9cf7bc8b25c2f1d88fef0eca7c7dbf5aea7a78877a2dfbd91eead6d2",
+      "tests/unit/test_app_factory.py": "4984b07832547257f48ad39113348f1a2a86034abcb59a6aff8af3469cc40e9a",
+      "tests/unit/test_core.py": "7473e0c5b93ae60a8c50a8dae305a906114e72e64d6701f9b3e5551803cc65c7",
+      "tests/unit/test_prompts.py": "2efa808ff5452a1fc82f12ef0a212735cce1d4d874aaf8cb9b8d47b1fc8de2a2",
+      "tests/unit/test_f3_config.py": "32bc70badd96ce33dba005745469321b289c68b56d869cdfb36af2e1ebd10298",
+      "tests/unit/test_f3_result_boundaries.py": "402e7f63b50be986cef2cd486db25c4939da0282ce76f2881f0df912323172f4",
+      "tests/unit/test_f3_provider_results.py": "531f12cba0a465994596b4679edd4ad2435ee84f4497986f68c4a5c7ee9eae97",
+      "tests/unit/test_f3_token_budget.py": "732b762f3f7ad6d8fdc8c4feb318bf12c5c74faa330bcaa7337ccd89293a24b9",
+      "tests/unit/test_f3o1_provider_clients.py": "426f53d798b3447f061cf6c2d8165fbbfac3ea757629492b4a74193fce8c86fd",
+      "tests/unit/test_f3_app_resources.py": "31ad6599cc31817c38dca4cb7a110fabf1fb9d96af6bba67877bf45cc555c506",
+      "tests/unit/test_f3o1_counters.py": "27a377ef7ac8c4c97ab8d263628a851c6a5d5101e6062008ae588af3ae57e19b",
+      "tests/unit/test_request_context.py": "ef5dbe315d11f154435f916bc717f727f33b09e6c4bc6122aac957900a099ebe",
+      "tests/unit/test_settings.py": "0333b82eeedb26d93e5b53a176955bf18486384841ceef14984c2a9d3ad4f962",
+      "tests/unit/test_f3_config_boundaries.py": "8cb1e78338caf16f79dd4a509861630707bb214d25d8eb0e358950c72e322abe",
+      "tests/integration/test_trace_integrity.py": "25753d3935fe6cd70ad2f89f74e4d454bb03a23f870ad078db576b8a66b8e525",
+      "tests/integration/test_f2_prompts.py": "356c5113f7ce87c844543a710346d69ecd28fa55e457eb6d6333e74ebaecdc57",
+      "tests/integration/test_f3o1_dispatch.py": "c1550bd474c9a578c6394ed067ee236a45de98215b99080caa7124df067efc91",
+      "tests/integration/test_http.py": "888cfe595145919f55754ab022029e09a921fcec07ce197ceda4a489423b9bc7",
+      "tests/integration/test_f3_gateway.py": "857236f13dda708b3fe7633841f8c6e8d0eef7f8558f758011d1fe76e90a036e",
+      "tests/protocol/test_providers.py": "d7b37af58309b5c15701185c59616b537b29a157db819156c6f36fed2de3a3f0",
+      "tests/protocol/test_f3_prompt_wire.py": "352edc3290c98c09ac08c2c40d98fb2132b41b38d7c30aa3bf0680bf973ee8d9",
+      "tests/protocol/test_f3_gateway_probe.py": "1957e3b8b1da4757154d6cbac48e5406ecfc9768d78f2426616470cc3e03d757",
+      "tests/live/test_real_providers.py": "d2aac2dc70ca829ec3940af9e8d03413180900f99730896a794794ada189a7c8",
+      "config/gateway.yaml": "3d0fb2dc3fa6bf69d79f7de52cff89cdc37c54cbb9280b6061e7863e99b5366f"
+    },
+    "source_hashes_after": {
+      "src/contracts.py": "5be69f6e31925b607d4827e1063577ac59765ab3b641cbdfee534a8fd5862d50",
+      "src/settings.py": "2dc76e55cea3a0d84fff6fa71750ef3429678153e784226d1c4d0e60cd2831b3",
+      "src/errors.py": "4d59be3bafae124111fba8c07c977a5ce100c7280d3ed6ec3da9c3f9c7de4e2f",
+      "src/main.py": "647be54421236236d8a95b1fc4020def543c3458efc28855499903f81750cc71",
+      "src/middleware/request_context.py": "c1babe3ab5c505bfc0550ec53f0b08bc69a370926a62da161beaaa1d9d71b4d2",
+      "src/providers/openai_compatible.py": "f63a898b4d78cb495f1da5091f99ea2fd0b8a4300a61b6731c75e7b4b28bb9ca",
+      "src/providers/factory.py": "e6db8f82f4c9c586fd4b44bb20f3c85541e9323ac560666390da06dcb22a9052",
+      "src/providers/deepseek.py": "0d8bcf1f170ee2bd4ac6907ad847a767c41ecbbbd34571040b52116f27b04097",
+      "src/providers/base.py": "220fbb7eb8ab24ca96b3a09f07dc1efe2726eb4690dbb893fb318f3406fae236",
+      "src/providers/mock.py": "5f1611fc89aff0b050e75f550dd7aa07a961ee99b6d7c0b9882b44fe28771b8e",
+      "src/api/errors.py": "dc85ba95d865b1eba3973ea6100bab3cfbcdc1950832b9ac9d8d97daeb0c9172",
+      "src/api/dependencies.py": "fcc3a723b79083371ebf7818b45d272a7234902d3ce9e8771186669b5d389b58",
+      "src/api/routes.py": "0ff1ad28422f174ee8fc2db3238b6a1b67d8e27feabe9e27de38c6b8aa5316d3",
+      "src/services/trace.py": "55a89ce7a626f82b3f8404c9188d224dc4e49025cb8a0860c017a472c71ff48a",
+      "src/services/gateway.py": "ef1dce55f11dce5a18473ec27877721cdcfef5675240a653871028c5cfe941cf",
+      "src/services/token_budget.py": "9e988307062fc17fe3313afd74f67523dff598d3d0d6174661641fceb25257b0",
+      "src/services/models.py": "5c639035623ef2a4723f25f833c0cd3eb5bc22790f6f19451891b9799055bd1b",
+      "src/services/credentials.py": "886b780b3b31640985cc8f041167141ab0d846c4441742ff7a0e3748f1de3760",
+      "src/services/prompts.py": "3f9cbf57d97541e12ffbc4ea590e2478b828420bf4cd3598c616173b4df8d3dc",
+      "src/services/token_counters/__init__.py": "126c74feed40ab8f72675fcb055f7150d268a166c11e6c8a8a896a32bc7ea3a8",
+      "src/services/token_counters/deepseek_v41.py": "b80af6c0ce80a9578e6a9df4952303107e8f3f779cf4fdff21b1f2139ff473e2",
+      "src/services/token_counters/base.py": "f6919c6f8737800cb3bb6f6afb1ed6f0c4a8b46de39701eefcd5f09afec13e73",
+      "tests/conftest.py": "880665e5878cf076257194ed3dac62924666b03490ca48f5fcf30e95fa136656",
+      "tests/prompt_cases.py": "97358e859d739935dfc669615eb72fb9ff388c2e1f2131285d464609683db9fb",
+      "tests/f3_cases.py": "7efdb1a657bbcfba90663a74753b01e451c9ebdc27637f90684a7494047e3240",
+      "tests/smoke/conftest.py": "2595e228cac0a404f20887741261b0744f3b9d55006f727322bf82c24d04b91c",
+      "tests/smoke/test_http_server.py": "cf89c35c992a03102f88ebd2cb19c40f771834282f8413693d4afaea68fa5ce4",
+      "tests/unit/test_f3_contracts.py": "18f64e9d9cf7bc8b25c2f1d88fef0eca7c7dbf5aea7a78877a2dfbd91eead6d2",
+      "tests/unit/test_app_factory.py": "4984b07832547257f48ad39113348f1a2a86034abcb59a6aff8af3469cc40e9a",
+      "tests/unit/test_core.py": "7473e0c5b93ae60a8c50a8dae305a906114e72e64d6701f9b3e5551803cc65c7",
+      "tests/unit/test_prompts.py": "2efa808ff5452a1fc82f12ef0a212735cce1d4d874aaf8cb9b8d47b1fc8de2a2",
+      "tests/unit/test_f3_config.py": "32bc70badd96ce33dba005745469321b289c68b56d869cdfb36af2e1ebd10298",
+      "tests/unit/test_f3_result_boundaries.py": "402e7f63b50be986cef2cd486db25c4939da0282ce76f2881f0df912323172f4",
+      "tests/unit/test_f3_provider_results.py": "531f12cba0a465994596b4679edd4ad2435ee84f4497986f68c4a5c7ee9eae97",
+      "tests/unit/test_f3_token_budget.py": "732b762f3f7ad6d8fdc8c4feb318bf12c5c74faa330bcaa7337ccd89293a24b9",
+      "tests/unit/test_f3o1_provider_clients.py": "426f53d798b3447f061cf6c2d8165fbbfac3ea757629492b4a74193fce8c86fd",
+      "tests/unit/test_f3_app_resources.py": "31ad6599cc31817c38dca4cb7a110fabf1fb9d96af6bba67877bf45cc555c506",
+      "tests/unit/test_f3o1_counters.py": "27a377ef7ac8c4c97ab8d263628a851c6a5d5101e6062008ae588af3ae57e19b",
+      "tests/unit/test_request_context.py": "ef5dbe315d11f154435f916bc717f727f33b09e6c4bc6122aac957900a099ebe",
+      "tests/unit/test_settings.py": "0333b82eeedb26d93e5b53a176955bf18486384841ceef14984c2a9d3ad4f962",
+      "tests/unit/test_f3_config_boundaries.py": "8cb1e78338caf16f79dd4a509861630707bb214d25d8eb0e358950c72e322abe",
+      "tests/integration/test_trace_integrity.py": "25753d3935fe6cd70ad2f89f74e4d454bb03a23f870ad078db576b8a66b8e525",
+      "tests/integration/test_f2_prompts.py": "356c5113f7ce87c844543a710346d69ecd28fa55e457eb6d6333e74ebaecdc57",
+      "tests/integration/test_f3o1_dispatch.py": "c1550bd474c9a578c6394ed067ee236a45de98215b99080caa7124df067efc91",
+      "tests/integration/test_http.py": "888cfe595145919f55754ab022029e09a921fcec07ce197ceda4a489423b9bc7",
+      "tests/integration/test_f3_gateway.py": "857236f13dda708b3fe7633841f8c6e8d0eef7f8558f758011d1fe76e90a036e",
+      "tests/protocol/test_providers.py": "d7b37af58309b5c15701185c59616b537b29a157db819156c6f36fed2de3a3f0",
+      "tests/protocol/test_f3_prompt_wire.py": "352edc3290c98c09ac08c2c40d98fb2132b41b38d7c30aa3bf0680bf973ee8d9",
+      "tests/protocol/test_f3_gateway_probe.py": "1957e3b8b1da4757154d6cbac48e5406ecfc9768d78f2426616470cc3e03d757",
+      "tests/live/test_real_providers.py": "d2aac2dc70ca829ec3940af9e8d03413180900f99730896a794794ada189a7c8",
+      "config/gateway.yaml": "3d0fb2dc3fa6bf69d79f7de52cff89cdc37c54cbb9280b6061e7863e99b5366f"
+    },
+    "raw_stream_sha256": "406da001bf3cf3753fe6bc2ba6004f7758f4625bf4e716c78d192c71e0943631",
+    "report": "全部指定文件已逐文件实际 Read 完毕（含差分全文 896 行），并补充核对了 `credentials.py`、`tests/conftest.py`、`tests/live/test_real_providers.py` 三个必要上下文文件。未读任何 `.env`、`config/*.yaml`、`tokenizer.json`、`reference_encoding.py`、`uv.lock`；全程仅用 Read，未运行任何测试或命令。\n\n# F3-O1 第 1 轮独立只读审查报告\n\n## 一、测试执行声明\n\n我未重跑任何测试。以下全部测试结论来自执行者证据（`evidence.json`、`live-results.xml`、`test-plan.md`），我仅核对回执真实性、退出码与前后一致性，不据此声称重跑。\n\n## 二、规格核对（三项交付与保留契约）\n\n### 交付 1：代码导读模板 + F3/O1 导读及工作流\n- 模板 `docs/templates/代码实现导读模板.md` 六节齐全（行为变化/调用链/阅读顺序/取舍/成功失败定位/验证边界），与 AGENTS.md 第 41 行要求一致。\n- F3 与 F3-O1 两份 `implementation-summary.md` 均已产出，状态标注“待独立审查”，未提前声称验收。相对链接层级核对正确（O1 导读 `../../../../../src/...`、F3 导读 `../../../src/...` 均落到真实文件；所列 `ModelConfig.token_counter`、`TokenCounter/TokenCount`、`build_counters`、`DeepSeekV41Counter`、`TokenBudget`、`ProviderClients`、`create_app`、`GatewayService._complete` 全部存在且职责描述与源码一致）。\n- 工作流已同步：`AGENTS.md`、`docs/AGENTS.md` 规则 10、README、architecture、progress 均已更新，F3-O1 单列“待独立审查”，原 F3 验收记录未改写。\n\n### 交付 2：main 职责拆出 ProviderClients\n- 旧 main 的注入归一化、凭据解析、lifespan 构造/关闭全部迁入 `src/providers/factory.py:23-65` 的 `ProviderClients`；`create_provider` 保留原签名与行为。差分核对确认旧逻辑逐条等价迁移：\n  - 互斥注入（`provider`/`providers` 同给 → ValueError，factory.py:29-30，原报错文案保留）；\n  - 注入集合与注册表名称精确匹配（factory.py:33-34）；\n  - 注入快照只读（`dict(providers)` 拷贝 + `MappingProxyType`，factory.py:35），调用方事后清空/改写不影响；\n  - 凭据只在非注入路径于 `__init__` 解析本地文件（factory.py:41，`load_credentials` 空引用集短路不读文件，credentials.py:9-10，保持“仅 Mock 不读凭据文件”契约）；\n  - 工厂客户端延迟到 `open()` 构造；构造失败/退出时在 `finally` 逆序关闭所有已创建自有对象、注入对象不关闭（factory.py:44-64）；关闭异常吞掉内部细节后统一 `RuntimeError(\"Provider 客户端关闭失败\") from None`，与原 main 可观察行为一致（原 `while owned.pop()` 逆序语义与 `reversed(owned)` 等价）。\n- `main.py:31-36` 只保留装配与短 lifespan 挂载；main 不再含具体型号分支（原 `any(model.model_id != \"deepseek-flash\")` 检查已移除）。\n- ProviderClients 不依赖 FastAPI（factory.py 无 fastapi 导入），符合“不是统一应用容器”边界。\n\n### 交付 3：通用 TokenBudget + DeepSeek 编码资源封装\n- `ModelConfig.token_counter: str`（models.py:54），`Definition` 为 `strict=True` + 非空白校验 → 缺省/空串/空白/None/bool/数字/列表/字典全部定义级拒绝（O1-C01）；供应商专属默认值与枚举已移除，属已确认的显式必填迁移。\n- `TokenBudget`（token_budget.py）完全通用：`__init__` 复制策略集为只读代理；`from_models` → `build_counters` → `validate_models`；`counter_for` 按 `model.token_counter` 查表 + `supports(model)` 兼容校验；未知策略抛 `ConfigurationError(\"计数策略未注册\")`、不兼容抛 `\"计数策略与模型或运行模式不匹配\"`，均在 `ProviderClients` 构造前（main.py:30-31 先于 31 行 clients 构造）拒绝，未放宽可执行配置。\n- `token_counters/__init__.py` 为受控工厂字典 `{\"deepseek_v41\": DeepSeekV41Counter}`，无动态导入，只构造被引用策略且每标识一次（测试证明未知键先拒、未引用策略不加载资源）。\n- 具体编码封装在 `deepseek_v41.py`：资源校验（manifest revision/model/mode + 三资源摘要 + 实际字节哈希，error 文案无路径无回显）、固定文本编码（`encode` 原样迁移自 F3 token_budget）、`supports` 具体化为 `model_id == deepseek-flash and thinking_mode == disabled`（deepseek_v41.py:59-60）。`DEFAULT_ASSET_DIR` 为项目根 `assets/...`（parents[3] 修正了中间迁移的少一层错误，README 链接一致）。通用层（main/gateway/token_budget/`__init__`）不含任何具体 model_id 判断，符合“不按 Provider 绑定、通用入口不判断具体型号”。\n- **保留契约逐项核对**：`gateway.py` 仅第 51-53 行变更（差分确认其余未动）——先记录策略版本再计数（第 51 行在 count 之前，保留原计数异常时的记录语义）、`check` 公式 `输入+输出+余量<=窗口` 逐字保留（token_budget.py:40-42）；固定顺序 结构/Prompt/指纹→模型→输出/超时→计数/窗口→尝试→Provider→结果验收 与代码顺序一致；输出/超时错误在计数前拒绝；窗口拒绝零尝试且保留计数/版本/指纹/生效预算；HTTP 信封、错误分类、Prompt/指纹、超时边界、Trace/request_id、Middleware、api 层均不在差分内。\n\n### 测试策略边界\n- 分派测试用 fixture 模型/策略（`test_f3o1_dispatch.py` 的 `fixture-a/fixture-b` + `Counter`），同 Provider 异策略、跨 Provider 共享策略、预算边界 48/47、Event 逆序并发均证明通用分派而非新真实型号；文档明示“测试策略不代表支持新真实型号”，未越界声明。\n\n## 三、证据核对\n\n| 项 | 证据 | 核对结论 |\n| --- | --- | --- |\n| 基线 | evidence baseline：570 passed/4 skipped，48.60s，exit 0 | 与 F3 验收数一致 |\n| 最终离线 | full-offline-corrected：606 passed/4 skipped，49.93s，exit 0 | 570+36 新测试+1(LICENSE 破坏例)-1(test_f3_config 移除的枚举例)=606，算术吻合 |\n| 真实四例 | real-four-cases：4 passed，4.65s，exit 0；live-results.xml 仅元信息（无 Prompt/回答/Key），`input_delta` 全 0，`counter_version`=REVISION | 与 live_metadata、xml_sha256 一致；机制核对：tests/live 在 pytest 进程内经 `uvicorn.Server`（lifespan=on）+ 回环 127.0.0.1 真实 HTTP 进入 Gateway、真实适配器调用供应商，`delta <= safety_margin` 断言（该文件不在差分内，沿用 F3） |\n| Red 回执 | red-explicit-counter（DID NOT RAISE，1 failed/5 passed）、red-generic-budget（4 failed，旧 TokenBudget 把映射当资源路径）、red-model-strategy-dispatch（6 failed，旧 main 具体型号分支拒绝已注册策略）、red-provider-clients（7 failed：5 个断言失败 + 2 个缺 open 的 AttributeError） | 均为正确断言失败，非导入/拼写错误；2 个 AttributeError 未冒充行为 Red，与 test-plan 陈述一致 |\n| 中间失败保留 | green-counter-goldens（7 failed，资源路径少上溯一层）、full-offline（1 failed/600 passed，残留 main.create_provider 监视点） | 原样保留回执，未冒充 TDD Red，与陈述一致 |\n| 迁移审计 | original_test_functions_retained=156，changed_functions=16 项（与差分逐一吻合），16 份历史工件哈希未变，runtime_config_unchanged=true | 与“原156函数保留16迁移/覆盖扩展、原16历史工件与运行Mock YAML未改”一致 |\n| 文档核验 | document-contract-verification：exit 0，10 份当前文档/103 本地链接、16 历史哈希、运行 Mock YAML | 通过 |\n\n## 四、发现的问题\n\n**P0：无。P1：无。P2：无。**\n\nP3（不影响验收，记录处理结论）：\n- **P3-1**（代码风格）`tests/unit/test_f3o1_counters.py:19-23`：第二个 import 块出现在首个测试之后，模块级导入位置后置。仅风格问题，无行为影响，全量通过。处理建议：合并到文件顶部。\n- **P3-2**（轻微冗余）`src/services/gateway.py:51-52`：每请求对 `counter_for(model)` 执行两次（先取 version，`count()` 内部再查一次）。当前形式是为保留“先记录版本、后计数”的异常语义的刻意设计，行为正确；如需优化可单次取 counter 后复用，属可选整理。\n- **P3-3**（证据呈现）`evidence.json` 的 runs 数组中 `red-explicit-counter` 排在 `baseline` 之前，与设计步骤 1“先基线”的叙述顺序不同。基线输出 570 passed 不含新测试文件，与新文件后建的事实自洽，仅 JSON 排列顺序问题，不影响真实性判断。\n- **P3-4**（说明性观察）`DeepSeekV41Counter.version` 取自常量 `REVISION` 而非 `manifest[\"revision\"]`（deepseek_v41.py:32）；两者经构造期校验必然相等，语义等价，无需修改。\n\n## 五、结论\n\n三项交付全部落地且与已确认设计/测试方案一致；`token_counter` 显式必填、未知策略启动拒绝、不按 Provider 绑定、原 HTTP/错误/Prompt/指纹/预算/超时/Trace/生命周期行为保留均经源码逐行与差分双重核对；Red/Green、中间失败、最终 606+4skip、真实四例的原始回执完整且互洽，未发现把文档/Mock 写成真实验证或把未运行测试写成通过的表述。测试结论来自执行者证据，我未重跑。\n\n**CODE_VERDICT: APPROVED**（无 P0–P2 阻断项；4 项 P3 已记录处置建议，不影响验收）。",
+    "p3_dispositions": [
+      {
+        "id": 1,
+        "decision": "测试模块分段导入不影响行为，记录为风格项；本轮保留已验证源码快照。后续修改该文件时可统一整理。"
+      },
+      {
+        "id": 2,
+        "decision": "保留重复查找以维持先记版本后计数的异常记录语义；查找只读且廉价，不增加额外抽象。"
+      },
+      {
+        "id": 3,
+        "decision": "runner按命令完成时间追加数组。基线先启动，运行期间写首组新测试并观察Red；基线结束后才修改生产代码。保留原始数组，不重排或补造时间。"
+      },
+      {
+        "id": 4,
+        "decision": "构造时manifest revision与固定常量严格相等，版本语义一致，保留。"
+      }
+    ],
+    "read_diagnostics": {
+      "total_calls": 42,
+      "successful_calls": 41,
+      "oversized_ranges": 1,
+      "note": "One evidence range exceeded tool token limit; smaller ranges succeeded. All31 required files had successful Read; raw evidence was sampled, not read in full. Additional3 context files and full source/test diff were read."
+    }
+  },
+  "environment": {
+    "python": "3.14.7",
+    "dependencies": "unchanged uv.lock",
+    "scope": "single worker local/isolated network; no new real model or tokenizer resources"
+  }
+}

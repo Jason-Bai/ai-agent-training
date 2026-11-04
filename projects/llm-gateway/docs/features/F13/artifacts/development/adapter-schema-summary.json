@@ -1,0 +1,47 @@
+[
+  {
+    "model": "qwen3.8-flash",
+    "scope": "Bailian adapter+local output validation; not HTTP/PG acceptance",
+    "status": "passed",
+    "actual_model": "qwen3.8-flash",
+    "parsed": {
+      "order_id": "A123"
+    },
+    "usage": {
+      "input_tokens": 70,
+      "output_tokens": 10,
+      "total_tokens": 80
+    },
+    "elapsed_seconds": 1.1608211669954471
+  },
+  {
+    "model": "qwen3.7-plus",
+    "scope": "Bailian adapter+local output validation; not HTTP/PG acceptance",
+    "status": "passed",
+    "actual_model": "qwen3.7-plus",
+    "parsed": {
+      "order_id": "A123"
+    },
+    "usage": {
+      "input_tokens": 70,
+      "output_tokens": 15,
+      "total_tokens": 85
+    },
+    "elapsed_seconds": 1.3329178749700077
+  },
+  {
+    "model": "qwen3.8-max",
+    "scope": "Bailian adapter+local output validation; not HTTP/PG acceptance",
+    "status": "passed",
+    "actual_model": "qwen3.8-max",
+    "parsed": {
+      "order_id": "A123"
+    },
+    "usage": {
+      "input_tokens": 70,
+      "output_tokens": 10,
+      "total_tokens": 80
+    },
+    "elapsed_seconds": 1.890674875001423
+  }
+]

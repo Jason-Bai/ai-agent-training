@@ -1,0 +1,22 @@
+{
+  "scope": "complete post-review-fix regression; no skips or selection exclusions",
+  "command": [
+    "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/.venv/bin/python",
+    "-W",
+    "error",
+    "-m",
+    "pytest",
+    "--run-live",
+    "-ra",
+    "-q",
+    "-o",
+    "junit_family=xunit1",
+    "--junitxml=/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llmgw-f12-work-an6u5lyo/full-r2.xml",
+    "--basetemp=/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llmgw-f12-work-an6u5lyo/pytest-full-r2"
+  ],
+  "cwd": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway",
+  "started_at": "2026-11-03T13:21:20.978720+00:00",
+  "ended_at": "2026-11-03T13:54:59.063545+00:00",
+  "elapsed_seconds": 2018.080805167032,
+  "exit_code": 0
+}

@@ -1,0 +1,22 @@
+{
+  "command": [
+    ".venv/bin/python",
+    "-W",
+    "error",
+    "-m",
+    "pytest",
+    "--ignore=tests/live",
+    "-ra",
+    "-q",
+    "-o",
+    "junit_family=xunit1",
+    "--junitxml=/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llmgw-f13-work-eifzl4on/trace-fix-offline.xml",
+    "--basetemp=/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llmgw-f13-work-eifzl4on/pytest-trace-fix-offline"
+  ],
+  "started_at": "2026-11-03T17:36:00.934222+00:00",
+  "manifest": "trace-fix-manifest.json",
+  "scope": "all default non-live nodes after Store-only production fix",
+  "ended_at": "2026-11-03T17:50:22.056557+00:00",
+  "elapsed_seconds": 861.1209717079764,
+  "exit_code": 0
+}

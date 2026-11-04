@@ -1,0 +1,60 @@
+{
+  "source": "raw upstream per request; no production quote/price/cache functions or SQL quote reused",
+  "price_config_sha256": "d27a38358ecb61770b5a12fe68d24bbd61b4f089ab4827c18fa80f6d8edcb494",
+  "version": "flash-cny-20261103",
+  "period": "off_peak",
+  "rates": {
+    "hit": "0.02",
+    "miss": "1",
+    "output": "4"
+  },
+  "independent_time_windows": [
+    {
+      "start": "2026-11-03T13:30:13.403217+08:00",
+      "end": "2026-11-03T13:31:15.409858+08:00"
+    },
+    {
+      "start": "2026-11-03T13:31:16.752490+08:00",
+      "end": "2026-11-03T13:32:18.337291+08:00"
+    },
+    {
+      "start": "2026-11-03T13:32:21.755087+08:00",
+      "end": "2026-11-03T13:33:23.729371+08:00"
+    },
+    {
+      "start": "2026-11-03T13:33:29.068946+08:00",
+      "end": "2026-11-03T13:34:30.711920+08:00"
+    },
+    {
+      "start": "2026-11-03T13:34:41.024370+08:00",
+      "end": "2026-11-03T13:44:42.694502+08:00"
+    }
+  ],
+  "accounts": {
+    "a": {
+      "input_tokens": 2156825,
+      "output_tokens": 76683,
+      "total_tokens": 2233508,
+      "cached_input_tokens": 0,
+      "fee": "2.463557",
+      "known": 8525,
+      "unknown": 0
+    },
+    "b": {
+      "input_tokens": 2127477,
+      "output_tokens": 75611,
+      "total_tokens": 2203088,
+      "cached_input_tokens": 0,
+      "fee": "2.429921",
+      "known": 8409,
+      "unknown": 1
+    }
+  },
+  "records": 16935,
+  "streaming_client_usage_matches": 8466,
+  "limitations": [
+    "SQL database was cleaned after fixture; per-request SQL Usage/cache/price fields not archived; per-request original wire vs SQL cannot be retrospectively verified",
+    "Original supplier invoice unavailable"
+  ],
+  "per_request_file": "evidence-raw-per-request.json.gz"
+}

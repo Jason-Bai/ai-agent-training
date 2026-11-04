@@ -1,0 +1,17 @@
+{
+  "command": [
+    ".venv/bin/python",
+    "-W",
+    "error",
+    "-m",
+    "pytest",
+    "tests/unit/test_f13_auto_planning.py",
+    "tests/unit/test_f13_auto_config.py",
+    "tests/unit/test_f13_classification.py",
+    "tests/unit/test_f12_routing.py",
+    "tests/unit/test_f12_configuration_restore.py",
+    "-q"
+  ],
+  "exit_code": 0,
+  "at": "2026-11-03T15:28:20.521128+00:00"
+}

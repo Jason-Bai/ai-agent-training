@@ -1,0 +1,1 @@
+{"command": [".venv/bin/python", "-W", "error", "-m", "pytest", "tests/unit/test_f13_pricing.py", "tests/unit/test_f9_prices.py", "-ra", "-q"], "at": "2026-11-03T15:01:30.511474+00:00", "exit_code": 0}

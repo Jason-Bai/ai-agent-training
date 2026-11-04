@@ -1,0 +1,14 @@
+{
+  "prepared_at_utc": "2026-11-02T12:05:47.422020+00:00",
+  "task_name": "f7_independent_review",
+  "fork_turns": "none",
+  "prompt_file": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/docs/features/F7/review-prompt-r1.md",
+  "prompt_sha256": "4827c4a61da19e7b7b2a828c023c74f06f2f8fba1096e1d84273fa580e433efa",
+  "source_manifest": "/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llmgw-f7-nc80f2b0/pre-review-r1.json",
+  "read_only": "task instruction, not tool-enforced",
+  "status": "completed",
+  "agent": "/root/f7_independent_review",
+  "submitted_at_utc": "2026-11-02T12:06:26.725210+00:00",
+  "verdict": "BLOCKED",
+  "report": "review-r1.md"
+}

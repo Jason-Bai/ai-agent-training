@@ -1,0 +1,21 @@
+{
+  "verified_at_utc": "2026-11-02T12:36:45.893293+00:00",
+  "owned_test_containers_remaining": "",
+  "docker_ps_exit_code": 0,
+  "interrupted_test_cleanup": {
+    "compose_project": "llmgw-test-6c8b87446af4",
+    "created_at": "2026-11-02T11:31:25.575712343Z",
+    "config_file": "/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llm-gateway-pg-test-ul4yruay/compose.yaml",
+    "relation": "created during the recorded interrupted full-final pass, which ended 11:31:31 UTC; only this disposable test project was removed",
+    "operation": "docker compose down -v --remove-orphans",
+    "exit_code": 0,
+    "result": "test container, network and volume removed"
+  },
+  "user_configuration": "actual gateway.yaml and AGENTS hashes unchanged; no real secrets read or modified",
+  "full_live_validation": {
+    "verified_at_utc": "2026-11-02T12:55:41.190148+00:00",
+    "owned_test_containers_remaining": [],
+    "actual_provider_credentials": "本阶段真实测试按用户授权加载；未输出或修改",
+    "ordinary_gateway_configuration": "unchanged Mock"
+  }
+}

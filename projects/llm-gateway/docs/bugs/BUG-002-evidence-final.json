@@ -1,0 +1,45 @@
+{
+  "command": [
+    "uv",
+    "run",
+    "--python",
+    "3.12",
+    "python",
+    "-W",
+    "error",
+    "-m",
+    "pytest",
+    "--run-live",
+    "-o",
+    "junit_family=xunit1",
+    "--junitxml=/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llmgw-bug002-fbnsw_6u/full-final.xml",
+    "-ra",
+    "-q"
+  ],
+  "runner": "root",
+  "exit_code": 0,
+  "tests": 2086,
+  "live_nodes": 28,
+  "baseline_nodes": 2039,
+  "added_nodes": 47,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "capacity": {
+    "business_requests": 14887,
+    "successes": 14887,
+    "errors": {},
+    "sustained_requests": 12544,
+    "sustained_success_rate": 1.0,
+    "selected_concurrency": 20,
+    "sustained_seconds": 600,
+    "drained_rate_per_second": 20.861657855689735
+  },
+  "evidence_boundaries": [
+    "This is a new BUG-002 regression; F10 historical artifacts unchanged.",
+    "Nested pytest expected-skip/missing-key/collection-audit probes are assertions inside passing tests, not omitted required live cases.",
+    "Real provider paths both use DeepSeek, not two independent suppliers.",
+    "Supplier invoice and per-request raw-SQL archival comparison are not added by this test-only bugfix."
+  ],
+  "frozen_source_manifest": "/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llmgw-bug002-fbnsw_6u/full-start-v2/manifest.json"
+}

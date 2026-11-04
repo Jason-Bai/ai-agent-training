@@ -1,0 +1,21 @@
+{
+  "verified_at": "2026-11-04T06:05:52.878514+00:00",
+  "source_files": 257,
+  "production_unchanged_from_verified_trace_fix": true,
+  "AGENTS_unchanged": true,
+  "archives": [
+    {
+      "name": "final-evidence.tar.gz",
+      "sha256": "f4dbb0d5f888bf2c3a7f8a9f74a4c0388045b973cc014cc8fcd128b863a5e2f0",
+      "entries_verified": 26722
+    },
+    {
+      "name": "acceptance-closure-evidence.tar.gz",
+      "sha256": "7b10f8d97cf874e4057d6ae776caaf25cf126cd3ca74f78f89547263befb0229",
+      "entries_verified": 272
+    }
+  ],
+  "broken_local_links": [],
+  "accepted_under_confirmed_layered_criterion": true,
+  "original_blocked_report_retained": true
+}

@@ -1,0 +1,3027 @@
+--- baseline/README.md
++++ current/README.md
+@@ -1,6 +1,6 @@
+ # LLM Gateway（1.6 学习项目）
+ 
+-> 状态：F1/F1-O1/F2/F3 已验收；F4 已验收通过：离线836、Python3.12关键233、真实六例通过，Claude Code第1轮APPROVED。F5 已验收：最终离线1099、Python3.12关键235、最新真实两例通过，原生Claude Code第2轮APPROVED；F6验收通过，F7验收通过，F8 已验收通过（[代码导读](docs/features/F8/implementation-summary.md)），F9–F10 为后续规划，计费尚未实现。默认配置仍使用 Mock。
++> 状态：F1/F1-O1/F2/F3 已验收；F4 已验收通过：离线836、Python3.12关键233、真实六例通过，Claude Code第1轮APPROVED。F5 已验收：最终离线1099、Python3.12关键235、最新真实两例通过，原生Claude Code第2轮APPROVED；F6验收通过，F7验收通过，F8 已验收通过（[代码导读](docs/features/F8/implementation-summary.md)），F9 已进入全量验证，F10 为后续规划。默认配置仍使用 Mock。
+ 
+ [F1-O1 独立优化](docs/features/F1/optimizations/O1/design.md)已实现 Middleware 抽取、目录命名、环境配置与应用工厂启动；115 个测试与 Claude Code 独立审查均通过，验收通过。[本项测试与证据](docs/features/F1/optimizations/O1/test-plan.md)独立维护；原 F1 记录保留历史快照。
+ 
+@@ -25,7 +25,7 @@
+ F6本地更新需要先启动项目PostgreSQL，再在项目根显式执行 `uv run alembic upgrade head` 升级至当前版本（F6 引入的迁移为 `f6_001`），然后启动Gateway；旧版本库会被启动检查拒绝，不会自动迁移。取消调用示例：
+ 
+ ```bash
+-curl -sS -X POST "http://127.0.0.1:8000/v1/llm/stream/${REQUEST_ID}/cancel"
++curl -H "Authorization: Bearer ${GATEWAY_AGENT_TOKEN}" -sS -X POST "http://127.0.0.1:8000/v1/llm/stream/${REQUEST_ID}/cancel"
+ ```
+ 
+ REQUEST_ID取创建接口返回值。首次取消后可间隔500ms重复同一POST；202/canceling继续等待，200时读取canceled/failed/completed并停止轮询。接口错误不当作生成终态；无需请求体，也不用传Provider或上游协议。已提交历史事件仍可按after_seq读取。
+@@ -40,7 +40,7 @@
+ - F4 已接入普通调用的 `response_schema`，使用 `context_answer@1.2.0`；完整支持边界见规则文档。F5 流式请求不声明 `response_schema`，提供时即使为 null 也在调用 Provider 前拒绝。
+ - 流式对外事件统一为 `response.*`；F5-O2先POST创建、再GET订阅并按SSE id续传；F6已实现pending/running请求主动取消，当前验收通过。
+ - F5-O1 已接入普通及流式请求/Attempt、完整执行输入及流式业务事件的 PostgreSQL 持久化，由 Compose 管理；API Key 不落库，未知 Usage 不记实测 0，暂不实现数据清理。主动探测在 O1 时仅使用内存，F8 将其接入同一组表。原 SQLite 规划由此替换；O1 验收状态以本项测试方案为准。
+-- 当前仅支持本地 Token 预算检查和实际 Usage 记录，没有费用计算或结算能力。F9 规划补齐用量与计费，已确认的 Agent 预算与供应商成本规则见 [F9 设计](docs/features/F9/design.md)。
++- F9 按内部 Agent 的可用余额准入，并对每次 Provider 尝试预留、结算和对账。完整规则见 [F9 设计](docs/features/F9/design.md)。
+ 
+ ## 入口与组件
+ 
+@@ -54,7 +54,7 @@
+ | 结果校验组件 | 区分 JSON 语法、Schema 和业务校验边界 | 错误候选结果被包装成成功 |
+ | 恢复策略组件 | 错误分类、预算、重试和能力匹配的 fallback | 非可恢复错误乱重试，流式内容可能重复 |
+ | Trace / 持久化组件 | PostgreSQL 保存普通、流式和主动探测的请求与 Attempt；按 request_id 查询元数据，流式事件单独用于续传 | 故障、模型切换和用量来源无法还原，事件无法补读 |
+-| 用量与计费组件（F9 待实现） | 基于实际 Usage 和价格规则核算费用，关联调用记录结算与对账 | Token 用量无法转成可核对的费用，本地预算可能被误当作实测收费依据 |
++| 用量与计费组件 | 基于实际 Usage 和价格规则核算费用，关联调用记录结算与对账 | Token 用量无法转成可核对的费用，本地预算可能被误当作实测收费依据 |
+ 
+ 完整流程图、组件关系与单实例边界见 [架构说明](docs/architecture.md)。接口草案见 [契约说明](docs/contracts.md)。
+ 
+@@ -90,6 +90,31 @@
+ F5 起每个模型还必须显式声明严格布尔 `supports_streaming`；当前默认两条 Mock 为 true。参考历史F4配置切真实时保留这个新字段，不整体替换成缺少字段的旧YAML；false仍可普通调用/探测，但流式调用前拒绝。能力声明不替代实际接入验证。
+ 
+ 导入 `main` 不创建应用；Uvicorn 通过 `--factory` 调用 `create_app`。客户端在应用 lifespan 构造/释放，每 Provider 配置一个可复用实例。两种真实客户端不继承环境代理，不跟随重定向，重试关闭。自动化测试显式注入配置或使用临时运行目录中的同名 `.env`，不依赖或修改开发者配置，不使用 `.env.test`。
++
++### Agent 凭据与本地拨款
++
++先迁移到 `f9_001` 并重启 Gateway。在另一个终端进入本项目目录，首次为测试 Agent 创建身份并签发凭据。以下命令将完整凭据保存在当前 shell 变量中。旧版请求没有可信 Agent 归属，仅供本机管理员核查。
++
++```bash
++export PYTHONPATH=src
++uv run python -m admin create-agent orders 售后客服
++GATEWAY_AGENT_TOKEN=$(uv run python -m admin issue orders)
++uv run python -m admin deposit orders 1.00 --operation-id orders-initial-001
++```
++
++每次新的拨款使用新的操作编号，重复同一编号和内容不会重复入账。所有 `/v1/` 请求携带上述 Bearer 凭据。`GET /healthz` 是公开存活探针。两条默认 Mock 占用零元，带凭据即可使用。真实调用按 [prices.yaml](config/prices.yaml) 中显式绑定的账户、模型、生效版本计价。价格与节假日日历由维护者更新后重启加载；已保存的价格快照供历史查询。
++
++```bash
++curl -sS -D - -H "Authorization: Bearer ${GATEWAY_AGENT_TOKEN}" \
++  -H 'Content-Type: application/json' http://127.0.0.1:8000/v1/llm \
++  -d '{"model":"general-primary","prompt":{"name":"basic_text","version":"1.0.0"},"messages":[{"role":"user","content":"查询订单 A123"}]}'
++curl -sS -H "Authorization: Bearer ${GATEWAY_AGENT_TOKEN}" http://127.0.0.1:8000/v1/billing/summary
++curl -sS -H "Authorization: Bearer ${GATEWAY_AGENT_TOKEN}" 'http://127.0.0.1:8000/v1/billing/requests?limit=10'
++# REQUEST_ID 取自普通响应的 X-Request-ID 或创建流返回的 data.request_id
++curl -sS -H "Authorization: Bearer ${GATEWAY_AGENT_TOKEN}" "http://127.0.0.1:8000/v1/billing/requests/${REQUEST_ID}"
++```
++
++本机管理员通过 `python -m admin --help` 查看命令。轮换用 `rotate orders PUBLIC_ID`，撤销用 `revoke orders PUBLIC_ID`，其中 PUBLIC_ID 是凭据第一个点之前的公开标识。凭据轮换后继续使用原账户余额。本期不自动迁移开发库或创建默认管理员凭据。
+ 
+ 向 `POST http://127.0.0.1:8000/v1/llm` 发送：
+ 
+@@ -126,7 +151,7 @@
+ 普通调用和主动探测从 `X-Request-ID` 响应头取得 ID，创建流还可从 `data.request_id` 取得。只在本机或隔离开发网络使用诊断接口。将下面的 UUID 替换成刚获得的 ID：
+ 
+ ```bash
+-curl -sS http://127.0.0.1:8000/v1/traces/00000000-0000-0000-0000-000000000000
++curl -H "Authorization: Bearer ${GATEWAY_AGENT_TOKEN}" -sS http://127.0.0.1:8000/v1/traces/00000000-0000-0000-0000-000000000000
+ ```
+ 
+ 先看 `data.status` 和 `error_stage`，再按 `attempt_no` 查看每次尝试的模型、结果和原因。备用模型成功时，主模型失败仍在列表中。每次实际回报的用量汇入 `data.usage.known_subtotal`，`unknown_attempts` 列出缺少用量的尝试编号。历史缺失的观测值为 null。查询读取 PostgreSQL 已提交状态，重复查询 pending 请求不会启动生成。字段与时间口径见[诊断契约](docs/contracts.md#f8-按请求查询诊断信息)。
+@@ -134,7 +159,7 @@
+ 流式调用先创建，再订阅；默认 Mock 可直接运行：
+ 
+ ```bash
+-curl -i -X POST http://127.0.0.1:8000/v1/llm/stream \
++curl -H "Authorization: Bearer ${GATEWAY_AGENT_TOKEN}" -i -X POST http://127.0.0.1:8000/v1/llm/stream \
+   -H 'Content-Type: application/json' \
+   -d '{"model":"general-primary","prompt":{"name":"basic_text","version":"1.0.0"},"messages":[{"role":"user","content":"请解释 TTFT"}],"max_output_tokens":128,"timeout_seconds":30}'
+ ```
+@@ -142,9 +167,9 @@
+ 创建成功为202，data为`{"request_id":"...","status":"pending"}`，此时不调用模型。把返回ID填入下面URL；首次有效GET启动生成：
+ 
+ ```bash
+-curl -N http://127.0.0.1:8000/v1/llm/stream/替换为request_id/events
++curl -H "Authorization: Bearer ${GATEWAY_AGENT_TOKEN}" -N http://127.0.0.1:8000/v1/llm/stream/替换为request_id/events
+ # 中断后，假设最后成功处理的 SSE id 为12；省略after_seq则从0回放
+-curl -N 'http://127.0.0.1:8000/v1/llm/stream/替换为request_id/events?after_seq=12'
++curl -H "Authorization: Bearer ${GATEWAY_AGENT_TOKEN}" -N 'http://127.0.0.1:8000/v1/llm/stream/替换为request_id/events?after_seq=12'
+ ```
+ 
+ 业务事件为response.delta/completed/failed/canceling/canceled，`id`是连续数据库seq；15秒空闲response.heartbeat无id、不落库。调用方按最后成功处理的id续传并去重；允许重投，不承诺端到端恰好一次。同一请求可多订阅，断连不停止生成；生成/取消所有者按数据库提交唯一终态。完成已提交后，订阅失败不能覆盖completed。主动取消使用前述POST取消及轮询接口，取消前已提交内容仍可回放。
+@@ -173,13 +198,13 @@
+ 
+ ## F7 有限恢复（已验收）
+ 
+-[设计](docs/features/F7/design.md)与[52组测试方案](docs/features/F7/test-plan.md)已确认；[实施步骤](docs/features/F7/implementation-plan.md)和[代码导读](docs/features/F7/implementation-summary.md)记录实现与验收。R2独审APPROVED；最新最终完整全量开启--run-live，1776项全部通过，含16个真实调用，0跳过/0未选中，原297项也已完整重跑；详见测试方案3.9与[真实全量证据](docs/features/F7/evidence-all-live.json)。F7 对应迁移 f7_001。F8 的当前 head 为 f8_001；启动前在项目根执行 `uv run alembic upgrade head`。
++[设计](docs/features/F7/design.md)与[52组测试方案](docs/features/F7/test-plan.md)已确认；[实施步骤](docs/features/F7/implementation-plan.md)和[代码导读](docs/features/F7/implementation-summary.md)记录实现与验收。R2独审APPROVED；最新最终完整全量开启--run-live，1776项全部通过，含16个真实调用，0跳过/0未选中，原297项也已完整重跑；详见测试方案3.9与[真实全量证据](docs/features/F7/evidence-all-live.json)。F7 对应迁移 f7_001。F8 迁移为 f8_001，F9 当前 head 为 f9_001；启动前在项目根执行 `uv run alembic upgrade head`。
+ 
+ 调用方可选initial_output_tokens指定首次预算，max_output_tokens仍是每次生成的授权上限。入口按完整max预留窗口；明确截断且尚未提交流式内容时，可同模型直接增到max重答。结构化格式错误最多一次受控修复。网络恢复、增长与修复共用整个请求最多3次、每候选最多2次；候选固定且能力/完整预算必须满足。
+ 
+ timeout_seconds覆盖整个请求，重试不重置；单次上限为min(模型max_timeout_seconds, 请求剩余时间)，无统一10秒。首次非空delta成功提交PG后禁止恢复，空格/换行也算；取消接受后不再启动模型。恢复期间订阅仍按原规则发送15秒空闲心跳。
+ 
+-配置示例见[完整安全示例](config/gateway.example.yaml)，按需合并recovery与fallback_models；当前实际gateway.yaml未改，仍两条Mock。Provider协议由配置决定，调用方不传协议/重试策略。成功只返回原text/usage/(parsed)，usage汇总各Attempt，任一次未知则整体null；内部保存已知部分，费用仍留F9。health探测固定单次原模型，healthz不调用模型。
++配置示例见[完整安全示例](config/gateway.example.yaml)，按需合并recovery与fallback_models；当前实际gateway.yaml未改，仍两条Mock。Provider协议由配置决定，调用方不传协议/重试策略。成功只返回原text/usage/(parsed)，usage汇总各Attempt，任一次未知则整体null；内部保存已知部分，费用可通过独立账务接口核对。health探测固定单次原模型，healthz不调用模型。
+ 
+ ## 递增路线
+ 
+@@ -196,7 +221,7 @@
+ | F6 流式取消 | [设计](docs/features/F6/design.md)已确认、[测试方案](docs/features/F6/test-plan.md)已确认，已验收通过；pending/running均经canceling，POST取消及轮询至终态，完成/取消按数据库先提交者生效 |
+ | F7 重试与 fallback | 已验收：有限预算、错误分类、能力匹配及提交边界；见[F7](docs/features/F7/design.md) |
+ | F8 Trace 完整性与诊断查询 | 基础持久化前移到 F5-O1；在 PostgreSQL 上补齐探测、取消、重试等路径和诊断查询，为用量核算提供可追溯依据 |
+-| [F9 用量与计费](docs/features/F9/design.md)（设计已确认，待测试方案确认） | 价格配置与版本、实际用量分类、费用计算、账单持久化与对账；区分本地预估与实际 Usage，未知用量不得按零结算。Agent 手动拨款、按尝试预留与结算、消耗总览及请求明细 |
++| [F9 用量与计费](docs/features/F9/design.md)（全量验证中） | 价格配置与版本、实际用量分类、费用计算、账单持久化与对账；区分本地预估与实际 Usage，未知用量不得按零结算。Agent 手动拨款、按尝试预留与结算、消耗总览及请求明细 |
+ | F10 总验收 | 在前述功能完成后，验证全路径故障、历史回归、用量与费用一致性及真实接入证据 |
+ 
+ 后续按“F5-O1 持久化基础 → F5-O2 两阶段调用与续传 → F6 主动取消 → F7 重试与 fallback → F8 Trace 完整性 → F9 用量与计费 → F10 总验收”推进。计费依赖每次实际 Provider 尝试的记录，需覆盖失败、取消及重试可能产生的用量；供应商成本与向调用方收费分别定义。计费核算以 Provider 返回的实际 Usage 为依据，并与供应商账单对账；缓存等分类按对应价格计算，本地 Token 计数只用于预检与预估。后续设计与测试仍须按工作流分别确认，不把已确认需求写成已实现能力。
+@@ -212,8 +237,11 @@
+ ```text
+ src/
+ ├── main.py
++├── admin.py
+ ├── api/
+ │   ├── routes.py
++│   ├── billing.py
++│   ├── identity.py
+ │   ├── dependencies.py
+ │   ├── sse.py
+ │   └── errors.py
+@@ -231,6 +259,7 @@
+ ├── services/
+ │   ├── gateway.py
+ │   ├── recovery.py
++│   ├── prices.py
+ │   ├── streaming.py
+ │   ├── streaming_manager.py
+ │   ├── subscriptions.py
+@@ -247,7 +276,9 @@
+ ├── persistence/
+ │   ├── __init__.py
+ │   ├── database.py
++│   ├── billing.py
+ │   ├── tables.py
++│   ├── billing_query.py
+ │   ├── trace_query.py
+ │   └── store.py
+ └── providers/
+--- baseline/config/prices.yaml
++++ current/config/prices.yaml
+@@ -0,0 +1,17 @@
++# CNY per million tokens. Account bindings are explicit, independent of wire protocol.
++# https://api-docs.deepseek.com/zh-cn/quick_start/pricing/
++bindings:
++  deepseek-main: deepseek
++  openai-main: deepseek
++versions:
++  - supplier: deepseek
++    model: deepseek-flash
++    version: flash-cny-20261103
++    effective_from: '2026-11-03T00:00:00+08:00'
++    peak: {hit: '0.04', miss: '2', output: '8'}
++    off_peak: {hit: '0.02', miss: '1', output: '4'}
++    # Calendar verified for this version from Nov 3 through Dec 31; no
++    # statutory holidays in that interval. Beyond it weekday peak windows
++    # require a maintained calendar before final settlement.
++    calendar_until: '2027-01-01'
++    holidays: []
+--- baseline/docs/architecture.md
++++ current/docs/architecture.md
+@@ -138,3 +138,7 @@
+ 普通生成、流式执行与主动探测各自由原执行器写入 Request 和 Attempt。主动探测只登记元数据。存储失败由统一恢复机制按 request_id 核对提交结果；后台核对不会再次调用上游。
+ 
+ 诊断 GET 经 `api/routes.py` 进入 `persistence/trace_query.py`。一次只读、可重复读事务获取请求、尝试和取消记录，`trace_contracts.py` 限定可返回字段。读取路径不调用模型或流式管理器，也不借用进程内的 Trace 作为数据库替代来源。
++
++## F9 预算与成本持久化
++
++AgentIdentityMiddleware 在进入请求处理前查询已持久化的凭据摘要及请求归属。Store 在建请求时记录所有者，在登记 Attempt 的同一事务中锁定该 Agent 并预留预算。首次有效订阅启动流时才会登记 Attempt。PriceBook 将本次价格版本与预留依据存入快照。适配器交付独立于本地估算的实报 Usage 及缓存分类；完成、失败、取消和恢复共用账本事务，读端按账户过滤。请求锁再到账户锁的顺序沿用同一个 PostgreSQL 实例。查询、人工处置、计费边界及实测入口见 [F9 导读](features/F9/implementation-summary.md)。
+--- baseline/docs/contracts.md
++++ current/docs/contracts.md
+@@ -134,3 +134,13 @@
+ | usage | known_subtotal 对所有已回报的 Attempt 分别汇总输入、输出、总 Token；没有任何回报时为 null。unknown_attempts 给出仍未知的编号，单次上游计数须为非负整数、总和相符且可由 SQL BIGINT 表示。跨尝试小计用精确整数累加，不受单次计数的上界约束。模型标识缺失不会抹掉合法实报。 |
+ 
+ 主动探测先持久化登记再调用指定模型，结果存储失败也不重新调用。诊断读取使用 PostgreSQL 一致视图。原始消息、变量、Schema、结果正文、事件正文与凭据不在响应字段内。
++
++## F9 Agent 身份和账务接口
++
++每个 /v1/ 请求携带 Authorization Bearer 凭据。缺失或无效为 401/unauthorized，其他账户的请求与不存在的请求同为 404。旧版无归属记录仅供本机管理。价格不可用为 503/price_unavailable，余额不足为 402/insufficient_budget。已开始的 SSE 通过 response.failed 返回错误码。拒绝预留时没有上游调用。/healthz 保持公开，模型探测按调用方归属计价。
++
++- GET /v1/billing/summary 返回 currency、deposited、charged、reserved、pending、pending_attempts、available 和 usage。pending 已含在 reserved 中。usage.real 和 usage.mock 各自报告 attempts、unknown_attempts、known_subtotal。
++- GET /v1/billing/requests 接受 from、to（带时区的创建时间，左闭右开）、limit（1 至 100，默认 50）及上页 next_cursor。按创建时间和唯一 ID 倒序返回 items 和 next_cursor，每个请求只有一行。游标按原值做 URL 编码传递。
++- GET /v1/billing/requests/{request_id} 包含同一请求的金额合计与 attempts。每次尝试可见状态、模型、来源、Token 与缓存分类、价格快照、当初预留的 reserved_amount、已确认的 agent_charge、supplier_cost 和账务处置类别。账务金额是人民币十进制字符串，未知为 null。请求级 charged 是已知小计，需要同时查看 reserved/pending 和 billing_status。
++
++同一次流的创建、回放、取消、查询均不会额外启动付费尝试。平台承担的未核实费用可由管理员后续补记供应商成本，Agent 端已解除的预留不会重新扣款。核对真实账单时按价格配置中的供应商计费账户和账期匹配；同一操作号重复提交不重复调账。
+--- baseline/docs/progress.md
++++ current/docs/progress.md
+@@ -25,7 +25,7 @@
+ | F7 重试与 fallback | 验收通过 | [测试与验收](features/F7/test-plan.md#39-用户修订验收标准最终版本全部重跑并启用真实provider)：最终完整--run-live 1776通过、0跳过/0未选中；16真实全部通过，原297已重跑；R2 APPROVED且版本不变；[原始证据](features/F7/evidence-all-live.json)、[代码导读](features/F7/implementation-summary.md) |
+ | F8 Trace 完整性与诊断查询 | 验收通过 | [代码导读](features/F8/implementation-summary.md) · [全量 1904 通过，含真实 16](features/F8/test-plan.md) · [第三轮独审 APPROVED，保留 1 个 P3](features/F8/review-r3.md) |
+ | F8-O1 默认 Mock 模拟用量 | 验收通过 | [设计](features/F8/optimizations/O1/design.md)及[测试方案](features/F8/optimizations/O1/test-plan.md) |
+-| F9 用量与计费 | 待测试方案确认 | [整体设计已确认](features/F9/design.md) · [测试方案](features/F9/test-plan.md) |
++| F9 用量与计费 | 待独立审查 | [整体设计已确认](features/F9/design.md) · [测试方案](features/F9/test-plan.md) |
+ | F10 总验收 | 未开始 | 前述功能的全路径、回归、实际用量与真实接入证据 |
+ 
+ F1 与 F1-O1 已验收；F2 的需求、设计和完整资产已确认，本项测试方案确认后已开始实施并完成本地验证，本地 223 个测试及 Claude Code 第 1 轮独立审查通过，F2 已验收。每个功能先确认设计和对应测试方案，再按 TDD 最小实现；功能边界独立、能力递增。Feature 在 `docs/features/<编号>/` 保存设计和测试方案，Bug 在 `docs/bugs/` 建记录，均由本文件追踪；不以 Git 分支或提交作为前提。验收通过后报告结论，之后发现问题走 Bug 工作流。
+--- baseline/migrations/versions/f9_001.py
++++ current/migrations/versions/f9_001.py
+@@ -0,0 +1,40 @@
++"""Persistent Agent identity, per-attempt holds and immutable budget operations."""
++from alembic import op
++
++revision = 'f9_001'
++down_revision = 'f8_001'
++branch_labels = None
++depends_on = None
++
++
++def upgrade():
++    op.execute("CREATE TABLE tb_agent (agent_id text PRIMARY KEY, name text NOT NULL)")
++    op.execute("""CREATE TABLE tb_agent_credential (
++        public_id text PRIMARY KEY, agent_id text NOT NULL REFERENCES tb_agent,
++        digest text NOT NULL, created_at timestamptz NOT NULL DEFAULT now(), revoked_at timestamptz)""")
++    op.execute("ALTER TABLE tb_llm_request ADD COLUMN agent_id text REFERENCES tb_agent")
++    op.execute("CREATE INDEX ix_llm_request_agent_page ON tb_llm_request(agent_id,created_at,id)")
++    op.execute("""CREATE TABLE tb_billing_attempt (
++        request_pk bigint NOT NULL, attempt_no integer NOT NULL, agent_id text NOT NULL REFERENCES tb_agent,
++        PRIMARY KEY(request_pk,attempt_no), FOREIGN KEY(request_pk,attempt_no) REFERENCES tb_llm_attempt,
++        state text NOT NULL CHECK (state IN ('reserved','pending','settled','released','platform')),
++        reserved_amount numeric NOT NULL CHECK (reserved_amount >= 0), agent_charge numeric CHECK (agent_charge >= 0),
++        supplier_cost numeric CHECK (supplier_cost >= 0), quote jsonb, cached_input_tokens bigint, billing_observed_at timestamptz,
++        reason text, created_at timestamptz NOT NULL DEFAULT now())""")
++    op.execute("CREATE INDEX ix_tb_billing_attempt_agent_id ON tb_billing_attempt(agent_id)")
++    op.execute("""CREATE TABLE tb_billing_operation (
++        operation_id text PRIMARY KEY, agent_id text REFERENCES tb_agent,
++        kind text NOT NULL CHECK (kind IN ('deposit','settle','zero','platform','supplier','statement')),
++        amount numeric CHECK (amount >= 0), request_pk bigint, attempt_no integer,
++        FOREIGN KEY(request_pk,attempt_no) REFERENCES tb_billing_attempt,
++        reason text NOT NULL, details jsonb NOT NULL, created_at timestamptz NOT NULL DEFAULT now())""")
++    op.execute("CREATE INDEX ix_tb_billing_operation_agent_id ON tb_billing_operation(agent_id)")
++
++
++def downgrade():
++    # Refuse destructive downgrade once financial records or identities exist.
++    op.execute("""DO $$ BEGIN IF EXISTS (SELECT FROM tb_agent) OR EXISTS (SELECT FROM tb_billing_operation)
++                  THEN RAISE EXCEPTION 'F9 billing data exists'; END IF; END $$""")
++    op.execute("DROP TABLE tb_billing_operation, tb_billing_attempt")
++    op.execute("ALTER TABLE tb_llm_request DROP COLUMN agent_id")
++    op.execute("DROP TABLE tb_agent_credential, tb_agent")
+--- baseline/src/admin.py
++++ current/src/admin.py
+@@ -0,0 +1,93 @@
++"""Local administrator commands. Run with PYTHONPATH=src python -m admin."""
++import argparse
++import asyncio
++from datetime import datetime
++from pathlib import Path
++import json
++import sys
++from uuid import UUID
++
++from api.identity import create_agent, issue_credential, revoke_credential, rotate_credential
++from errors import GatewayError
++from persistence import billing
++from persistence.database import Database, load_database_config
++from services.models import DEFAULT_CONFIG_DIR
++
++
++def command_line():
++    parser = argparse.ArgumentParser(description='LLM Gateway Agent 与账务管理')
++    parser.add_argument('--config-dir', type=Path, default=DEFAULT_CONFIG_DIR)
++    commands = parser.add_subparsers(dest='action', required=True)
++    create = commands.add_parser('create-agent')
++    create.add_argument('agent_id')
++    create.add_argument('name')
++    for name in ('issue', 'rotate', 'revoke'):
++        p = commands.add_parser(name)
++        p.add_argument('agent_id')
++        if name != 'issue':
++            p.add_argument('public_id')
++    p = commands.add_parser('deposit')
++    p.add_argument('agent_id')
++    p.add_argument('amount')
++    p.add_argument('--operation-id', required=True)
++    p = commands.add_parser('resolve')
++    p.add_argument('request_id', type=UUID)
++    p.add_argument('attempt_no', type=int)
++    p.add_argument('decision', choices=['settle','zero','platform','supplier'])
++    p.add_argument('--amount')
++    p.add_argument('--reason', required=True)
++    p.add_argument('--operation-id', required=True)
++    p = commands.add_parser('statement')
++    p.add_argument('supplier')
++    p.add_argument('start', type=datetime.fromisoformat)
++    p.add_argument('end', type=datetime.fromisoformat)
++    p.add_argument('amount')
++    p.add_argument('--operation-id', required=True)
++    p.add_argument('--reason', required=True)
++    return parser
++
++
++async def run(args):
++    database = Database(load_database_config(args.config_dir), args.config_dir)
++    try:
++        await database.check()
++        async with database.transaction() as session:
++            if args.action == 'create-agent':
++                await create_agent(session, args.agent_id, args.name)
++            elif args.action == 'issue':
++                return await issue_credential(session, args.agent_id)
++            elif args.action == 'rotate':
++                return await rotate_credential(session, args.agent_id, args.public_id)
++            elif args.action == 'revoke':
++                await revoke_credential(session, args.agent_id, args.public_id)
++            elif args.action == 'deposit':
++                return await billing.deposit(session, args.agent_id, args.operation_id, args.amount)
++            elif args.action == 'resolve':
++                return await billing.resolve(session, args.request_id, args.attempt_no, args.operation_id,
++                                             args.decision, args.amount, args.reason)
++            elif args.action == 'statement':
++                return await billing.reconcile_statement(session, args.operation_id, args.supplier,
++                    'CNY', args.start, args.end, args.amount, args.reason)
++    finally:
++        await database.close()
++
++
++def main():
++    args = command_line().parse_args()
++    try:
++        result = asyncio.run(run(args))
++    except GatewayError as exc:
++        print(f'{exc.code} {exc.message}', file=sys.stderr)
++        return 1
++    except ValueError:
++        print('命令参数或配置无效', file=sys.stderr)
++        return 1
++    if args.action in {'issue', 'rotate'}:
++        print(result)
++    else:
++        print(json.dumps({'success':True,'data':result}, ensure_ascii=False, default=str))
++    return 0
++
++
++if __name__ == '__main__':
++    sys.exit(main())
+--- baseline/src/api/billing.py
++++ current/src/api/billing.py
+@@ -0,0 +1,76 @@
++"""Authenticated read-only views of an Agent's billing account."""
++from datetime import datetime, timezone
++import re
++from uuid import UUID
++
++from fastapi import APIRouter, Request
++
++from errors import GatewayError
++from persistence.billing_query import read_detail, read_requests, read_summary
++from utils.json_codec import dumps
++from starlette.responses import Response
++
++
++router = APIRouter(prefix='/v1/billing')
++
++
++def success(data):
++    # Financial amounts are strings on the wire. FastAPI's generic encoder can
++    # convert Decimal to float before our JSON codec sees the original value.
++    return Response(dumps({'success': True, 'code': 'ok', 'message': '成功', 'data': data}),
++                    media_type='application/json')
++
++
++def reject():
++    return GatewayError('invalid_request', '账务查询参数不合法', 422)
++
++
++def instant(value):
++    try:
++        parsed = datetime.fromisoformat(value)
++        if parsed.tzinfo is not None:
++            return parsed.astimezone(timezone.utc)
++    except (TypeError, ValueError, OverflowError):
++        pass
++    raise reject()
++
++
++@router.get('/summary')
++async def summary(request: Request):
++    if request.query_params:
++        raise reject()
++    data = await read_summary(request.app.state.storage.database, request.state.agent_id)
++    return success(data)
++
++
++@router.get('/requests')
++async def list_requests(request: Request):
++    query = request.query_params
++    if set(query) - {'from', 'to', 'cursor', 'limit'} or any(len(query.getlist(k)) != 1 for k in query):
++        raise reject()
++    limit = query.get('limit', '50')
++    if not re.fullmatch(r'[1-9][0-9]{0,2}', limit) or int(limit) > 100:
++        raise reject()
++    start = instant(query['from']) if 'from' in query else None
++    end = instant(query['to']) if 'to' in query else None
++    if start is not None and end is not None and start >= end:
++        raise reject()
++    cursor = None
++    if 'cursor' in query:
++        stamp, sep, seq = query['cursor'].rpartition('|')
++        if not sep or not re.fullmatch(r'[1-9][0-9]{0,18}', seq) or int(seq) > 2**63 - 1:
++            raise reject()
++        cursor = (instant(stamp), int(seq))
++    data = await read_requests(request.app.state.storage.database, request.state.agent_id,
++                               int(limit), start, end, cursor)
++    return success(data)
++
++
++@router.get('/requests/{request_id}')
++async def request_details(request_id: UUID, request: Request):
++    if request.query_params:
++        raise reject()
++    data = await read_detail(request.app.state.storage.database, request.state.agent_id, request_id)
++    if data is None:
++        raise GatewayError('not_found', '未找到请求记录', 404)
++    return success(data)
+--- baseline/src/api/identity.py
++++ current/src/api/identity.py
+@@ -0,0 +1,91 @@
++"""Persisted Gateway credentials and request ownership for internal Agents."""
++import hashlib
++import hmac
++import re
++import secrets
++from uuid import UUID, uuid4
++
++from fastapi import Request
++from sqlalchemy import text
++from starlette._utils import get_route_path
++from starlette.datastructures import Headers
++
++from api.errors import error_response
++from errors import GatewayError
++
++
++_BEARER = re.compile(r'Bearer ([0-9a-f]{32})\.([A-Za-z0-9_-]{43})', re.IGNORECASE | re.ASCII)
++
++
++async def create_agent(session, agent_id, name):
++    if not isinstance(agent_id, str) or not re.fullmatch(r'[A-Za-z0-9_-]{1,128}', agent_id):
++        raise ValueError('invalid agent id')
++    if not isinstance(name, str) or not name.strip() or len(name) > 256:
++        raise ValueError('invalid agent name')
++    created = await session.scalar(text('INSERT INTO tb_agent(agent_id,name) VALUES (:id,:name) '
++        'ON CONFLICT DO NOTHING RETURNING agent_id'), {'id': agent_id, 'name': name})
++    if created is None:
++        raise ValueError('agent already exists')
++
++
++async def issue_credential(session, agent_id):
++    public_id, secret = uuid4().hex, secrets.token_urlsafe(32)
++    issued = await session.scalar(text('INSERT INTO tb_agent_credential(public_id,agent_id,digest,created_at) '
++        'SELECT :public,agent_id,:digest,now() FROM tb_agent WHERE agent_id=:agent RETURNING public_id'),
++        {'public': public_id, 'agent': agent_id, 'digest': hashlib.sha256(secret.encode()).hexdigest()})
++    if issued is None:
++        raise ValueError('agent not found')
++    return f'{public_id}.{secret}'
++
++
++async def revoke_credential(session, agent_id, public_id):
++    revoked = await session.scalar(text('UPDATE tb_agent_credential SET revoked_at=now() '
++        'WHERE agent_id=:agent AND public_id=:public AND revoked_at IS NULL RETURNING public_id'),
++        {'agent': agent_id, 'public': public_id})
++    if revoked is None:
++        raise ValueError('active credential not found')
++
++
++async def rotate_credential(session, agent_id, public_id):
++    await revoke_credential(session, agent_id, public_id)
++    return await issue_credential(session, agent_id)
++
++
++async def owned_stream_id(request_id: UUID, request: Request) -> str:
++    """Check the resource selected by FastAPI before subscribing or canceling."""
++    async with request.app.state.storage.database.transaction() as session:
++        allowed = await session.scalar(text('SELECT 1 FROM tb_llm_request WHERE request_id=:rid '
++            "AND agent_id=:agent AND operation='streaming'"), {'rid': request_id, 'agent': request.state.agent_id})
++    if allowed is None:
++        raise GatewayError('not_found', '未找到请求记录', 404)
++    return str(request_id)
++
++
++class AgentIdentityMiddleware:
++    def __init__(self, app, database):
++        self.app, self.database = app, database
++
++    async def __call__(self, scope, receive, send):
++        path = get_route_path(scope) if scope['type'] == 'http' else ''
++        if not path.startswith('/v1/'):
++            return await self.app(scope, receive, send)
++        state = scope.setdefault('state', {})
++        try:
++            values = Headers(scope=scope).getlist('authorization')
++            match = _BEARER.fullmatch(values[0]) if len(values) == 1 else None
++            if match is None:
++                raise GatewayError('unauthorized', '凭据无效', 401)
++            public_id, secret = match.groups()
++            async with self.database.transaction() as session:
++                result = (await session.execute(text('SELECT agent_id,digest FROM tb_agent_credential '
++                    'WHERE public_id=:public AND revoked_at IS NULL'), {'public': public_id})).first()
++                if result is None or not hmac.compare_digest(result.digest, hashlib.sha256(secret.encode()).hexdigest()):
++                    raise GatewayError('unauthorized', '凭据无效', 401)
++                state['agent_id'] = result.agent_id
++        except GatewayError as exc:
++            headers = {'X-Request-ID': str(uuid4())}
++            if exc.status_code == 401:
++                headers['WWW-Authenticate'] = 'Bearer'
++            response = error_response(state, exc.status_code, exc.code, exc.message, headers)
++            return await response(scope, receive, send)
++        return await self.app(scope, receive, send)
+--- baseline/src/api/routes.py
++++ current/src/api/routes.py
+@@ -9,6 +9,7 @@
+ from starlette import status as http_status
+ 
+ from api.dependencies import get_gateway
++from api.identity import owned_stream_id
+ from contracts import ErrorResponse, LLMRequest, ProbeResponse, SuccessResponse, StructuredLLMData, StreamRequest, StreamCreatedData, StreamCreatedResponse, StreamCancelData, StreamCancelResponse
+ from api.sse import EventStreamResponse
+ from persistence.database import StorageUnavailable
+@@ -86,11 +87,7 @@
+                            http_status.HTTP_422_UNPROCESSABLE_CONTENT,
+                            http_status.HTTP_500_INTERNAL_SERVER_ERROR, http_status.HTTP_503_SERVICE_UNAVAILABLE)}},
+             description='从after_seq之后读取已提交事件；省略为0。断开订阅不取消生成。')
+-async def stream_events(request_id: str, request: Request) -> Response:
+-    try:
+-        request_id = str(UUID(request_id))
+-    except ValueError:
+-        raise GatewayError('invalid_request', '请求ID不合法', 422) from None
++async def stream_events(request: Request, request_id: Annotated[str, Depends(owned_stream_id)]) -> Response:
+     query = request.query_params
+     values = query.getlist('after_seq')
+     if set(query) - {'after_seq'} or len(values) > 1 or (values and re.fullmatch(r'[0-9]+', values[0]) is None):
+@@ -115,11 +112,8 @@
+                             http_status.HTTP_404_NOT_FOUND, http_status.HTTP_422_UNPROCESSABLE_CONTENT,
+                             http_status.HTTP_500_INTERNAL_SERVER_ERROR, http_status.HTTP_503_SERVICE_UNAVAILABLE)}},
+              description='发起或轮询取消；202表示canceling，200返回已有终态。断连不撤销已接受的取消。')
+-async def cancel_stream(request_id: str, request: Request, response: Response) -> StreamCancelResponse:
+-    try:
+-        request_id = str(UUID(request_id))
+-    except ValueError:
+-        raise GatewayError('invalid_request', '请求ID不合法', http_status.HTTP_422_UNPROCESSABLE_CONTENT) from None
++async def cancel_stream(request: Request, response: Response,
++                        request_id: Annotated[str, Depends(owned_stream_id)]) -> StreamCancelResponse:
+     if request.query_params or await request.body():
+         raise GatewayError('invalid_request', '取消接口不接受请求体或查询参数', http_status.HTTP_422_UNPROCESSABLE_CONTENT)
+     status = await request.app.state.streaming_manager.cancel(request_id)
+@@ -153,7 +147,7 @@
+ async def trace_by_id(request_id: UUID, request: Request) -> TraceResponse:
+     request.state.generation_request_id = str(request_id)
+     try:
+-        data = await read_trace(request.app.state.storage.database, request_id)
++        data = await read_trace(request.app.state.storage.database, request_id, request.state.agent_id)
+     except StorageUnavailable:
+         logging.getLogger(__name__).error('request_id=%s stage=trace_query code=storage_unavailable', request_id)
+         raise
+--- baseline/src/errors.py
++++ current/src/errors.py
+@@ -28,7 +28,7 @@
+ class ProviderCallError(Exception):
+     """Safe classification and confirmed metadata; never retain raw exceptions."""
+     def __init__(self, raw_message='', *, code='provider_error', status_code=http_status.HTTP_502_BAD_GATEWAY,
+-                 actual_model=None, finish_reason=None, usage=None,
++                 actual_model=None, finish_reason=None, usage=None, cached_input_tokens=None, billing_observed_at=None,
+                  upstream_status=None, upstream_finish_reason=None, transient=False,
+                  retry_after_seconds=None, upstream_http_status=None):
+         self.code = code
+@@ -37,6 +37,8 @@
+         self.actual_model = actual_model
+         self.finish_reason = finish_reason
+         self.usage = usage
++        self.cached_input_tokens = cached_input_tokens
++        self.billing_observed_at = billing_observed_at
+         self.upstream_status = upstream_status
+         self.upstream_finish_reason = upstream_finish_reason
+         self.transient = transient
+--- baseline/src/main.py
++++ current/src/main.py
+@@ -8,6 +8,9 @@
+ 
+ from api.errors import register_error_handlers
+ from api.routes import router
++from api.billing import router as billing_router
++from api.identity import AgentIdentityMiddleware
++from services.prices import PriceBook
+ from middleware.request_context import RequestContextMiddleware
+ from providers.base import Provider
+ from providers.factory import ProviderClients
+@@ -38,7 +41,7 @@
+     token_budget.validate_models(models)
+     clients = ProviderClients(model_registry, provider=provider, providers=providers, config_dir=config_dir)
+     database = Database(load_database_config(config_dir), config_dir) if database is None else database
+-    storage = Store(database)
++    storage = Store(database, PriceBook.load(config_dir))
+     active = set()
+     generations = set()
+     pending = {}
+@@ -144,5 +147,7 @@
+     app.state.defer_persistence = defer
+     register_error_handlers(app)
+     app.include_router(router)
++    app.include_router(billing_router)
+     app.add_middleware(RequestContextMiddleware, traces=traces, storage=storage, active=active, defer=defer)
++    app.add_middleware(AgentIdentityMiddleware, database=database)
+     return app
+--- baseline/src/middleware/request_context.py
++++ current/src/middleware/request_context.py
+@@ -31,6 +31,7 @@
+         if scope["method"] == "POST" and (scope["path"] == "/v1/llm" or is_probe or is_stream):
+             operation = 'streaming' if is_stream else 'provider_probe' if is_probe else 'completion'
+             trace = self.traces.start_request(request_id, operation=operation)
++            trace.agent_id = state.get("agent_id")
+             state["trace"] = trace
+         persisted = trace is not None and self.storage is not None
+         if persisted:
+--- baseline/src/persistence/billing.py
++++ current/src/persistence/billing.py
+@@ -0,0 +1,178 @@
++"""Ledger mutations run in the caller's request/attempt or CLI transaction."""
++from datetime import datetime, timezone
++from decimal import Decimal, InvalidOperation
++from uuid import UUID
++
++from sqlalchemy import func, insert, select, update
++from sqlalchemy.dialects.postgresql import insert as pg_insert
++
++from errors import GatewayError
++from persistence.tables import agent, billing_attempt as bill, billing_operation as op, request
++from utils.diagnostic_values import attempt_usage
++
++ACTIVE = ('reserved', 'pending')
++
++
++def _money(value):
++    try:
++        number = Decimal(value) if isinstance(value, (str, Decimal, int)) and not isinstance(value, bool) else None
++    except InvalidOperation:
++        number = None
++    if number is None or not number.is_finite() or number < 0 or number.adjusted() > 20 or number.as_tuple().exponent < -24:
++        raise GatewayError('invalid_amount', '金额超出范围', 422)
++    return number
++
++
++async def _lock_agent(session, agent_id):
++    if not await session.scalar(select(agent.c.agent_id).where(agent.c.agent_id == agent_id).with_for_update()):
++        raise GatewayError('agent_not_found', '未找到 Agent', 404)
++
++
++async def balance(session, agent_id):
++    """One statement also works in a read-only snapshot."""
++    deposits = select(func.coalesce(func.sum(op.c.amount), 0)).where(
++        op.c.agent_id == agent_id, op.c.kind == 'deposit').scalar_subquery()
++    totals = select(
++        deposits.label('deposited'), func.coalesce(func.sum(bill.c.agent_charge), 0).label('charged'),
++        func.coalesce(func.sum(bill.c.reserved_amount).filter(bill.c.state.in_(ACTIVE)), 0).label('reserved'),
++        func.coalesce(func.sum(bill.c.reserved_amount).filter(bill.c.state == 'pending'), 0).label('pending'),
++        func.count().filter(bill.c.state == 'pending').label('pending_attempts'),
++    ).where(bill.c.agent_id == agent_id).subquery()
++    return dict((await session.execute(select(totals, (
++        totals.c.deposited - totals.c.charged - totals.c.reserved).label('available')))).mappings().one())
++
++
++async def _operation(session, *, operation_id, **fields):
++    if not isinstance(operation_id, str) or not operation_id.strip() or len(operation_id) > 200:
++        raise GatewayError('invalid_operation', '操作编号不合法', 422)
++    added = await session.scalar(pg_insert(op).values(operation_id=operation_id, **fields)
++        .on_conflict_do_nothing().returning(op.c.operation_id))
++    if added:
++        return True
++    previous = (await session.execute(select(op).where(op.c.operation_id == operation_id))).mappings().one()
++    for key, value in fields.items():
++        if previous[key] != value:
++            raise GatewayError('billing_operation_conflict', '操作编号已用于其他内容', 409)
++    return False
++
++
++async def deposit(session, agent_id, operation_id, amount):
++    amount = _money(amount)
++    if not amount:
++        raise GatewayError('invalid_amount', '拨款必须大于零', 422)
++    await _lock_agent(session, agent_id)
++    await _operation(session, operation_id=operation_id, kind='deposit', agent_id=agent_id,
++                     amount=amount, reason='manual_deposit', details={})
++    return await balance(session, agent_id)
++
++
++async def reserve(session, row, record, quote):
++    owner = row['agent_id']
++    if not owner:
++        return
++    mock = record.adapter == 'mock'
++    if not mock and quote is None:
++        raise GatewayError('price_unavailable', '无法确认预留价格', 503)
++    amount = Decimal(0) if mock else quote.reserve_amount
++    await _lock_agent(session, owner)
++    if not mock and (await balance(session, owner))['available'] < amount:
++        raise GatewayError('insufficient_budget', 'Agent 可用预算不足', 402)
++    await session.execute(insert(bill).values(request_pk=row['id'], attempt_no=record.number,
++        agent_id=owner, state='reserved', reserved_amount=amount, quote=None if mock else quote.snapshot()))
++
++
++async def settle(session, row, record):
++    if not row['agent_id'] or record is None:
++        return
++    from services.prices import PriceQuote
++    await _lock_agent(session, row['agent_id'])
++    key = (bill.c.request_pk == row['id'], bill.c.attempt_no == record.number)
++    entry = (await session.execute(select(bill).where(*key))).mappings().one_or_none()
++    if not entry or entry['state'] != 'reserved':
++        return
++    usage = attempt_usage(record.usage)
++    cached = getattr(record, 'cached_input_tokens', None)
++    if not usage or type(cached) is not int or not 0 <= cached <= usage.input_tokens:
++        cached = None
++    observed_at = getattr(record, 'billing_observed_at', None)
++    if not isinstance(observed_at, datetime) or observed_at.utcoffset() is None:
++        observed_at = None
++    cost = None
++    state, reason = 'pending', 'insufficient_pricing_evidence'
++    if record.adapter == 'mock':
++        state, reason, cost = 'settled', 'mock', Decimal(0)
++    elif record.provider_entered is False and usage is None:
++        state, reason, cost = 'released', 'provider_not_called', Decimal(0)
++    elif usage and observed_at is not None and record.actual_model == record.configured_model:
++        quote = PriceQuote.from_snapshot(entry['quote'])
++        cost = quote.cost(usage, cached, ended_at=observed_at)
++        if cost is not None:
++            state, reason = 'settled', 'reported_usage'
++    await session.execute(update(bill).where(*key).values(state=state, reason=reason,
++        agent_charge=cost, supplier_cost=cost, cached_input_tokens=cached, billing_observed_at=observed_at))
++
++
++async def recover_billing(session, row):
++    """A lost process cannot certify that its registered attempt never left the process."""
++    if not row['agent_id']:
++        return
++    await _lock_agent(session, row['agent_id'])
++    key = (bill.c.request_pk == row['id'], bill.c.state == 'reserved')
++    from persistence.tables import attempt
++    mock_attempts = select(attempt.c.attempt_no).where(
++        attempt.c.request_pk == row['id'], attempt.c.adapter == 'mock')
++    await session.execute(update(bill).where(*key, bill.c.attempt_no.in_(mock_attempts)).values(
++        state='settled', agent_charge=0, supplier_cost=0, reason='mock'))
++    await session.execute(update(bill).where(*key).values(state='pending', reason='execution_interrupted'))
++
++
++async def resolve(session, request_id, attempt_no, operation_id, action, amount=None, reason=''):
++    if action not in ('settle', 'zero', 'platform', 'supplier') or not reason.strip():
++        raise GatewayError('invalid_disposition', '需要有效的处置方式和依据', 422)
++    if action not in ('settle', 'supplier') and amount is not None and _money(amount) != 0:
++        raise GatewayError('invalid_amount', '释放预留无需金额', 422)
++    confirmed = _money(amount) if action in ('settle', 'supplier') else Decimal(0)
++    row = (await session.execute(select(request.c.id, request.c.agent_id).where(
++        request.c.request_id == UUID(str(request_id))))).mappings().one_or_none()
++    if not row or not row['agent_id']:
++        raise GatewayError('not_found', '未找到请求', 404)
++    await _lock_agent(session, row['agent_id'])
++    key = (bill.c.request_pk == row['id'], bill.c.attempt_no == attempt_no)
++    entry = (await session.execute(select(bill).where(*key))).mappings().one_or_none()
++    if not entry:
++        raise GatewayError('not_found', '未找到尝试', 404)
++    # Insert receipt and mutate ledger atomically. Replayed commands need no pending row.
++    added = await _operation(session, operation_id=operation_id, agent_id=row['agent_id'],
++        kind=action, amount=confirmed, request_pk=row['id'], attempt_no=attempt_no, reason=reason, details={})
++    if added and action == 'supplier':
++        if entry['state'] != 'platform' or entry['supplier_cost'] is not None:
++            raise GatewayError('billing_state_conflict', '仅可核实平台承担的未知成本', 409)
++        await session.execute(update(bill).where(*key).values(supplier_cost=confirmed))
++    elif added:
++        if entry['state'] != 'pending':
++            raise GatewayError('billing_state_conflict', '仅待核实尝试允许处置', 409)
++        await session.execute(update(bill).where(*key).values(state={
++            'settle':'settled','zero':'released','platform':'platform'}[action],
++            agent_charge=confirmed, supplier_cost=None if action == 'platform' else confirmed,
++            reason='manual_' + action))
++    return await balance(session, row['agent_id'])
++
++
++async def reconcile_statement(session, operation_id, supplier, currency, start, end, amount, reason):
++    """Compare an account-period statement; leave individual allocations untouched."""
++    if (not supplier.strip() or currency != 'CNY' or start.tzinfo is None or end.tzinfo is None
++            or start >= end or not reason.strip()):
++        raise GatewayError('invalid_statement', '账单账户、期间、币种或依据不合法', 422)
++    amount = _money(amount)
++    # Serialize identical receipts even when the matching known subtotal subsequently changes.
++    details = {'supplier':supplier, 'currency':currency, 'start':start.astimezone(timezone.utc).isoformat(),
++               'end':end.astimezone(timezone.utc).isoformat()}
++    added = await _operation(session, operation_id=operation_id, kind='statement', amount=amount,
++                             reason=reason, details=details)
++    totals = select(func.sum(bill.c.supplier_cost).label('subtotal'),
++                    func.count().filter(bill.c.supplier_cost.is_(None)).label('unknown_attempts')).where(
++        bill.c.quote['supplier'].astext == supplier, bill.c.quote['currency'].astext == currency,
++        bill.c.created_at >= start, bill.c.created_at < end).subquery()
++    result = (await session.execute(select(totals, (amount - func.coalesce(totals.c.subtotal, 0))
++        .label('unassigned_difference')))).mappings().one()
++    return dict(result, operation_id=operation_id, newly_recorded=added)
+--- baseline/src/persistence/billing_query.py
++++ current/src/persistence/billing_query.py
+@@ -0,0 +1,113 @@
++"""PostgreSQL projections for per-Agent accounting. Monetary values use decimal strings."""
++from decimal import Decimal
++
++from sqlalchemy import text
++
++from persistence.billing import balance
++
++
++def money(value):
++    return None if value is None else format(value, 'f')
++
++
++async def snapshot(session):
++    await session.execute(text('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY'))
++
++
++async def read_summary(database, agent_id):
++    async with database.transaction() as session:
++        await snapshot(session)
++        account = await balance(session, agent_id)
++        rows = (await session.execute(text("""
++            SELECT a.adapter='mock' AS mock, count(*) AS attempts,
++                   count(*) FILTER (WHERE a.input_tokens IS NULL) AS unknown,
++                   sum(a.input_tokens) AS input_tokens, sum(a.output_tokens) AS output_tokens,
++                   sum(a.total_tokens) AS total_tokens
++            FROM tb_llm_request r JOIN tb_llm_attempt a ON a.request_pk=r.id
++            WHERE r.agent_id=:aid GROUP BY a.adapter='mock'
++        """), {'aid': agent_id})).mappings().all()
++    data = {k: money(v) if isinstance(v, Decimal) else v for k, v in account.items()}
++    data['currency'] = 'CNY'
++    usage = {k: {'attempts': 0, 'unknown_attempts': 0, 'known_subtotal': None}
++             for k in ('real', 'mock')}
++    for row in rows:
++        subtotal = None if row['input_tokens'] is None else {
++            k: int(row[k]) for k in ('input_tokens', 'output_tokens', 'total_tokens')}
++        usage['mock' if row['mock'] else 'real'] = {
++            'attempts': row['attempts'], 'unknown_attempts': row['unknown'], 'known_subtotal': subtotal}
++    return dict(data, usage=usage)
++
++
++# Limit the request page before joining billing attempts. The same projection is
++# used for a single request so its totals always use the list's accounting rules.
++def request_view(row):
++    return {
++        'request_id': str(row['request_id']), 'created_at': row['created_at'].isoformat(),
++        'model': row['requested_model'], 'status': row['status'],
++        'billing_status': row['billing_status'], 'currency': 'CNY',
++        **{k: money(row[k]) for k in ('charged', 'reserved', 'pending')},
++    }
++
++
++async def request_page(session, agent_id, predicates, params):
++    query = """
++        WITH page AS (
++            SELECT id,request_id,created_at,requested_model,status FROM tb_llm_request
++            WHERE agent_id=:aid {filters}
++            ORDER BY created_at DESC, id DESC LIMIT :limit
++        )
++        SELECT p.*, coalesce(sum(b.agent_charge),0) AS charged,
++            coalesce(sum(b.reserved_amount) FILTER (WHERE b.state IN ('reserved','pending')),0) AS reserved,
++            coalesce(sum(b.reserved_amount) FILTER (WHERE b.state='pending'),0) AS pending,
++            CASE WHEN count(*) FILTER (WHERE b.state='pending')>0
++                 THEN CASE WHEN count(*) FILTER (WHERE b.state IN ('settled','released','platform'))>0
++                      THEN 'partially_pending' ELSE 'pending' END
++                 WHEN count(*) FILTER (WHERE b.state='reserved')>0 THEN 'reserved'
++                 WHEN count(b.attempt_no)>0 THEN 'settled' ELSE 'no_charge' END AS billing_status
++        FROM page p LEFT JOIN tb_billing_attempt b ON b.request_pk=p.id
++        GROUP BY p.id,p.request_id,p.created_at,p.requested_model,p.status
++        ORDER BY p.created_at DESC,p.id DESC
++    """.format(filters=''.join(' AND ' + sql for sql in predicates))
++    return (await session.execute(text(query), dict(params, aid=agent_id))).mappings().all()
++
++
++async def read_requests(database, agent_id, size, start, end, cursor):
++    params, where = {'limit': size + 1}, []
++    if start is not None:
++        params['start'] = start
++        where.append('created_at >= :start')
++    if end is not None:
++        params['end'] = end
++        where.append('created_at < :end')
++    if cursor is not None:
++        params['stamp'], params['seq'] = cursor
++        where.append('(created_at,id)<(:stamp,:seq)')
++    async with database.transaction() as session:
++        rows = await request_page(session, agent_id, where, params)
++    next_cursor = None
++    if len(rows) > size:
++        last = rows[size - 1]
++        next_cursor = f"{last['created_at'].isoformat()}|{last['id']}"
++    return {'items': [request_view(r) for r in rows[:size]], 'next_cursor': next_cursor}
++
++
++async def read_detail(database, agent_id, request_id):
++    async with database.transaction() as session:
++        await snapshot(session)
++        rows = await request_page(session, agent_id, ['request_id=:rid'],
++                                  {'rid':request_id,'limit':1})
++        if not rows:
++            return None
++        attempts = (await session.execute(text("""
++            SELECT a.attempt_no,a.provider,a.adapter,a.configured_model,a.status,a.reason,
++                   a.input_tokens,a.output_tokens,a.total_tokens,b.cached_input_tokens,b.state,b.billing_observed_at,
++                   b.reserved_amount,b.agent_charge,b.supplier_cost,b.quote,b.reason AS billing_reason
++            FROM tb_llm_attempt a LEFT JOIN tb_billing_attempt b
++            ON (a.request_pk,a.attempt_no)=(b.request_pk,b.attempt_no)
++            WHERE a.request_pk=:pk ORDER BY a.attempt_no
++        """), {'pk':rows[0]['id']})).mappings().all()
++    result = request_view(rows[0])
++    result['attempts'] = [dict(a, billing_observed_at=a['billing_observed_at'].isoformat() if a['billing_observed_at'] else None, usage_source='mock' if a['adapter']=='mock' else 'real',
++                               **{k:money(a[k]) for k in ('reserved_amount','agent_charge','supplier_cost')})
++                          for a in attempts]
++    return result
+--- baseline/src/persistence/database.py
++++ current/src/persistence/database.py
+@@ -11,7 +11,7 @@
+ from constants import DATABASE_POOL_SIZE, DATABASE_MAX_OVERFLOW, DATABASE_OPERATION_TIMEOUT_SECONDS
+ from services.models import Definition, ConfigurationError, read_yaml
+ 
+-REVISION = 'f8_001'
++REVISION = 'f9_001'
+ 
+ 
+ class DatabaseConfig(Definition):
+--- baseline/src/persistence/store.py
++++ current/src/persistence/store.py
+@@ -4,6 +4,8 @@
+ 
+ from sqlalchemy import select, insert, update, func
+ from sqlalchemy.dialects.postgresql import insert as pg_insert
++from errors import GatewayError
++from persistence import billing
+ from persistence.tables import request, attempt as attempt_table, event as event_table
+ from utils.json_codec import dumps, loads
+ from utils.diagnostic_values import attempt_usage, metadata_text
+@@ -24,6 +26,7 @@
+     # Rejected client identifiers can contain characters PostgreSQL TEXT cannot store.
+     for name in ('requested_model', 'prompt_name', 'prompt_version'):
+         values[name] = metadata_text(values[name])
++    values['agent_id'] = getattr(trace, 'agent_id', None)
+     return values
+ 
+ 
+@@ -52,8 +55,9 @@
+ 
+ 
+ class Store:
+-    def __init__(self, database):
++    def __init__(self, database, prices=None):
+         self.database = database
++        self.prices = prices
+ 
+     async def _locked(self, session, request_id):
+         return (await session.execute(select(request).where(request.c.request_id == UUID(str(request_id))).with_for_update())).mappings().one_or_none()
+@@ -120,6 +124,9 @@
+             if attempt is not None:
+                 selection = selection.where(attempt_table.c.attempt_no == attempt.number)
+             await session.execute(selection.values(**values))
++            if attempt is not None:
++                await billing.settle(session, row, attempt)
++            await billing.recover_billing(session, row)
+             payload = {'request_id': trace.request_id}
+             if error_code:
+                 payload.update(code=error_code, message='取消清理失败')
+@@ -163,6 +170,16 @@
+                 prompt_fingerprint=attempt.prompt_fingerprint, input_token_count=attempt.input_token_count,
+                 counter_version=attempt.counter_version, max_output_tokens=attempt.max_output_tokens,
+                 reason=attempt.reason, provider_entered=attempt.provider_entered))
++            if row['agent_id'] is not None:
++                try:
++                    quote = None if attempt.adapter == 'mock' else self.prices.quote(
++                        attempt.provider, attempt.configured_model, timestamp,
++                        attempt.input_token_count, attempt.max_output_tokens, latest_end=row['deadline_at'])
++                    await billing.reserve(session, row, attempt, quote)
++                except GatewayError as exc:
++                    trace.error_stage = 'billing_admission'
++                    trace._recovery_stop_reason = exc.code
++                    raise
+             await session.execute(update(request).where(request.c.id == row['id']).values(started_at=func.coalesce(request.c.started_at, timestamp), timing_snapshot=timing(trace)))
+ 
+     async def finish_attempt(self, trace, attempt, *, deadline=None):
+@@ -179,6 +196,7 @@
+                 attempt_table.c.request_pk == row['id'], attempt_table.c.attempt_no == attempt.number,
+                 attempt_table.c.status == 'running').values(
+                 status=attempt.status, ended_at=now(), **attempt_values(trace, attempt)))
++            await billing.settle(session, row, attempt)
+             return row['status']
+ 
+     async def _event(self, session, row, name, payload):
+@@ -226,6 +244,8 @@
+                     attempt_table.c.status == 'running').values(
+                     status=attempt.status if attempt.status in TERMINAL else status,
+                     ended_at=timestamp, **attempt_values(trace, attempt)))
++                await billing.settle(session, row, attempt)
++            await billing.recover_billing(session, row)
+             if event is not None:
+                 name, payload = event
+                 if name != 'response.' + status or row['input_snapshot'] is None:
+@@ -268,6 +288,7 @@
+             status='failed', error_code='execution_interrupted', error_message='执行已中断', ended_at=timestamp))
+         await session.execute(update(attempt_table).where(attempt_table.c.request_pk == row['id'],
+             attempt_table.c.status == 'running').values(status='failed', error_code='execution_interrupted', ended_at=timestamp))
++        await billing.recover_billing(session, row)
+         if row['operation'] == 'streaming' and row['input_snapshot'] is not None:
+             await self._event(session, row, 'response.failed', {'request_id': str(row['request_id']),
+                 'code': 'execution_interrupted', 'message': '执行已中断'})
+--- baseline/src/persistence/tables.py
++++ current/src/persistence/tables.py
+@@ -48,3 +48,37 @@
+     CheckConstraint('seq > 0'),
+     CheckConstraint("event_type IN ('response.delta','response.completed','response.failed','response.canceling','response.canceled')"),
+ )
++
++# F9. Historical requests keep a NULL owner and are never backfilled into a budget.
++from sqlalchemy import ForeignKeyConstraint, Numeric, func
++from sqlalchemy.dialects.postgresql import JSONB
++
++agent = Table('tb_agent', metadata,
++    Column('agent_id', Text, primary_key=True), Column('name', Text, nullable=False))
++agent_credential = Table('tb_agent_credential', metadata,
++    Column('public_id', Text, primary_key=True),
++    Column('agent_id', Text, ForeignKey('tb_agent.agent_id'), nullable=False),
++    Column('digest', Text, nullable=False),
++    Column('created_at', DateTime(timezone=True), nullable=False, server_default=func.now()),
++    Column('revoked_at', DateTime(timezone=True)))
++request.append_column(Column('agent_id', Text, ForeignKey('tb_agent.agent_id')))
++Index('ix_llm_request_agent_page', request.c.agent_id, request.c.created_at, request.c.id)
++billing_attempt = Table('tb_billing_attempt', metadata,
++    Column('request_pk', BigInteger, primary_key=True), Column('attempt_no', Integer, primary_key=True),
++    ForeignKeyConstraint(['request_pk', 'attempt_no'], ['tb_llm_attempt.request_pk', 'tb_llm_attempt.attempt_no']),
++    Column('agent_id', Text, ForeignKey('tb_agent.agent_id'), nullable=False, index=True),
++    Column('state', Text, nullable=False), Column('reserved_amount', Numeric, nullable=False),
++    Column('agent_charge', Numeric), Column('supplier_cost', Numeric), Column('quote', JSONB),
++    Column('cached_input_tokens', BigInteger), Column('billing_observed_at', DateTime(timezone=True)), Column('reason', Text),
++    Column('created_at', DateTime(timezone=True), nullable=False, server_default=func.now()),
++    CheckConstraint("state in ('reserved','pending','settled','released','platform')"),
++    CheckConstraint('reserved_amount >= 0 and agent_charge >= 0 and supplier_cost >= 0'))
++billing_operation = Table('tb_billing_operation', metadata,
++    Column('operation_id',Text,primary_key=True), Column('kind',Text,nullable=False),
++    Column('agent_id',Text,ForeignKey('tb_agent.agent_id'),index=True),
++    Column('amount',Numeric), Column('request_pk',BigInteger), Column('attempt_no',Integer),
++    ForeignKeyConstraint(['request_pk','attempt_no'], ['tb_billing_attempt.request_pk','tb_billing_attempt.attempt_no']),
++    Column('reason',Text,nullable=False), Column('details',JSONB,nullable=False),
++    Column('created_at',DateTime(timezone=True),nullable=False,server_default=func.now()),
++    CheckConstraint("kind in ('deposit','settle','zero','platform','supplier','statement')"),
++    CheckConstraint('amount >= 0'))
+--- baseline/src/persistence/trace_query.py
++++ current/src/persistence/trace_query.py
+@@ -21,13 +21,13 @@
+     }
+ 
+ 
+-async def read_trace(database, request_id):
++async def read_trace(database, request_id, agent_id):
+     # PostgreSQL's default READ COMMITTED can mix two commits between these SELECTs.
+     async with database.transaction() as session:
+         await session.execute(text('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY'))
+         summary_columns = [request.c[name] for name in TraceData.model_fields if name in request.c]
+         row = (await session.execute(select(request.c.id, *summary_columns, request.c.timing_snapshot)
+-               .where(request.c.request_id == request_id))).mappings().one_or_none()
++               .where(request.c.request_id == request_id, request.c.agent_id == agent_id))).mappings().one_or_none()
+         if row is None:
+             return None
+         metrics = json.loads(row['timing_snapshot']) if row['timing_snapshot'] else {}
+--- baseline/src/providers/base.py
++++ current/src/providers/base.py
+@@ -6,7 +6,7 @@
+ import sys
+ from typing import Literal, Protocol
+ 
+-from pydantic import Field, ValidationError, field_validator, model_validator
++from pydantic import AwareDatetime, Field, ValidationError, field_validator, model_validator
+ from starlette import status as http_status
+ 
+ from contracts import Message, StrictObject, Usage
+@@ -18,6 +18,16 @@
+ class ProviderMetadata(StrictObject):
+     actual_model: str | None = None
+     usage: Usage | None = None
++    billing_observed_at: AwareDatetime | None = None
++    cached_input_tokens: int | None = Field(default=None, ge=0)
++
++    @field_validator('cached_input_tokens', mode='before')
++    @classmethod
++    def cache_count_matches_usage(cls, value, info):
++        usage = info.data.get('usage')
++        if usage is not None and type(value) is int and 0 <= value <= usage.input_tokens:
++            return value
++        return None
+ 
+     @field_validator('actual_model', 'finish_reason', 'upstream_status', 'upstream_finish_reason', check_fields=False)
+     @classmethod
+@@ -63,7 +73,7 @@
+                 raise ValueError('failed event needs a known Provider error code')
+         elif self.error_code is not None:
+             raise ValueError('only failed events carry an error code')
+-        if self.status == 'running' and (self.usage is not None or self.upstream_terminal_received):
++        if self.status == 'running' and (self.usage is not None or self.billing_observed_at is not None or self.upstream_terminal_received):
+             raise ValueError('running event cannot carry terminal data')
+         if self.status == 'completed' and not self.upstream_terminal_received:
+             raise ValueError('completed event requires upstream terminal evidence')
+@@ -77,6 +87,28 @@
+     def stream(self, model: ModelConfig, messages: list[Message], *,
+                max_output_tokens: int, timeout_seconds: float) -> AsyncIterator[ProviderStreamEvent]: ...
+     async def aclose(self) -> None: ...
++
++
++def cached_input(counts, *, chat, total):
++    """Conflicting, malformed or absent billing evidence remains unknown."""
++    detail_key = 'prompt_tokens_details' if chat else 'input_tokens_details'
++    hits = []
++    if detail_key in counts:
++        detail = counts[detail_key]
++        if not isinstance(detail, dict):
++            return None
++        if 'cached_tokens' in detail:
++            hits.append(detail['cached_tokens'])
++    if chat and 'prompt_cache_hit_tokens' in counts:
++        hits.append(counts['prompt_cache_hit_tokens'])
++    if chat and 'prompt_cache_miss_tokens' in counts:
++        miss = counts['prompt_cache_miss_tokens']
++        if type(miss) is not int or not 0 <= miss <= total:
++            return None
++        hits.append(total - miss)
++    if hits and all(type(hit) is int and hit == hits[0] and 0 <= hit <= total for hit in hits):
++        return hits[0]
++    return None
+ 
+ 
+ def observe_reported_metadata(raw, observed, *, chat):
+@@ -93,9 +125,16 @@
+         if usage is None:
+             raise ValueError('invalid Provider token counts')
+         observed['usage'] = usage
++        observed['cached_input_tokens'] = cached_input(counts, chat=chat, total=usage.input_tokens)
+     if model is None:
+         raise ValueError('invalid Provider model')
+     return model, usage
++
++
++def observe_terminal_usage(observed):
++    """Only a recognized terminal upstream report is evidence of the full bill."""
++    if observed.get('usage') is not None:
++        observed['billing_observed_at'] = datetime.now(timezone.utc)
+ 
+ 
+ def parse_response(raw) -> ProviderResult:
+@@ -109,6 +148,10 @@
+         if not isinstance(choices, list) or len(choices) != 1:
+             raise ValueError
+         choice = choices[0]
++        if (isinstance(choice, dict) and raw.get('object') == 'chat.completion'
++                and choice.get('finish_reason') in ('stop', 'length', 'content_filter', 'tool_calls',
++                                                   'aborted', 'insufficient_system_resource', 'refusal')):
++            observe_terminal_usage(observed)
+         message = choice['message']
+         if message['role'] != 'assistant' or message.get('tool_calls'):
+             raise ValueError
+@@ -124,7 +167,8 @@
+             text = text if text is not None else ''
+         if not isinstance(text, str) or not isinstance(reason, str) or not reason.strip():
+             raise ValueError
+-        return ProviderResult(text=text, actual_model=actual, finish_reason=reason, usage=usage,
++        return ProviderResult(text=text, actual_model=actual, finish_reason=reason, usage=usage, cached_input_tokens=observed.get('cached_input_tokens'),
++                              billing_observed_at=observed.get('billing_observed_at'),
+                               upstream_finish_reason=original_reason)
+     except (KeyError, TypeError, ValueError, ValidationError):
+         raise ProviderCallError(code='provider_invalid_response', **observed) from None
+@@ -138,7 +182,9 @@
+             raise ValueError
+         actual, usage = observe_reported_metadata(raw, observed, chat=False)
+         state = raw.get('status')
+-        metadata = dict(actual_model=actual, usage=usage, upstream_status=state)
++        if state in ('failed', 'incomplete', 'completed'):
++            observe_terminal_usage(observed)
++        metadata = dict(observed, upstream_status=state)
+         error, incomplete = raw.get('error'), raw.get('incomplete_details')
+         if state == 'failed':
+             if (not isinstance(error, dict) or not isinstance(error.get('code'), str)
+@@ -211,7 +257,8 @@
+     }.get(reason, ('provider_invalid_response', http_status.HTTP_502_BAD_GATEWAY))
+     raise ProviderCallError(code=code, status_code=status, actual_model=result.actual_model,
+                             transient=reason in {'aborted', 'insufficient_system_resource'},
+-                            finish_reason=reason, usage=result.usage,
++                            finish_reason=reason, usage=result.usage, cached_input_tokens=result.cached_input_tokens,
++                            billing_observed_at=result.billing_observed_at,
+                             upstream_status=result.upstream_status,
+                             upstream_finish_reason=result.upstream_finish_reason)
+ 
+--- baseline/src/providers/mock.py
++++ current/src/providers/mock.py
+@@ -53,7 +53,7 @@
+                     yield ProviderStreamEvent(status='failed', error_code=self.error.code, transient=self.error.transient,
+                                               retry_after_seconds=self.error.retry_after_seconds,
+                                               upstream_http_status=self.error.upstream_http_status,
+-                                              usage=self.error.usage, actual_model=self.error.actual_model,
++                                              usage=self.error.usage, cached_input_tokens=self.error.cached_input_tokens, actual_model=self.error.actual_model,
+                                               upstream_status=self.error.upstream_status,
+                                               upstream_finish_reason=self.error.upstream_finish_reason)
+                     return
+@@ -71,7 +71,7 @@
+                         yield ProviderStreamEvent(status='failed', error_code=item.code, transient=item.transient,
+                                                   retry_after_seconds=item.retry_after_seconds,
+                                                   upstream_http_status=item.upstream_http_status,
+-                                                  usage=item.usage, actual_model=item.actual_model,
++                                                  usage=item.usage, cached_input_tokens=item.cached_input_tokens, actual_model=item.actual_model,
+                                                   upstream_status=item.upstream_status,
+                                                   upstream_finish_reason=item.upstream_finish_reason)
+                         return
+--- baseline/src/providers/streaming.py
++++ current/src/providers/streaming.py
+@@ -1,6 +1,6 @@
+ """Wire-only SSE decoding and protocol state; Gateway consumes platform events."""
+ from errors import ProviderCallError
+-from providers.base import ProviderStreamEvent, observe_reported_metadata, parse_responses_response
++from providers.base import ProviderStreamEvent, observe_terminal_usage, observe_reported_metadata, parse_responses_response
+ from utils.diagnostic_values import metadata_text
+ from utils.json_codec import loads
+ 
+@@ -53,6 +53,8 @@
+         if not isinstance(text,str):raise ValueError
+         reason=choice.get('finish_reason')
+         if reason is not None and metadata_text(reason) is None:raise ValueError
++        if reason == 'stop' or reason in _REASONS:
++            observe_terminal_usage(observed)
+         refusal=delta.get('refusal')
+         if refusal is not None:
+             if not isinstance(refusal,str):raise ValueError
+@@ -61,12 +63,12 @@
+             if usage is not None:raise ValueError
+             yield ProviderStreamEvent(delta=text,**meta)
+         elif reason=='stop':
+-            terminal=ProviderStreamEvent(status='completed',usage=usage,upstream_terminal_received=True,upstream_finish_reason='stop',**meta)
++            terminal=ProviderStreamEvent(status='completed',usage=usage,cached_input_tokens=observed.get('cached_input_tokens'),billing_observed_at=observed.get('billing_observed_at'),upstream_terminal_received=True,upstream_finish_reason='stop',**meta)
+             observed.update(usage=terminal.usage,upstream_finish_reason='stop')
+             if text:yield ProviderStreamEvent(delta=text,**meta)
+         else:
+             if reason not in _REASONS:raise ValueError
+-            yield failure(_REASONS[reason],transient=reason in {'aborted','insufficient_system_resource'},delta=text,usage=usage,upstream_terminal_received=True,upstream_finish_reason=reason,**meta)
++            yield failure(_REASONS[reason],transient=reason in {'aborted','insufficient_system_resource'},delta=text,usage=usage,cached_input_tokens=observed.get('cached_input_tokens'),billing_observed_at=observed.get('billing_observed_at'),upstream_terminal_received=True,upstream_finish_reason=reason,**meta)
+             return
+     raise ValueError
+ 
+@@ -105,11 +107,13 @@
+                         observed['actual_model']=error.actual_model
+                     if error.usage is not None:
+                         observed['usage']=error.usage
++                        observed['cached_input_tokens']=error.cached_input_tokens
++                        observed['billing_observed_at']=error.billing_observed_at
+                     raise ValueError from None
+-                yield failure(error.code,transient=error.transient,actual_model=error.actual_model,usage=error.usage,
++                yield failure(error.code,transient=error.transient,actual_model=error.actual_model,usage=error.usage, cached_input_tokens=error.cached_input_tokens, billing_observed_at=error.billing_observed_at,
+                               upstream_status=error.upstream_status,upstream_terminal_received=True)
+                 return
+-            meta={'actual_model':result.actual_model,'usage':result.usage,'upstream_status':result.upstream_status,
++            meta={'actual_model':result.actual_model,'usage':result.usage,'cached_input_tokens':result.cached_input_tokens,'billing_observed_at':result.billing_observed_at,'upstream_status':result.upstream_status,
+                   'upstream_finish_reason':result.upstream_finish_reason,'upstream_terminal_received':True}
+             if refusal_seen:yield failure('provider_refused', **meta)
+             elif result.finish_reason=='stop':yield ProviderStreamEvent(status='completed',**meta)
+--- baseline/src/services/gateway.py
++++ current/src/services/gateway.py
+@@ -305,7 +305,7 @@
+                     finally:
+                         attempt.provider_duration_ms = (monotonic() - dispatched) * 1000
+                 failure_stage = 'output_validation'
+-                for field in ('actual_model', 'finish_reason', 'usage', 'upstream_status', 'upstream_finish_reason'):
++                for field in ('actual_model', 'finish_reason', 'usage', 'cached_input_tokens', 'billing_observed_at', 'upstream_status', 'upstream_finish_reason'):
+                     setattr(attempt, field, getattr(result, field))
+                 validate_result(result)
+                 parsed = validate_output(result.text, prepared) if prepared else None
+@@ -317,7 +317,7 @@
+                          else ProviderCallError(code='provider_timeout', status_code=504))
+             except (ProviderCallError, GatewayError) as exc:
+                 error = exc
+-                for field in ('actual_model', 'finish_reason', 'usage', 'upstream_status', 'upstream_finish_reason'):
++                for field in ('actual_model', 'finish_reason', 'usage', 'cached_input_tokens', 'billing_observed_at', 'upstream_status', 'upstream_finish_reason'):
+                     value = getattr(exc, field, None)
+                     if value is not None:
+                         setattr(attempt, field, value)
+--- baseline/src/services/prices.py
++++ current/src/services/prices.py
+@@ -0,0 +1,169 @@
++"""Versioned CNY tariffs, expressed per million tokens; never read provider keys."""
++from dataclasses import asdict, dataclass
++from datetime import date, datetime, time, timedelta
++from decimal import Decimal, localcontext
++from pathlib import Path
++from zoneinfo import ZoneInfo
++
++from pydantic import Field, StringConstraints, field_validator
++from typing import Annotated
++
++from contracts import Usage
++from errors import GatewayError
++from services.models import ConfigurationError, Definition, read_yaml
++from utils.diagnostic_values import attempt_usage
++
++
++SHANGHAI = ZoneInfo('Asia/Shanghai')
++Price = Annotated[str, StringConstraints(pattern=r'^(0|[1-9][0-9]{0,8})(\.[0-9]{1,9})?$')]
++
++
++class Rates(Definition):
++    hit: Price
++    miss: Price
++    output: Price
++
++
++class Tariff(Definition):
++    supplier: str
++    model: str
++    version: str
++    effective_from: datetime
++    peak: Rates
++    off_peak: Rates
++    calendar_until: date | None = None
++    holidays: list[date] = Field(default_factory=list)
++
++    @field_validator('effective_from', mode='before')
++    @classmethod
++    def timestamp(cls, value):
++        stamp = datetime.fromisoformat(value) if isinstance(value, str) else value
++        if not isinstance(stamp, datetime) or stamp.tzinfo is None:
++            raise ValueError('effective_from requires an explicit timezone')
++        return stamp
++
++    @field_validator('calendar_until', mode='before')
++    @classmethod
++    def calendar_date(cls, value):
++        return date.fromisoformat(value) if isinstance(value, str) else value
++
++    @field_validator('holidays', mode='before')
++    @classmethod
++    def closed_dates(cls, values):
++        if not isinstance(values, list):
++            raise ValueError('invalid holiday list')
++        return [date.fromisoformat(v) if isinstance(v, str) else v for v in values]
++
++
++class Catalog(Definition):
++    bindings: dict[str, str]
++    versions: list[Tariff]
++
++
++@dataclass(frozen=True)
++class PriceQuote:
++    supplier: str
++    model: str
++    version: str
++    currency: str
++    period: str
++    hit: str
++    miss: str
++    output: str
++    input_count: int
++    output_cap: int
++    reserve_amount: Decimal
++    valid_until: str | None
++
++    def snapshot(self):
++        return asdict(self) | {'reserve_amount': str(self.reserve_amount)}
++
++    @classmethod
++    def from_snapshot(cls, value):
++        return cls(**(value | {'reserve_amount': Decimal(value['reserve_amount'])}))
++
++    def cost(self, usage: Usage | None, cached_input_tokens, *, ended_at=None):
++        if attempt_usage(usage) is None or self.period == 'unknown':
++            return None
++        if self.valid_until and ended_at and ended_at >= datetime.fromisoformat(self.valid_until):
++            return None
++        if type(cached_input_tokens) is not int or not 0 <= cached_input_tokens <= usage.input_tokens:
++            if Decimal(self.hit) != Decimal(self.miss) and usage.input_tokens:
++                return None
++            cached_input_tokens = 0
++        with localcontext() as context:
++            context.prec = 64
++            return (cached_input_tokens * Decimal(self.hit)
++                    + (usage.input_tokens - cached_input_tokens) * Decimal(self.miss)
++                    + usage.output_tokens * Decimal(self.output)) / 1_000_000
++
++
++class PriceBook:
++    def __init__(self, catalog: Catalog):
++        self.catalog = catalog
++        starts = set()
++        versions = set()
++        for rule in catalog.versions:
++            key = (rule.supplier, rule.model)
++            if (*key, rule.effective_from) in starts or (*key, rule.version) in versions:
++                raise ConfigurationError('prices.yaml 价格版本重叠')
++            starts.add((*key, rule.effective_from))
++            versions.add((*key, rule.version))
++
++    @classmethod
++    def load(cls, config_dir: Path):
++        path = Path(config_dir) / 'prices.yaml'
++        if not path.exists():
++            return cls(Catalog(bindings={}, versions=[]))
++        try:
++            return cls(Catalog.model_validate(read_yaml(path)))
++        except ValueError:
++            raise ConfigurationError('prices.yaml 价格配置不合法') from None
++
++    def quote(self, provider, model, started_at, input_tokens, max_output_tokens, *, latest_end=None):
++        supplier = self.catalog.bindings.get(provider)
++        rules = sorted((r for r in self.catalog.versions if r.supplier == supplier and r.model == model),
++                       key=lambda r: r.effective_from)
++        eligible = [r for r in rules if r.effective_from <= started_at]
++        if not eligible:
++            raise GatewayError('price_unavailable', '缺少本次调用适用价格', 503)
++        rule = eligible[-1]
++        period, boundary = self._period(rule, started_at)
++        next_version = next((r.effective_from for r in rules if r.effective_from > started_at), None)
++        if next_version and (boundary is None or next_version < boundary):
++            boundary = next_version
++        rates = rule.off_peak if period == 'off_peak' else rule.peak
++        candidates = [rule, *(r for r in rules if r.effective_from > started_at
++                              and (latest_end is None or r.effective_from <= latest_end))]
++        possible_rates = [rate for tariff in candidates for rate in (tariff.peak, tariff.off_peak)]
++        maximum_input = max(Decimal(s) for rate in possible_rates for s in (rate.hit, rate.miss))
++        maximum_output = max(Decimal(rate.output) for rate in possible_rates)
++        with localcontext() as context:
++            context.prec = 64
++            reserve = (input_tokens * maximum_input + max_output_tokens * maximum_output) / 1_000_000
++        return PriceQuote(supplier, model, rule.version, 'CNY', period, rates.hit, rates.miss, rates.output,
++                          input_tokens, max_output_tokens, reserve, boundary.isoformat() if boundary else None)
++
++    @staticmethod
++    def _period(rule, stamp):
++        if rule.peak == rule.off_peak:
++            return 'fixed', None
++        local = stamp.astimezone(SHANGHAI)
++        # Weekends and known statutory holidays are entirely off peak.
++        day = local.date()
++
++        def at(hour):
++            return datetime.combine(day, time(hour), SHANGHAI)
++
++        if local.weekday() < 5 and day not in rule.holidays:
++            for begin, end in ((9, 12), (14, 18)):
++                if local < at(begin):
++                    return 'off_peak', at(begin)
++                if local < at(end):
++                    known = rule.calendar_until is not None and day < rule.calendar_until
++                    return ('peak' if known else 'unknown'), at(end)
++        # Next possible tariff change is the next working weekday at 09:00.
++        day += timedelta(days=1)
++        while day.weekday() >= 5 or day in rule.holidays:
++            day += timedelta(days=1)
++        return 'off_peak', at(9)
+--- baseline/src/services/streaming.py
++++ current/src/services/streaming.py
+@@ -7,7 +7,7 @@
+ 
+ from constants import STREAM_CLEANUP_TIMEOUT_SECONDS, STREAM_HEARTBEAT_SECONDS
+ from contracts import Message, Usage
+-from errors import PROVIDER_MESSAGES, ProviderCallError
++from errors import GatewayError, PROVIDER_MESSAGES, ProviderCallError
+ from providers.base import ProviderStreamEvent
+ from services.models import ModelConfig, ProviderConfig
+ from persistence.database import StorageUnavailable
+@@ -344,6 +344,8 @@
+                 if asyncio.current_task().cancelling():
+                     raise asyncio.CancelledError
+                 raise StreamFailure('storage_unavailable') from None
++            except GatewayError as exc:
++                raise StreamFailure(exc.code) from None
+             finally:
+                 del self.attempt.input_snapshot
+         else:
+@@ -440,7 +442,7 @@
+             self.trace.upstream_first_text_at = monotonic()
+         if event.upstream_terminal_received:
+             self.trace.upstream_terminal_at = monotonic()
+-        for name in ('actual_model', 'usage', 'upstream_status', 'upstream_finish_reason'):
++        for name in ('actual_model', 'usage', 'cached_input_tokens', 'billing_observed_at', 'upstream_status', 'upstream_finish_reason'):
+             value = getattr(event, name)
+             if value is not None:
+                 setattr(self.attempt, name, value)
+--- baseline/src/services/trace.py
++++ current/src/services/trace.py
+@@ -1,4 +1,5 @@
+ import asyncio
++from datetime import datetime
+ import logging
+ from time import monotonic
+ from dataclasses import dataclass
+@@ -99,6 +100,8 @@
+     reason: str | None = None
+     provider_duration_ms: float | None = None
+     provider_entered: bool = False
++    cached_input_tokens: int | None = None
++    billing_observed_at: datetime | None = None
+ 
+ 
+ class TraceStore:
+--- baseline/tests/conftest.py
++++ current/tests/conftest.py
+@@ -129,6 +129,8 @@
+         result = subprocess.run([sys.executable, '-m', 'alembic', '-x', f'config_dir={directory}',
+                                  'upgrade', 'head'], cwd=root, capture_output=True, text=True, timeout=30)
+         assert result.returncode == 0, result.stderr
++        from legacy_identity import provision
++        provision(directory)
+         yield server, template
+     finally:
+         server.close()
+@@ -137,7 +139,7 @@
+ @pytest.fixture(autouse=True)
+ def explicit_database_for_historical_tests(request, monkeypatch):
+     """Keep existing fixtures independent from the maintainer's password/YAML."""
+-    if any(name in request.path.name for name in ('f5o1', 'f5o2', 'f6', 'f7', 'f8')):
++    if any(name in request.path.name for name in ('f5o1', 'f5o2', 'f6', 'f7', 'f8', 'f9')):
+         yield
+         return
+     import main
+@@ -170,3 +172,49 @@
+     yield
+     for server, name in reversed(databases):
+         server.drop_database(name)
++
++
++@pytest.fixture(autouse=True)
++def authenticated_historical_gateway_clients(request, monkeypatch):
++    """Old HTTP scenarios now use a funded account; F9 tests set credentials explicitly."""
++    if 'f9' in request.path.name or 'postgres' in request.path.parts:
++        return
++    import httpx
++    from alembic import command
++    from starlette.testclient import TestClient
++    from legacy_identity import HEADERS, provision
++    original_upgrade = command.upgrade
++    original_build = httpx.AsyncClient.build_request
++    original_test_build = TestClient.build_request
++
++    def upgrade(config, revision, *args, **kwargs):
++        result = original_upgrade(config, revision, *args, **kwargs)
++        if revision == 'head' and 'config_dir' in config.attributes:
++            provision(config.attributes['config_dir'])
++        return result
++
++    def build(client, *args, **kwargs):
++        message = original_build(client, *args, **kwargs)
++        if isinstance(client._transport, httpx.ASGITransport):
++            if message.url.host in {'test', 'testserver'} and message.url.path.startswith('/v1/'):
++                message.headers.setdefault('Authorization', HEADERS['Authorization'])
++        return message
++
++    monkeypatch.setattr(command, 'upgrade', upgrade)
++    def test_build(client, *args, **kwargs):
++        message = original_test_build(client, *args, **kwargs)
++        if message.url.host == 'testserver' and message.url.path.startswith('/v1/'):
++            message.headers.setdefault('Authorization', HEADERS['Authorization'])
++        return message
++
++    monkeypatch.setattr(TestClient, 'build_request', test_build)
++    monkeypatch.setattr(httpx.AsyncClient, 'build_request', build)
++
++
++@pytest.fixture(autouse=True)
++def prices_for_historical_loopback_adapters(request, monkeypatch):
++    if request.path.stem in {'test_f3_gateway_probe', 'test_f8_rejected_usage', 'test_f6_protocol', 'test_f7_protocol'}:
++        from pathlib import Path
++        from services.prices import PriceBook
++        catalog = PriceBook.load(Path(__file__).parent / 'fixtures/wire_prices')
++        monkeypatch.setattr(PriceBook, 'load', classmethod(lambda cls, directory: catalog))
+--- baseline/tests/fixtures/wire_prices/prices.yaml
++++ current/tests/fixtures/wire_prices/prices.yaml
+@@ -0,0 +1,8 @@
++bindings: {wire: loopback, mock-main: loopback, mock-backup: loopback}
++versions:
++  - supplier: loopback
++    model: deepseek-flash
++    version: fixture-v1
++    effective_from: '2020-01-01T00:00:00Z'
++    peak: {hit: '0.4', miss: '2', output: '8'}
++    off_peak: {hit: '0.4', miss: '2', output: '8'}
+--- baseline/tests/integration/test_f5_gateway.py
++++ current/tests/integration/test_f5_gateway.py
+@@ -3,6 +3,7 @@
+ import json
+ import httpx
+ 
++from legacy_identity import ASGI_AUTH
+ import pytest
+ from fastapi.testclient import TestClient
+ 
+@@ -178,7 +179,7 @@
+         path = '/v1/llm/stream/' + request_id + '/events'
+         scope = {'type': 'http', 'method': 'GET', 'path': path, 'raw_path': path.encode(),
+                  'root_path': '', 'scheme': 'http', 'query_string': b'', 'http_version': '1.1',
+-                 'headers': [], 'server': ('test', 80), 'client': ('127.0.0.1', 1234),
++                 'headers': [ASGI_AUTH], 'server': ('test', 80), 'client': ('127.0.0.1', 1234),
+                  'asgi': {'version': '3.0', 'spec_version': '2.4'}}
+         await asyncio.wait_for(app(scope, receive, send), 3)
+         trace = app.state.traces.requests[request_id]
+--- baseline/tests/integration/test_f5o1_http.py
++++ current/tests/integration/test_f5o1_http.py
+@@ -5,6 +5,7 @@
+ from uuid import UUID
+ 
+ from fastapi.testclient import TestClient
++from legacy_identity import ASGI_AUTH
+ import pytest
+ 
+ from f4_cases import registry
+@@ -283,7 +284,7 @@
+     scope = {'type': 'http', 'method': 'GET' if request_id else 'POST', 'path': path,
+              'raw_path': path.encode(), 'root_path': '', 'scheme': 'http',
+              'query_string': b'', 'http_version': '1.1',
+-             'headers': [(b'content-type', b'application/json')],
++             'headers': [ASGI_AUTH, (b'content-type', b'application/json')],
+              'server': ('test', 80), 'client': ('127.0.0.1', 1234),
+              'asgi': {'version': '3.0', 'spec_version': '2.4'}}
+     supplied = False
+--- baseline/tests/integration/test_f5o2_delivery.py
++++ current/tests/integration/test_f5o2_delivery.py
+@@ -4,6 +4,7 @@
+ import logging
+ from time import monotonic
+ 
++from legacy_identity import ASGI_AUTH
+ import pytest
+ import httpx
+ 
+@@ -23,7 +24,7 @@
+         await (disconnect or asyncio.Event()).wait()
+         return {'type':'http.disconnect'}
+     scope={'type':'http','asgi':{'version':'3.0'},'method':method,'path':path,'raw_path':path.encode(),
+-           'query_string':query,'headers':[(b'content-type',b'application/json')],
++           'query_string':query,'headers':[ASGI_AUTH, (b'content-type',b'application/json')],
+            'scheme':'http','server':('test',80),'client':('test',1),'http_version':'1.1'}
+     await app(scope,receive,send)
+ 
+--- baseline/tests/integration/test_f5o2_faults.py
++++ current/tests/integration/test_f5o2_faults.py
+@@ -5,6 +5,7 @@
+ import time
+ 
+ import httpx
++from legacy_identity import ASGI_AUTH
+ import pytest
+ from sqlalchemy.ext.asyncio import AsyncSession, AsyncSessionTransaction
+ 
+@@ -215,7 +216,7 @@
+             raise BrokenPipeError('controlled transport closed')
+     scope={'type':'http','asgi':{'version':'3.0'},'http_version':'1.1','scheme':'http',
+         'method':'POST','path':'/v1/llm/stream','raw_path':b'/v1/llm/stream','query_string':b'',
+-        'root_path':'','headers':[(b'content-type',b'application/json')],'server':('test',80),'client':('127.0.0.1',12345)}
++        'root_path':'','headers':[ASGI_AUTH, (b'content-type',b'application/json')],'server':('test',80),'client':('127.0.0.1',12345)}
+     async with app.router.lifespan_context(app):
+         with pytest.raises(BrokenPipeError):
+             await app(scope,receive,send)
+--- baseline/tests/integration/test_f5o2_replay.py
++++ current/tests/integration/test_f5o2_replay.py
+@@ -53,6 +53,7 @@
+ async def seed_o1_history(app,rid,count,status):
+     state=app.state
+     trace=state.traces.start_request(rid,operation='streaming')
++    trace.agent_id = 'legacy-test'  # Owned history with O1 event and snapshot format.
+     gateway=GatewayService(state.providers,state.traces,state.prompt_registry,state.model_registry,state.token_budget)
+     execution=gateway.prepare_stream(StreamRequest.model_validate(body()),trace)
+     # O1's real Store path, before pending/two-stage creation existed.
+--- baseline/tests/integration/test_f8_probe.py
++++ current/tests/integration/test_f8_probe.py
+@@ -128,8 +128,11 @@
+         with TestClient(app()) as client:
+             for rid in [*ids, probe_id]:
+                 result = client.get(f'/v1/traces/{rid}')
+-                assert result.status_code == 200
+-                assert result.json()['data']['status'] == 'completed'
++                if rid in ids:
++                    assert result.status_code == 404  # F7 rows have no authenticated owner
++                else:
++                    assert result.status_code == 200
++                    assert result.json()['data']['status'] == 'completed'
+             with server.connect(name) as conn:
+                 assert conn.execute("""select a.provider_duration_ms from tb_llm_request r
+                     join tb_llm_attempt a on r.id=a.request_pk where r.request_id=any(%s)""",(ids,)).fetchall() == [(None,),(None,)]
+@@ -215,7 +218,7 @@
+         snapshot['error_stage'] = stage
+     with connect() as conn:
+         pk = conn.execute("""insert into tb_llm_request(request_id,operation,status,error_code,timing_snapshot,
+-            created_at,ended_at) values(%s,'provider_probe','failed','storage_unavailable',%s,now(),now())
++            created_at,ended_at,agent_id) values(%s,'provider_probe','failed','storage_unavailable',%s,now(),now(),'legacy-test')
+             returning id""", (rid,json.dumps(snapshot))).fetchone()[0]
+         conn.execute("""insert into tb_llm_attempt(request_pk,attempt_no,status,provider,adapter,model,
+             configured_model,api_protocol,started_at,cleanup_error_code,latency_ms)
+--- baseline/tests/integration/test_f8_trace_query.py
++++ current/tests/integration/test_f8_trace_query.py
+@@ -37,12 +37,10 @@
+             response = client.get(f'/v1/traces/{key}')
+             assert (response.status_code, response.json()['code']) == (status, code)
+ 
+-        @asynccontextmanager
+-        async def unavailable(*args, **kwargs):
++        async def fail_query(*args, **kwargs):
+             raise StorageUnavailable()
+-            yield
+ 
+-        monkeypatch.setattr(app.state.storage.database, 'transaction', unavailable)
++        monkeypatch.setattr('api.routes.read_trace', fail_query)
+         response = client.get(f'/v1/traces/{rid}')
+         assert (response.status_code, response.json()['code']) == (503, 'storage_unavailable')
+         assert f'request_id={rid} stage=trace_query code=storage_unavailable' in caplog.text
+@@ -88,7 +86,7 @@
+ 
+         def advance_after_request_read(conn, cursor, statement, parameters, context, many):
+             nonlocal committed
+-            if not committed and 'FROM tb_llm_request' in statement and 'request_id' in statement:
++            if not committed and 'FROM tb_llm_request' in statement and 'timing_snapshot' in statement:
+                 committed = True
+                 with server.connect(name) as writer:
+                     row = writer.execute("UPDATE tb_llm_request SET status='completed', last_event_seq=1 WHERE request_id=%s RETURNING id",(rid,)).fetchone()
+--- baseline/tests/integration/test_f9_billing_queries.py
++++ current/tests/integration/test_f9_billing_queries.py
+@@ -0,0 +1,100 @@
++from fastapi.testclient import TestClient
++
++from test_f5o2_http import case, make_app, server
++
++
++def test_billing_summary_is_an_authenticated_gateway_route(case, server):
++    _, config = case
++    with TestClient(make_app(config)) as client:
++        response = client.get('/v1/billing/summary')
++    assert response.status_code == 401
++    assert response.json()['success'] is False
++    assert response.json()['data'] is None
++
++
++import os
++import subprocess
++import sys
++from pathlib import Path
++from datetime import datetime, timezone
++from decimal import Decimal
++from uuid import uuid4
++
++import pytest
++from sqlalchemy import text
++
++from api.identity import create_agent, issue_credential
++from f7_cases import application, body
++from persistence import billing
++from providers.mock import MockProvider
++
++
++async def enroll(app, agent_id, amount='1'):
++    async with app.state.storage.database.transaction() as s:
++        await create_agent(s, agent_id, agent_id)
++        token = await issue_credential(s, agent_id)
++        if amount:
++            await billing.deposit(s, agent_id, agent_id+'-funds', amount)
++    return {'Authorization': 'Bearer ' + token}
++
++
++async def test_owned_mock_usage_and_empty_history(case, server):
++    _, config = case
++    async with application(config, MockProvider()) as (app, client):
++        owner = await enroll(app,'orders')
++        other = await enroll(app,'another')
++        response = await client.post('/v1/llm', json=body(), headers=owner)
++        assert response.status_code == 200, response.text
++        rid = response.headers['x-request-id']
++        view = (await client.get('/v1/billing/summary', headers=owner)).json()['data']
++        assert Decimal(view['available']) == 1 and Decimal(view['charged']) == 0
++        assert view['usage']['mock']['known_subtotal'] == response.json()['data']['usage']
++        assert view['usage']['real']['attempts'] == 0
++        url = '/v1/billing/requests/' + rid
++        detail = (await client.get(url,headers=owner)).json()['data']
++        assert detail['attempts'][0]['usage_source'] == 'mock'
++        assert Decimal(detail['attempts'][0]['agent_charge']) == 0
++        assert (await client.get(url,headers=other)).status_code == 404
++        assert (await client.get('/v1/billing/requests',headers=other)).json()['data']['items'] == []
++
++
++async def test_cursor_pages_and_date_boundaries(server, case):
++    _, config = case
++    async with application(config, MockProvider()) as (app, client):
++        headers = await enroll(app,'pages')
++        stamp = datetime(2026,1,1,tzinfo=timezone.utc)
++        ids = [uuid4() for _ in range(102)]
++        sql = text("""INSERT INTO tb_llm_request
++            (agent_id,request_id,operation,status,created_at) VALUES ('pages',:rid,'completion','failed',:at)""")
++        async with app.state.storage.database.transaction() as s:
++            await s.execute(sql,[{'rid':rid,'at':stamp if i<101 else stamp.replace(day=2)} for i,rid in enumerate(ids)])
++        params = {'from':stamp.isoformat(),'to':stamp.replace(day=2).isoformat()}
++        url = '/v1/billing/requests'
++        page = (await client.get(url,params=params,headers=headers)).json()['data']
++        assert len(page['items']) == 50
++        found = [r['request_id'] for r in page['items']]
++        while page['next_cursor']:
++            page = (await client.get(url,params=dict(params,cursor=page['next_cursor'],limit=100),
++                                     headers=headers)).json()['data']
++            found.extend(row['request_id'] for row in page['items'])
++        assert found == [str(i) for i in reversed(ids[:101])]
++        for invalid in ({'limit':0},{'limit':101},{'cursor':'bad'},{'to':'2026-01-01'}):
++            assert (await client.get(url,params=invalid,headers=headers)).status_code == 422
++
++
++def test_admin_issues_credential_and_replays_deposit(server, case):
++    _, config = case
++    root = Path(__file__).resolve().parents[2]
++    def cli(*args):
++        result = subprocess.run([sys.executable,'-m','admin','--config-dir',str(config),*args],cwd=root,
++                                env=dict(os.environ,PYTHONPATH=str(root/'src')),capture_output=True,text=True)
++        assert result.returncode == 0, result.stderr
++        return result.stdout.strip()
++    cli('create-agent','orders','售后')
++    token = cli('issue','orders')
++    for _ in range(2):
++        cli('deposit','orders','1.25','--operation-id','receipt-1')
++    with TestClient(make_app(config)) as client:
++        summary = client.get('/v1/billing/summary',headers={'Authorization':'Bearer '+token})
++        assert summary.status_code == 200
++        assert Decimal(summary.json()['data']['available']) == Decimal('1.25')
+--- baseline/tests/integration/test_f9_identity.py
++++ current/tests/integration/test_f9_identity.py
+@@ -0,0 +1,96 @@
++from uuid import uuid4
++
++import httpx
++import pytest
++
++from f6_cases import case, server
++from f7_cases import application, body
++from providers.mock import MockProvider
++
++
++async def test_missing_credential_never_starts_generation(case):
++    _, config = case
++    mock = MockProvider()
++    async with application(config, mock) as (_, client):
++        assert (await client.get('/healthz')).status_code == 200
++        for headers in ({}, {'authorization': 'Basic invalid'}, [('authorization', 'Bearer x'), ('authorization', 'Bearer y')]):
++            reply = await client.post('/v1/llm', headers=headers, json=body())
++            assert reply.status_code == 401
++            assert reply.json()['code'] == 'unauthorized'
++            assert reply.headers['x-request-id']
++        assert not mock.calls
++
++
++async def test_auth_precedes_http_payload_validation(case):
++    from test_f5o2_http import make_app
++    app = make_app(case[1])
++    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url='http://test') as client:
++        response = await client.post('/v1/llm', json={})
++        assert response.status_code == 401
++
++
++async def test_rotation_revocation_durable_ownership(case, server, caplog):
++    from api.identity import create_agent, issue_credential, rotate_credential, revoke_credential
++    name, config = case
++    provider = MockProvider()
++    async with application(config, provider) as (app, client):
++        database = app.state.storage.database
++        async with database.transaction() as session:
++            await create_agent(session, 'a', 'agent A')
++            await create_agent(session, 'b', 'agent B')
++            old = await issue_credential(session, 'a')
++            other = await issue_credential(session, 'b')
++        created = await client.post('/v1/llm/stream', headers={'Authorization': 'Bearer '+old}, json=body())
++        assert created.status_code == 202
++        rid = created.json()['data']['request_id']
++        async with database.transaction() as session:
++            new = await rotate_credential(session, 'a', old.split('.')[0])
++        for verb, path in [('get', f'/v1/traces/{rid}'), ('get', f'/v1/billing/requests/{rid}'),
++                           ('get', f'/v1/llm/stream/{rid}/events'), ('post', f'/v1/llm/stream/{rid}/cancel')]:
++            resp = await getattr(client,verb)(path, headers={'Authorization': 'Bearer '+other})
++            assert (resp.status_code, resp.json()['code']) == (404,'not_found')
++        assert not provider.stream_calls
++        assert (await client.get(f'/v1/traces/{rid}', headers={'Authorization':'Bearer '+old})).status_code == 401
++    async with application(config, provider) as (app, client):
++        result = await client.get(f'/v1/traces/{rid}', headers={'Authorization':'Bearer '+new})
++        assert result.status_code == 200
++        assert result.json()['data']['status'] == 'pending'
++        with server.connect(name) as connection:
++            rows = connection.execute('select * from tb_agent_credential').fetchall()
++            owner, = connection.execute('select agent_id from tb_llm_request where request_id=%s', (rid,)).fetchone()
++        assert owner == 'a'
++        for token in [old, other, new]:
++            assert token.split('.')[1] not in str(rows)+result.text+caplog.text
++        async with app.state.storage.database.transaction() as session:
++            await revoke_credential(session, 'a', new.split('.')[0])
++        assert (await client.get(f'/v1/traces/{rid}', headers={'Authorization':'Bearer '+new})).status_code == 401
++
++
++@pytest.mark.parametrize('verb,suffix,encoded_tail', [
++    ('get', 'events', '%0A'), ('post', 'cancel', '%0A'),
++    ('get', 'events', ''), ('post', 'cancel', ''),
++])
++async def test_cross_agent_matched_stream_route_has_no_side_effects(case, server, verb, suffix, encoded_tail):
++    from api.identity import create_agent, issue_credential
++    from f6_cases import observe
++
++    name, config = case
++    provider = MockProvider()
++    async with application(config, provider) as (app, client):
++        async with app.state.storage.database.transaction() as session:
++            await create_agent(session, 'owner', 'Owner')
++            await create_agent(session, 'intruder', 'Intruder')
++            owner = {'Authorization': 'Bearer ' + await issue_credential(session, 'owner')}
++            intruder = {'Authorization': 'Bearer ' + await issue_credential(session, 'intruder')}
++        created = await client.post('/v1/llm/stream', headers=owner, json=body())
++        rid = created.json()['data']['request_id']
++        before = observe(server, name, rid)
++        response = await client.request(verb, f'/v1/llm/stream/{rid}/{suffix}{encoded_tail}', headers=intruder)
++        assert response.status_code == 404, response.text
++        assert response.json()['data'] is None
++        assert response.json()['code'] == 'not_found'
++        assert not provider.stream_calls
++        assert observe(server, name, rid) == before
++        with server.connect(name) as conn:
++            assert conn.execute('SELECT count(*) FROM tb_billing_attempt').fetchone() == (0,)
++            assert conn.execute('SELECT count(*) FROM tb_billing_operation').fetchone() == (0,)
+--- baseline/tests/integration/test_f9_paid_flow.py
++++ current/tests/integration/test_f9_paid_flow.py
+@@ -0,0 +1,183 @@
++"""Test-owned provider HTTP servers, real Gateway/SDK/PG, fixed fixture prices."""
++from contextlib import asynccontextmanager
++from datetime import datetime, timedelta, timezone
++from decimal import Decimal
++import json
++
++import httpx
++import pytest
++
++from f3_cases import CountingFixture, MODEL_VALUES
++from f6_cases import case, server
++from f7_cases import body
++from main import create_app
++from persistence.billing import resolve
++from services.models import ModelConfig, ModelRegistry, ProviderConfig, RecoveryPolicy
++from settings import Settings
++from test_f9_billing_queries import enroll
++from protocol.test_providers import server as primary_wire, server as backup_wire, SUCCESS
++
++import yaml
++
++
++@asynccontextmanager
++async def account(config, primary_wire, backup_wire, rates, *, next_tariff=None):
++    definitions = {
++        'chat': ProviderConfig(adapter='deepseek', api_protocol='chat_completions',
++                               base_url=primary_wire.url, credential_ref='test'),
++        'response': ProviderConfig(adapter='openai_compatible', api_protocol='responses',
++                                   base_url=backup_wire.url, credential_ref='test'),
++    }
++    prices = dict(zip(('hit', 'miss', 'output'), rates))
++    tariff = dict(supplier='fixture', model='deepseek-flash', version='test-v1',
++                  effective_from='2020-01-01T00:00:00Z', peak=prices, off_peak=prices)
++    (config/'prices.yaml').write_text(yaml.safe_dump({'bindings': dict.fromkeys(definitions, 'fixture'),
++                                                      'versions': [tariff, tariff | next_tariff] if next_tariff else [tariff]}))
++    (config/'credentials.yaml').write_text('credentials: {test: {api_key: local-wire-fixture}}')
++    models = {name: ModelConfig(**(MODEL_VALUES | {'provider': provider, 'fallback_models': fallback}))
++              for name, provider, fallback in [('general-primary', 'chat', ('general-backup',)),
++                                                ('general-backup', 'response', ())]}
++    registry = ModelRegistry(models, definitions, recovery=RecoveryPolicy(max_attempts=2, max_attempts_per_model=1))
++    app = create_app(settings=Settings(env='test', _env_file=None), model_registry=registry,
++                     config_dir=config, token_budget=CountingFixture(250).as_budget())
++    async with app.router.lifespan_context(app):
++        headers = await enroll(app, 'agent-a123')
++        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app),
++                                     base_url='http://test', headers=headers) as client:
++            yield app, client
++
++
++def responses_body(output):
++    return json.dumps(dict(object='response', model='deepseek-flash', status='completed',
++                           output=[dict(type='message', role='assistant', status='completed',
++                                        content=[dict(type='output_text', text='A123')])],
++                           usage=dict(input_tokens=200, output_tokens=output, total_tokens=200+output,
++                                      input_tokens_details={'cached_tokens':150})))
++
++
++@pytest.mark.parametrize('model', ['general-primary', 'general-backup'])
++async def test_b01_fixed_prices_cross_the_provider_boundary(server, case, primary_wire, backup_wire, model):
++    name, config = case
++    primary_wire.body = SUCCESS | {'usage': dict(prompt_tokens=200, completion_tokens=20, total_tokens=220,
++                                                  prompt_cache_hit_tokens=150, prompt_cache_miss_tokens=50)}
++    backup_wire.raw = responses_body(20).encode()
++    async with account(config, primary_wire, backup_wire, ('0.4', '2', '8')) as (_, client):
++        result = await client.post('/v1/llm', json=body(model=model, max_output_tokens=100))
++        assert result.status_code == 200, result.text
++        assert len(primary_wire.calls) + len(backup_wire.calls) == 1
++        rid = result.headers['x-request-id']
++        data = (await client.get(f'/v1/billing/requests/{rid}')).json()['data']
++        attempt, = data['attempts']
++        assert attempt['cached_input_tokens'] == 150
++        assert Decimal(attempt['reserved_amount']) == Decimal('.001300')
++        assert Decimal(attempt['agent_charge']) == Decimal('.000320')
++        summary = (await client.get('/v1/billing/summary')).json()['data']
++        assert Decimal(summary['available']) == Decimal('.999680')
++        with server.connect(name) as conn:
++            saved, = conn.execute('SELECT reserved_amount, agent_charge, supplier_cost FROM tb_billing_attempt').fetchall()
++        assert saved == (Decimal('.001300'), Decimal('.000320'), Decimal('.000320'))
++
++
++@pytest.mark.parametrize('action,amount,available', [('settle','.008','.986'), ('zero',None,'.994'),
++                                                     ('platform',None,'.994')])
++async def test_b04_unknown_primary_known_backup_disposition(server, case, primary_wire, backup_wire,
++                                                           action, amount, available):
++    name, config = case
++    primary_wire.status = 503  # rejected without trustworthy usage
++    backup_wire.raw = responses_body(40).encode()
++    async with account(config, primary_wire, backup_wire, ('20','20','50')) as (app, client):
++        reply = await client.post('/v1/llm', json=body(max_output_tokens=100))
++        assert reply.status_code == 200, reply.text
++        assert len(primary_wire.calls) == len(backup_wire.calls) == 1
++        rid = reply.headers['x-request-id']
++        item, = (await client.get('/v1/billing/requests')).json()['data']['items']
++        detail = (await client.get('/v1/billing/requests/'+rid)).json()['data']
++        assert item['request_id'] == rid and item['billing_status'] == 'partially_pending'
++        assert [a['state'] for a in detail['attempts']] == ['pending','settled']
++        summary = (await client.get('/v1/billing/summary')).json()['data']
++        assert [Decimal(summary[k]) for k in ['available','charged','pending']] == [
++            Decimal('.984'), Decimal('.006'), Decimal('.010')]
++        assert summary['usage']['real']['unknown_attempts'] == 1
++        for _ in range(2):
++            async with app.state.storage.database.transaction() as session:
++                await resolve(session, rid, 1, 'disposition-A123', action, amount, 'fixture statement')
++        with server.connect(name) as conn:
++            row = conn.execute('SELECT agent_charge,supplier_cost FROM tb_billing_attempt WHERE attempt_no=1').fetchone()
++        assert row == (Decimal(amount or '0'), None if action=='platform' else Decimal(amount or '0'))
++        summary = (await client.get('/v1/billing/summary')).json()['data']
++        assert Decimal(summary['available']) == Decimal(available)
++        assert Decimal(summary['pending']) == 0
++
++
++@pytest.mark.parametrize('final_report', [False, True])
++async def test_r1_chat_usage_without_done_requires_final_report(server, case, primary_wire, backup_wire, final_report):
++    name, config = case
++    report = dict(prompt_tokens=10, completion_tokens=1, total_tokens=11,
++                  prompt_cache_hit_tokens=7, prompt_cache_miss_tokens=3)
++    chunk = dict(object='chat.completion.chunk', model='deepseek-flash', usage=report,
++                 choices=[dict(index=0, delta={'content':'x'}, finish_reason='stop' if final_report else None)])
++    primary_wire.raw = ('data: '+json.dumps(chunk)+'\n\n').encode()
++    async with account(config, primary_wire, backup_wire, ('20','20','50')) as (_, client):
++        result = await client.post('/v1/llm/stream', json=body(max_output_tokens=100))
++        rid = result.headers['x-request-id']
++        events = await client.get(f'/v1/llm/stream/{rid}/events')
++        assert 'response.failed' in events.text
++        detail = (await client.get(f'/v1/billing/requests/{rid}')).json()['data']['attempts'][0]
++        assert detail['total_tokens'] == 11
++        assert detail['state'] == ('settled' if final_report else 'pending')
++        if final_report:
++            assert Decimal(detail['agent_charge']) == Decimal('.000250')
++        else:
++            assert detail['agent_charge'] is None and detail['supplier_cost'] is None
++
++
++@pytest.mark.parametrize('offset,expected_status', [(5, 402), (120, 200)])
++async def test_r1_known_hike_only_within_deadline(server, case, primary_wire, backup_wire, monkeypatch,
++                                                 offset, expected_status):
++    from persistence import store
++    start = datetime.now(timezone.utc)
++    monkeypatch.setattr(store, 'now', lambda: start)
++    high = dict(hit='10000', miss='10000', output='10000')
++    hike = dict(version='expensive', effective_from=(start+timedelta(seconds=offset)).isoformat(), peak=high, off_peak=high)
++    async with account(case[1], primary_wire, backup_wire, ('1','1','1'), next_tariff=hike) as (_, client):
++        result = await client.post('/v1/llm', json=body(max_output_tokens=100, timeout_seconds=10))
++        assert result.status_code == expected_status
++        if expected_status == 402:
++            assert result.json()['code'] == 'insufficient_budget'
++            assert len(primary_wire.calls) == len(backup_wire.calls) == 0
++            summary = (await client.get('/v1/billing/summary')).json()['data']
++            assert Decimal(summary['available']) == 1 and Decimal(summary['reserved']) == 0
++        else:
++            assert len(primary_wire.calls) == 1 and not backup_wire.calls
++            rid = result.headers['x-request-id']
++            attempt, = (await client.get(f'/v1/billing/requests/{rid}')).json()['data']['attempts']
++            assert Decimal(attempt['reserved_amount']) == Decimal('.000350')
++
++
++@pytest.mark.parametrize('model', ['general-primary', 'general-backup'])
++@pytest.mark.parametrize('crossed', [False, True])
++async def test_r1_final_report_time_drives_settlement(server, case, primary_wire, backup_wire, monkeypatch, model, crossed):
++    from persistence import store
++    from providers import base
++    start = datetime.now(timezone.utc) - timedelta(minutes=5)
++    # Isolate UTC observation time from the later wall time of the database writer.
++    boundary = start + timedelta(seconds=5)
++    reported = boundary + timedelta(seconds=1 if crossed else -1)
++    class ObservedClock(datetime):
++        @classmethod
++        def now(cls, tz=None):
++            return reported.astimezone(tz)
++
++    monkeypatch.setattr(store, 'now', lambda: start)
++    monkeypatch.setattr(base, 'datetime', ObservedClock)
++    extra = dict(version='later', effective_from=boundary.isoformat())
++    backup_wire.raw = responses_body(20).encode()
++    async with account(case[1], primary_wire, backup_wire, ('1','1','1'), next_tariff=extra) as (_, client):
++        result = await client.post('/v1/llm', json=body(model=model, max_output_tokens=100))
++        assert result.status_code == 200, result.text
++        rid = result.headers['x-request-id']
++        attempt, = (await client.get(f'/v1/billing/requests/{rid}')).json()['data']['attempts']
++        assert attempt['state'] == ('pending' if crossed else 'settled')
++        with server.connect(case[0]) as db:
++            stored, = db.execute('SELECT billing_observed_at FROM tb_billing_attempt').fetchone()
++        assert stored == reported
+--- baseline/tests/integration/test_f9_stream_budget.py
++++ current/tests/integration/test_f9_stream_budget.py
+@@ -0,0 +1,81 @@
++"""One funded account, many subscribers, and independently observed provider entries."""
++import asyncio
++from decimal import Decimal
++
++import pytest
++from sqlalchemy import text
++
++from f6_cases import ControlledProvider, case, frames, server
++from f7_cases import application, body, registry
++from services.models import ModelRegistry, ProviderConfig
++from test_f9_billing_queries import enroll
++
++
++def paid_models(config):
++    models = registry({'general-backup': {'structured_output_mode': 'none'}})
++    providers = {key: ProviderConfig(adapter='deepseek',api_protocol='chat_completions',
++                 base_url='http://127.0.0.1', credential_ref='test-only') for key in models.providers}
++    (config/'prices.yaml').write_text("""
++bindings: {mock-main: test, mock-backup: test}
++versions:
++- supplier: test
++  model: deepseek-flash
++  version: test
++  effective_from: '2000-01-01T00:00:00Z'
++  peak: {hit: '0', miss: '0', output: '1000'}
++  off_peak: {hit: '0', miss: '0', output: '1000'}
++""")
++    return ModelRegistry(models.models,providers,models.recovery)
++
++
++@pytest.mark.parametrize('end',['cancel','finish'])
++async def test_parallel_preflight_and_stream_lifecycle(case, server, end):
++    _, config = case
++    controlled = ControlledProvider(first=True)
++    async with application(config,controlled,models=paid_models(config)) as (app,client):
++        client.headers.update(await enroll(app,'orders','0.010'))
++        payload = body(max_output_tokens=8)
++        created = await client.post('/v1/llm/stream',json=payload)
++        rid = created.json()['data']['request_id']
++        url = f'/v1/llm/stream/{rid}/events'
++        async def balance():
++            return (await client.get('/v1/billing/summary')).json()['data']
++        assert Decimal((await balance())['reserved']) == 0
++        subscriptions = [asyncio.create_task(client.get(url)) for _ in range(2)]
++        try:
++            await asyncio.wait_for(controlled.entered.wait(),5)
++            assert Decimal((await balance())['reserved']) == Decimal('.008')
++            refused = await client.post('/v1/llm',json=payload)
++            assert (refused.status_code,refused.json()['code']) == (402,'insufficient_budget')
++            assert not controlled.calls
++            another = await client.post('/v1/llm/stream',json=payload)
++            denied = await client.get('/v1/llm/stream/'+another.json()['data']['request_id']+'/events')
++            assert frames(denied.text)[-1][2]['code'] == 'insufficient_budget'
++            assert len(controlled.stream_calls) == 1
++            if end == 'cancel':
++                result = await client.post(f'/v1/llm/stream/{rid}/cancel')
++                assert result.status_code in (200,202)
++        finally:
++            controlled.release.set()
++            replies = await asyncio.wait_for(asyncio.gather(*subscriptions),6)
++        events = frames(replies[0].text)
++        assert events[-1][1] == ('response.canceled' if end=='cancel' else 'response.completed')
++        assert frames((await client.get(url,params={'after_seq':events[-1][0]-1})).text) == [events[-1]]
++        totals = await balance()
++        assert Decimal(totals['reserved']) == Decimal(totals['pending']) == Decimal('.008')
++        assert totals['pending_attempts'] == len(controlled.stream_calls) == 1
++        async with app.state.storage.database.transaction() as s:
++            assert await s.scalar(text('SELECT count(*) FROM tb_billing_attempt')) == 1
++
++
++async def test_pending_cancel_never_creates_a_hold(case,server):
++    _, config = case
++    provider = ControlledProvider()
++    async with application(config,provider,models=paid_models(config)) as (app,client):
++        client.headers.update(await enroll(app,'orders'))
++        rid = (await client.post('/v1/llm/stream',json=body())).json()['data']['request_id']
++        while (await client.post(f'/v1/llm/stream/{rid}/cancel')).status_code==202:
++            await asyncio.sleep(.01)
++        detail = (await client.get('/v1/billing/requests/'+rid)).json()['data']
++        assert detail['status']=='canceled' and not detail['attempts'] and not provider.stream_calls
++        assert Decimal(detail['charged']) == Decimal(detail['reserved']) == 0
+--- baseline/tests/legacy_identity.py
++++ current/tests/legacy_identity.py
+@@ -0,0 +1,31 @@
++"""Credentials belong only to disposable PostgreSQL and Gateway HTTP clients in historical tests."""
++from hashlib import sha256
++from pathlib import Path
++from tempfile import gettempdir
++from uuid import uuid4
++import secrets
++
++import psycopg
++import yaml
++
++
++PUBLIC = uuid4().hex
++SECRET = secrets.token_urlsafe(32)
++HEADERS = {'Authorization': f'Bearer {PUBLIC}.{SECRET}'}
++ASGI_AUTH = (b'authorization', HEADERS['Authorization'].encode())
++
++
++def provision(directory):
++    config = yaml.safe_load((Path(directory) / 'gateway.yaml').read_text())['database']
++    password = Path(config['password_file']).resolve()
++    assert config['host'] == '127.0.0.1' and config['username'] == 'gateway_test'
++    assert config['name'].startswith('case_') and password.name == 'postgres.password'
++    assert password.parent.parent == Path(gettempdir()).resolve()
++    assert password.parent.name.startswith('llm-gateway-pg-test-')
++    with psycopg.connect(host=config['host'], port=config['port'], dbname=config['name'],
++                         user=config['username'], password=password.read_text()) as db:
++        db.execute("INSERT INTO tb_agent VALUES ('legacy-test','integration fixture') ON CONFLICT DO NOTHING")
++        db.execute("INSERT INTO tb_agent_credential(public_id,agent_id,digest) VALUES (%s,'legacy-test',%s) ON CONFLICT DO NOTHING",
++                   (PUBLIC, sha256(SECRET.encode()).hexdigest()))
++        db.execute("""INSERT INTO tb_billing_operation(operation_id,kind,agent_id,amount,reason,details)
++                      VALUES ('initial-test-funds','deposit','legacy-test',10000,'test fixture','{}') ON CONFLICT DO NOTHING""")
+--- baseline/tests/live/test_f5o1_acceptance.py
++++ current/tests/live/test_f5o1_acceptance.py
+@@ -1,8 +1,12 @@
+ """Six explicitly authorized real calls; PostgreSQL remains test-owned."""
++from datetime import datetime
++from decimal import Decimal
++
+ import asyncio
+ import socket
+ 
+ import httpx2
++from legacy_identity import HEADERS
+ import pytest
+ import pytest_asyncio
+ from psycopg.rows import dict_row
+@@ -38,6 +42,7 @@
+     name = live_pg.create_database()
+     directory = write_config(tmp_path / 'config', live_pg, name, real_registry())
+     (directory / 'credentials.yaml').symlink_to(credentials)
++    (directory / 'prices.yaml').symlink_to(DEFAULT_CONFIG_DIR / 'prices.yaml')
+     await asyncio.to_thread(migrate, directory)
+     app = create_app(settings=Settings(env='test', _env_file=None),
+                      model_registry=real_registry(), config_dir=directory)
+@@ -54,7 +59,7 @@
+                     await task
+                     pytest.fail('验收服务未启动')
+                 await asyncio.sleep(.01)
+-        async with httpx2.AsyncClient(base_url=f'http://127.0.0.1:{port}', trust_env=False, timeout=40) as client:
++        async with httpx2.AsyncClient(headers=HEADERS, base_url=f'http://127.0.0.1:{port}', trust_env=False, timeout=40) as client:
+             yield app, client, live_pg, name
+     finally:
+         server.should_exit = True
+@@ -68,7 +73,20 @@
+     ('general-backup', 'openai_compatible', 'responses'),
+ ])
+ @pytest.mark.parametrize('mode', ['text', 'structured', 'streaming'])
+-async def test_real_call_and_committed_records(accepted_server, model, adapter, protocol, mode, record_property):
++async def test_real_call_and_committed_records(accepted_server, model, adapter, protocol, mode, record_property, monkeypatch):
++    from providers import base, streaming
++    # Observe only upstream metering, before provider-specific normalization.
++    # Never capture request headers, messages or response content.
++    wire_usage = []
++    actual_observer = base.observe_reported_metadata
++
++    def observe(raw, observed, *, chat):
++        if raw.get('usage') is not None:
++            wire_usage.append(dict(raw['usage']))
++        return actual_observer(raw, observed, chat=chat)
++
++    monkeypatch.setattr(base, 'observe_reported_metadata', observe)
++    monkeypatch.setattr(streaming, 'observe_reported_metadata', observe)
+     app, client, pg, name = accepted_server
+     payload = {'model': model, 'prompt': {'name': 'basic_text', 'version': '1.0.0'},
+                'messages': [{'role': 'user', 'content': '用一句话解释 TTFT，不超过四十字。'}],
+@@ -153,3 +171,39 @@
+                        'actual_model': attempt['actual_model'], 'input_tokens': attempt['input_tokens'],
+                        'output_tokens': attempt['output_tokens'], 'events': len(events)}.items():
+         record_property(key, value)
++
++    raw = wire_usage[-1]
++    if protocol == 'chat_completions':
++        billed_input, cached, billed_output = raw['prompt_tokens'], raw['prompt_cache_hit_tokens'], raw['completion_tokens']
++        assert cached + raw['prompt_cache_miss_tokens'] == billed_input
++    else:
++        billed_input, cached, billed_output = raw['input_tokens'], raw['input_tokens_details']['cached_tokens'], raw['output_tokens']
++    billing_url = f'/v1/billing/requests/{request_id}'
++    accounting = (await client.get(billing_url)).json()['data']
++    charge, = accounting['attempts']
++    with pg.connect(name, row_factory=dict_row) as connection:
++        ledger, = connection.execute('SELECT * FROM tb_billing_attempt WHERE request_pk=%s', (record['id'],)).fetchall()
++    quote = ledger['quote']
++    assert quote == charge['quote']
++    assert (quote['supplier'], quote['model'], quote['currency']) == ('deepseek', 'deepseek-flash', 'CNY')
++    assert charge['usage_source'] == 'real' and charge['cached_input_tokens'] == ledger['cached_input_tokens'] == cached
++    assert (billed_input, billed_output) == (attempt['input_tokens'], attempt['output_tokens'])
++    if charge['state'] == 'settled':
++        expected = (cached * Decimal(quote['hit']) + (billed_input-cached) * Decimal(quote['miss'])
++                    + billed_output * Decimal(quote['output'])) / 1_000_000
++        assert ledger['agent_charge'] == ledger['supplier_cost'] == Decimal(charge['agent_charge']) == expected
++    else:
++        # Calendar coverage or a tariff boundary can prevent an automatic charge.
++        assert charge['state'] == 'pending' and charge['agent_charge'] is None
++        assert quote['period'] == 'unknown' or (
++            quote['valid_until'] and attempt['ended_at'] >= datetime.fromisoformat(quote['valid_until']))
++    if mode == 'streaming':
++        before = len(wire_usage)
++        replay = await client.get(f'{path}/{request_id}/events', params={'after_seq': sequences[-2]})
++        assert replay.status_code == 200 and 'event: response.completed' in replay.text
++        assert len(wire_usage) == before
++        assert (await client.get(billing_url)).json()['data'] == accounting
++    for key, value in {'cached_input_tokens': cached, 'billing_state': charge['state'], 'price_version': quote['version'],
++                       'price_period': quote['period'], 'agent_charge': charge['agent_charge'],
++                       'supplier_cost': charge['supplier_cost']}.items():
++        record_property(key, value)
+--- baseline/tests/live/test_real_providers.py
++++ current/tests/live/test_real_providers.py
+@@ -6,6 +6,7 @@
+ import socket
+ 
+ import httpx2
++from legacy_identity import HEADERS
+ import pytest
+ import pytest_asyncio
+ import uvicorn
+@@ -55,7 +56,7 @@
+                     await task
+                     pytest.fail("真实测试应用未完成启动")
+                 await asyncio.sleep(0.01)
+-        async with httpx2.AsyncClient(base_url=f"http://127.0.0.1:{port}", trust_env=False, timeout=40) as client:
++        async with httpx2.AsyncClient(headers=HEADERS, base_url=f"http://127.0.0.1:{port}", trust_env=False, timeout=40) as client:
+             yield app, client
+     finally:
+         server.should_exit = True
+--- baseline/tests/postgres/test_f5o1_persistence.py
++++ current/tests/postgres/test_f5o1_persistence.py
+@@ -272,10 +272,10 @@
+         assert fields['id'] == ('bigint','YES','ALWAYS')
+         assert fields['request_id'][0] == 'uuid'
+         keys = conn.execute("select tablename,indexdef from pg_indexes where schemaname='public'").fetchall()
+-        assert len(keys) == 6  # includes Alembic PK
++        assert len(keys) == 13  # includes agent pagination, billing indexes and Alembic PK
+         assert any('UNIQUE' in ddl and '(request_id)' in ddl for _,ddl in keys)
+         foreign_keys = conn.execute("select count(*) from information_schema.table_constraints where constraint_type='FOREIGN KEY' and table_schema='public'").fetchone()[0]
+-        assert foreign_keys == 2
++        assert foreign_keys == 8
+         request_id = str(uuid.uuid4())
+         pk = conn.execute("insert into tb_llm_request(request_id,operation,status,created_at) values (%s,'completion','running',now()) returning id",(request_id,)).fetchone()[0]
+         conn.commit()
+--- baseline/tests/postgres/test_f6_storage.py
++++ current/tests/postgres/test_f6_storage.py
+@@ -168,13 +168,13 @@
+         try:await database.start()
+         finally:await database.close()
+         with pg_server.connect(name) as c:
+-            assert c.execute('select version_num from alembic_version').fetchone()==('f8_001',)
+-            assert c.execute('select * from tb_llm_request order by id').fetchall()==original_requests
++            assert c.execute('select version_num from alembic_version').fetchone()==('f9_001',)
++            assert c.execute('select * from tb_llm_request order by id').fetchall()==[(*r, None) for r in original_requests]
+             assert [row[:len(original_attempts[0])] for row in c.execute('select * from tb_llm_attempt order by request_pk,attempt_no').fetchall()]==original_attempts
+             assert c.execute('select * from tb_llm_stream_event order by request_pk,seq').fetchall()==original_events
+             c.execute("update tb_llm_attempt set status='canceled'")
+         with pytest.raises(psycopg.errors.CheckViolation):
+             with pg_server.connect(name) as c:c.execute("update tb_llm_attempt set status='canceling'")
+         with pg_server.connect(name) as c:
+-            assert {r[0] for r in c.execute("select tablename from pg_tables where schemaname='public'").fetchall()}=={'alembic_version','tb_llm_request','tb_llm_attempt','tb_llm_stream_event'}
++            assert {r[0] for r in c.execute("select tablename from pg_tables where schemaname='public'").fetchall()}=={'alembic_version','tb_llm_request','tb_llm_attempt','tb_llm_stream_event','tb_agent','tb_agent_credential','tb_billing_attempt','tb_billing_operation'}
+     finally:pg_server.drop_database(name)
+--- baseline/tests/postgres/test_f7_storage.py
++++ current/tests/postgres/test_f7_storage.py
+@@ -129,7 +129,7 @@
+         try:await db.start()
+         finally:await db.close()
+         with pg_server.connect(name) as c:
+-            assert c.execute('select version_num from alembic_version').fetchone()==('f8_001',)
++            assert c.execute('select version_num from alembic_version').fetchone()==('f9_001',)
+             assert c.execute('select '+','.join(columns)+' from tb_llm_attempt').fetchall()==before
+             assert c.execute('select input_snapshot,reason,provider_entered,input_token_count,max_output_tokens from tb_llm_attempt').fetchone()==(None,None,None,None,None)
+     finally:pg_server.drop_database(name)
+--- baseline/tests/postgres/test_f9_ledger.py
++++ current/tests/postgres/test_f9_ledger.py
+@@ -0,0 +1,269 @@
++from decimal import Decimal
++from uuid import uuid4
++
++import pytest
++from sqlalchemy import text
++
++from test_f5o2_storage import pg_server, persisted
++
++
++async def test_migration_preserves_historical_ownerless_requests(persisted):
++    db, _, _ = persisted
++    async with db.transaction() as session:
++        assert await session.scalar(text("select to_regclass('tb_billing_attempt')::text")) == 'tb_billing_attempt'
++        rid = uuid4()
++        await session.execute(text("""insert into tb_llm_request(request_id,operation,status,created_at)
++            values (:id,'completion','failed',now())"""), {'id': rid})
++        assert await session.scalar(text('select agent_id from tb_llm_request where request_id=:id'), {'id': rid}) is None
++
++
++from datetime import datetime, timedelta, timezone
++from types import SimpleNamespace
++
++from contracts import Usage
++from errors import GatewayError
++from persistence import billing
++from services.prices import PriceQuote
++
++
++def paid_quote(amount='0.008'):
++    return PriceQuote('supplier-main', 'flash', 'v1', 'CNY', 'fixed', '0.4', '2', '8',
++                      250, 100, Decimal(amount), None)
++
++
++async def owned_attempt(session, owner, number=1):
++    rid = uuid4()
++    pk = await session.scalar(text("""insert into tb_llm_request(agent_id,request_id,operation,status,created_at)
++        values (:owner,:id,'completion','running',now()) returning id"""), {'owner':owner, 'id':rid})
++    await session.execute(text("""insert into tb_llm_attempt(request_pk,attempt_no,model,provider,adapter,
++        api_protocol,configured_model,status,started_at)
++        values (:pk,:number,'primary','wire','deepseek','chat_completions','flash','running',now())"""),
++        {'pk': pk, 'number':number})
++    return {'id':pk, 'agent_id':owner,'request_id':rid}, SimpleNamespace(
++        number=number, adapter='deepseek', actual_model='flash', configured_model='flash',
++        billing_observed_at=datetime.now(timezone.utc),
++        usage=Usage(input_tokens=200,output_tokens=20,total_tokens=220),cached_input_tokens=150,provider_entered=True)
++
++
++async def account(session, amount='1.000'):
++    await session.execute(text("insert into tb_agent(agent_id,name) values ('ledger-a','A')"))
++    return await billing.deposit(session,'ledger-a','init',Decimal(amount))
++
++
++async def test_known_cost_deposit_replay_and_conflicting_operation(persisted):
++    db, _, _ = persisted
++    async with db.transaction() as s:
++        assert (await account(s))['available'] == 1
++        assert (await billing.deposit(s,'ledger-a','init','1'))['available'] == 1
++        row, rec = await owned_attempt(s, 'ledger-a')
++        await billing.reserve(s,row,rec,paid_quote('0.001300'))
++        assert (await billing.balance(s,'ledger-a'))['available'] == Decimal('.998700')
++        await billing.settle(s,row,rec)
++        await billing.settle(s,row,rec)
++        assert (await billing.balance(s,'ledger-a'))['available'] == Decimal('.999680')
++    with pytest.raises(GatewayError,match='操作编号'):
++        async with db.transaction() as s:
++            await billing.deposit(s,'ledger-a','init','2')
++
++
++@pytest.mark.parametrize('action,amount,state,charge,supplier',[
++    ('settle','.008','settled',Decimal('.008'),Decimal('.008')),
++    ('zero',None,'released',0,0), ('platform',None,'platform',0,None)])
++async def test_recovered_hold_manual_resolution_once(persisted,action,amount,state,charge,supplier):
++    db,_,_ = persisted
++    async with db.transaction() as s:
++        await account(s)
++        row,rec = await owned_attempt(s,'ledger-a')
++        await billing.reserve(s,row,rec,paid_quote())
++        await billing.recover_billing(s,row)
++        assert (await billing.balance(s,'ledger-a'))['pending_attempts'] == 1
++        for _ in range(2):
++            await billing.resolve(s,row['request_id'],1,'resolve',action,amount,'statement evidence')
++        record=(await s.execute(text('select state,agent_charge,supplier_cost from tb_billing_attempt'))).one()
++        assert tuple(record)==(state,charge,supplier)
++        assert (await billing.balance(s,'ledger-a'))['reserved']==0
++
++
++@pytest.mark.parametrize('actual,cache', [('different',150),('flash',None)])
++async def test_uncertain_evidence_bills_nothing_until_known(persisted,actual,cache):
++    db,_,_ = persisted
++    async with db.transaction() as s:
++        await account(s)
++        row,rec = await owned_attempt(s,'ledger-a')
++        rec.actual_model,rec.cached_input_tokens=actual,cache
++        await billing.reserve(s,row,rec,paid_quote())
++        await billing.settle(s,row,rec)
++        assert (await billing.balance(s,'ledger-a'))['pending']==Decimal('.008')
++
++
++async def test_statement_compares_known_and_unknown_without_allocating(persisted):
++    db,_,_=persisted
++    async with db.transaction() as s:
++        await account(s)
++        for known in (True,False):
++            row,rec = await owned_attempt(s,'ledger-a')
++            await billing.reserve(s,row,rec,paid_quote())
++            if not known: rec.usage=None
++            await billing.settle(s,row,rec)
++        now=datetime.now(timezone.utc)
++        args=('stmt','supplier-main','CNY',now-timedelta(hours=1),now+timedelta(hours=1),'0.001','supplier report')
++        for inserted in (True,False):
++            report = await billing.reconcile_statement(s,*args)
++            assert report['newly_recorded'] is inserted
++            assert report['subtotal']==Decimal('0.000320') and report['unknown_attempts']==1
++            assert report['unassigned_difference']==Decimal('0.000680')
++        assert (await billing.balance(s,'ledger-a'))['pending']==Decimal('.008')
++
++
++async def test_concurrent_reservations_serialize_on_agent(persisted):
++    import asyncio
++    db,_,_=persisted
++    async with db.transaction() as s:
++        await account(s,'.010')
++        attempts=[await owned_attempt(s,'ledger-a') for _ in range(2)]
++    async def run(item):
++        try:
++            async with db.transaction() as s:
++                await billing.reserve(s,*item,paid_quote())
++            return 'ok'
++        except GatewayError as exc:
++            return exc.code
++    assert sorted(await asyncio.gather(*(run(item) for item in attempts)))==['insufficient_budget','ok']
++    async with db.transaction() as s:
++        assert (await billing.balance(s,'ledger-a'))['available']==Decimal('.002')
++
++
++async def test_supplier_evidence_after_platform_release_does_not_charge_agent(persisted):
++    db,_,_=persisted
++    async with db.transaction() as s:
++        await account(s)
++        row,rec=await owned_attempt(s,'ledger-a')
++        await billing.reserve(s,row,rec,paid_quote())
++        await billing.recover_billing(s,row)
++        await billing.resolve(s,row['request_id'],1,'waive','platform',None,'platform assumes fee')
++        for _ in range(2):
++            await billing.resolve(s,row['request_id'],1,'invoice','supplier','.002','verified invoice')
++        record = (await s.execute(text('select state,agent_charge,supplier_cost from tb_billing_attempt'))).one()
++        assert tuple(record)==('platform',0,Decimal('.002'))
++        assert (await billing.balance(s,'ledger-a'))['available']==1
++
++
++async def test_commit_ack_loss_then_retry_never_reapplies_charge(persisted,monkeypatch):
++    from persistence.database import StorageUnavailable
++    from sqlalchemy.ext.asyncio import AsyncSessionTransaction
++    db,_,_=persisted
++    async with db.transaction() as s:
++        await account(s)
++        row,rec=await owned_attempt(s,'ledger-a')
++        await billing.reserve(s,row,rec,paid_quote())
++    original=AsyncSessionTransaction.__aexit__
++    async def lose_ack(transaction,*args):
++        await original(transaction,*args)
++        raise OSError('test: lost commit acknowledgement')
++    with monkeypatch.context() as patch:
++        patch.setattr(AsyncSessionTransaction,'__aexit__',lose_ack)
++        with pytest.raises(StorageUnavailable):
++            async with db.transaction() as s:
++                await billing.settle(s,row,rec)
++    async with db.transaction() as s:
++        await billing.recover_billing(s,row)
++        await billing.settle(s,row,rec)
++        assert (await billing.balance(s,'ledger-a'))['available']==Decimal('.999680')
++
++
++async def test_competing_manual_operations_only_one_commits(persisted):
++    import asyncio
++    db,_,_=persisted
++    async with db.transaction() as s:
++        await account(s)
++        row,rec=await owned_attempt(s,'ledger-a')
++        await billing.reserve(s,row,rec,paid_quote())
++        await billing.recover_billing(s,row)
++    async def resolve(idx):
++        try:
++            async with db.transaction() as s:
++                await billing.resolve(s,row['request_id'],1,str(idx),'settle','.003','verified receipt')
++            return 'ok'
++        except GatewayError as err:
++            return err.code
++    results=await asyncio.gather(resolve(1),resolve(2))
++    assert sorted(results)==['billing_state_conflict','ok']
++    async with db.transaction() as s:
++        assert (await billing.balance(s,'ledger-a'))['available']==Decimal('.997')
++        assert await s.scalar(text("select count(*) from tb_billing_operation where kind='settle'"))==1
++
++
++async def test_budget_can_be_negative_after_actual_settlement(persisted):
++    db,_,_=persisted
++    async with db.transaction() as s:
++        await account(s,'.000100')
++        row,rec=await owned_attempt(s,'ledger-a')
++        await billing.reserve(s,row,rec,paid_quote('.000100'))
++        await billing.settle(s,row,rec)
++        assert (await billing.balance(s,'ledger-a'))['available']==Decimal('-.000220')
++    with pytest.raises(GatewayError,match='预算不足'):
++        async with db.transaction() as s:
++            row,rec=await owned_attempt(s,'ledger-a')
++            await billing.reserve(s,row,rec,paid_quote())
++    async with db.transaction() as s:
++        assert (await billing.deposit(s,'ledger-a','credit-2','1.0'))['available']==Decimal('.999780')
++
++
++async def test_amounts_exact_at_scale_boundaries(persisted):
++    db,_,_=persisted
++    async with db.transaction() as s:
++        await account(s,'100000000000000000000')
++        await billing.deposit(s,'ledger-a','tiny','0.000000000000000000000001')
++        assert (await billing.balance(s,'ledger-a'))['available']==Decimal('100000000000000000000.000000000000000000000001')
++    for invalid in ('NaN','Infinity','-1','1e-25','1e21','0'):
++        with pytest.raises(GatewayError):
++            async with db.transaction() as s:
++                await billing.deposit(s,'ledger-a','invalid',invalid)
++
++
++@pytest.mark.parametrize('observation,expected_state', [
++    ('2025-12-31T23:59:59.999999+00:00','settled'),
++    ('2026-01-01T00:00:00+00:00','pending'),
++    (None,'pending'),
++])
++async def test_paid_settlement_uses_terminal_observation_not_write_time(persisted, observation, expected_state):
++    from dataclasses import replace
++    db,_,_=persisted
++    # The terminal report and the price switch are in the past when PG commits.
++    boundary = '2026-01-01T00:00:00+00:00'
++    quote = replace(paid_quote(), hit='2', miss='2', valid_until=boundary if observation else None)
++    async with db.transaction() as s:
++        await account(s)
++        row,rec = await owned_attempt(s,'ledger-a')
++        rec.billing_observed_at = datetime.fromisoformat(observation) if observation else None
++        await billing.reserve(s,row,rec,quote)
++        await billing.settle(s,row,rec)
++        state,charge = (await s.execute(text('select state,agent_charge from tb_billing_attempt'))).one()
++        assert state == expected_state
++        assert charge == (Decimal('.000560') if expected_state=='settled' else None)
++        assert (await s.scalar(text('select billing_observed_at from tb_billing_attempt'))) == rec.billing_observed_at
++
++
++async def test_paid_attempt_waiting_for_account_lock_retains_pre_boundary_evidence(persisted):
++    import asyncio
++    from dataclasses import replace
++    db,_,_=persisted
++    boundary = datetime.now(timezone.utc) + timedelta(milliseconds=400)
++    async with db.transaction() as s:
++        await account(s)
++        row,rec = await owned_attempt(s,'ledger-a')
++        await billing.reserve(s,row,rec,replace(paid_quote(),valid_until=boundary.isoformat()))
++    async def save():
++        async with db.transaction() as s:
++            await billing.settle(s,row,rec)
++    async with db.transaction() as blocker:
++        await blocker.execute(text("select agent_id from tb_agent where agent_id='ledger-a' for update"))
++        rec.billing_observed_at=datetime.now(timezone.utc)
++        assert rec.billing_observed_at < boundary
++        task=asyncio.create_task(save())
++        await asyncio.sleep(max(0,(boundary-datetime.now(timezone.utc)).total_seconds())+.02)
++        assert not task.done()
++    await task
++    async with db.transaction() as s:
++        state,stamp=(await s.execute(text('select state,billing_observed_at from tb_billing_attempt'))).one()
++        assert state=='settled' and stamp==rec.billing_observed_at
+--- baseline/tests/protocol/test_f9_stream_usage.py
++++ current/tests/protocol/test_f9_stream_usage.py
+@@ -0,0 +1,37 @@
++
++import pytest
++
++from contracts import Message
++from f3_cases import registry
++from providers.deepseek import DeepSeekProvider
++from providers.openai_compatible import OpenAICompatibleProvider
++from test_f5_providers import chat, frame, response, stream_server
++
++
++@pytest.mark.parametrize('adapter_type', [DeepSeekProvider, OpenAICompatibleProvider])
++@pytest.mark.parametrize('damage', ['none', 'conflict', 'after_report'])
++async def test_cash_evidence_on_terminal_and_protocol_failure(adapter_type, damage, stream_server):
++    if adapter_type is DeepSeekProvider:
++        report = dict(prompt_tokens=10, completion_tokens=5, total_tokens=15,
++                      prompt_cache_hit_tokens=7, prompt_cache_miss_tokens=3 if damage != 'conflict' else 4)
++        stream_server.data = frame(chat('ok', 'stop', report))
++        if damage != 'after_report':
++            stream_server.data += frame('[DONE]')
++    else:
++        msg = response()
++        msg['usage']['input_tokens_details'] = {'cached_tokens': 7 if damage != 'conflict' else True}
++        if damage == 'after_report':
++            msg['output'] = []
++        stream_server.data = frame(dict(type='response.completed', response=msg), 'response.completed')
++    provider = adapter_type(stream_server.url, 'fixture')
++    try:
++        events = [event async for event in provider.stream(
++            registry().get('general-primary'), [Message(role='user', content='A123')],
++            max_output_tokens=32, timeout_seconds=3)]
++    finally:
++        await provider.aclose()
++    terminal = events[-1]
++    assert terminal.status == ('failed' if damage == 'after_report' else 'completed')
++    assert terminal.usage.input_tokens == 10
++    assert terminal.cached_input_tokens == (None if damage == 'conflict' else 7)
++    assert all(event.cached_input_tokens is None for event in events[:-1])
+--- baseline/tests/smoke/test_f5_http_server.py
++++ current/tests/smoke/test_f5_http_server.py
+@@ -9,6 +9,7 @@
+ import time
+ 
+ import httpx
++from legacy_identity import HEADERS
+ import pytest
+ 
+ 
+@@ -115,7 +116,7 @@
+             'f5_acceptance:create_app','--factory','--workers','1','--fd',str(listener.fileno()),'--log-level','warning'],
+             cwd=runtime_dir/'unrelated-cwd',env={'PATH':os.defpath},pass_fds=(listener.fileno(),),stdout=log,stderr=subprocess.STDOUT)
+         try:
+-            with httpx.Client(base_url=f'http://127.0.0.1:{port}',timeout=3,trust_env=False) as client:
++            with httpx.Client(headers=HEADERS, base_url=f'http://127.0.0.1:{port}',timeout=3,trust_env=False) as client:
+                 deadline=time.monotonic()+10
+                 while True:
+                     try:
+--- baseline/tests/smoke/test_f5o1_process.py
++++ current/tests/smoke/test_f5o1_process.py
+@@ -13,6 +13,7 @@
+ 
+ import httpx
+ from psycopg.rows import dict_row
++from legacy_identity import HEADERS
+ import pytest
+ import yaml
+ 
+@@ -172,7 +173,7 @@
+                 [str(directory), str(project / 'src'), str(project / 'tests')])},
+             pass_fds=(listener.fileno(),), stdout=log, stderr=subprocess.STDOUT)
+         listener.close()
+-        with httpx.Client(base_url=f'http://127.0.0.1:{port}', timeout=8, trust_env=False) as client:
++        with httpx.Client(headers=HEADERS, base_url=f'http://127.0.0.1:{port}', timeout=8, trust_env=False) as client:
+             try:
+                 if ready:
+                     def health():
+--- baseline/tests/smoke/test_f5o2_process.py
++++ current/tests/smoke/test_f5o2_process.py
+@@ -11,6 +11,7 @@
+ from uuid import uuid4
+ 
+ import httpx
++from legacy_identity import HEADERS
+ import pytest
+ import yaml
+ 
+@@ -82,7 +83,7 @@
+                 [str(directory),str(project/'src'),str(project/'tests')])},
+             pass_fds=(listener.fileno(),),stdout=log,stderr=subprocess.STDOUT)
+         listener.close()
+-        with httpx.Client(base_url=f'http://127.0.0.1:{port}',timeout=10,trust_env=False) as client:
++        with httpx.Client(headers=HEADERS, base_url=f'http://127.0.0.1:{port}',timeout=10,trust_env=False) as client:
+             try:
+                 def ready():
+                     if process.poll() is not None:
+--- baseline/tests/smoke/test_f6_process.py
++++ current/tests/smoke/test_f6_process.py
+@@ -139,7 +139,9 @@
+         rid, url = create(client, 'lost-cancel-client')
+         with client.stream('GET', url) as response: assert next(events(response))[1]=='response.delta'
+         with socket.create_connection((client.base_url.host, client.base_url.port), timeout=5) as connection:
+-            connection.sendall(f'POST /v1/llm/stream/{rid}/cancel HTTP/1.1\r\nHost: localhost\r\nContent-Length: 0\r\nConnection: close\r\n\r\n'.encode())
++            authorization = client.headers['Authorization']
++            connection.sendall((f'POST /v1/llm/stream/{rid}/cancel HTTP/1.1\r\nHost: localhost\r\n'
++                                f'Authorization: {authorization}\r\nContent-Length: 0\r\nConnection: close\r\n\r\n').encode())
+             wait_for(lambda: ['cancel_reply_waiting',''] in observations(directory))
+         wait_for(lambda: observe(server,name,rid)[0]['status']=='canceled')
+         wait_for(lambda: ['stream_closed','lost-cancel-client'] in observations(directory))
+--- baseline/tests/smoke/test_f9_paid_restart.py
++++ current/tests/smoke/test_f9_paid_restart.py
+@@ -0,0 +1,86 @@
++"""SIGKILL a test-owned Gateway on either side of its first upstream call."""
++from concurrent.futures import ThreadPoolExecutor
++from decimal import Decimal
++from pathlib import Path
++
++import httpx
++import pytest
++import yaml
++
++from f3_cases import MODEL_VALUES
++from legacy_identity import provision
++from postgres_support import write_config, migrate
++from protocol.test_providers import server as wire
++from services.models import ModelConfig, ModelRegistry, ProviderConfig
++from test_f5o1_process import body, gateway, process_pg, wait_for
++
++
++BOOTSTRAP = """
++import asyncio
++from pathlib import Path
++from main import create_app as build_app
++from settings import Settings
++
++ROOT = Path(__file__).parent
++
++def create_app():
++    app = build_app(settings=Settings(env='test', _env_file=None), config_dir=ROOT/'config')
++    begin = app.state.storage.begin_attempt
++    async def after_begin(trace, attempt, **kwargs):
++        await begin(trace, attempt, **kwargs)
++        (ROOT/'committed').touch()
++        if (ROOT/'pause-before-provider').exists():
++            await asyncio.Event().wait()
++    app.state.storage.begin_attempt = after_begin
++    return app
++"""
++
++
++@pytest.mark.parametrize('calls',[0,1],ids=['kill-after-hold','kill-after-upstream-entry'])
++def test_paid_restart_keeps_unknown_hold_exactly_once(process_pg,tmp_path,wire,calls):
++    name = process_pg.create_database()
++    model = ModelConfig(**(MODEL_VALUES | {'provider':'wire'}))
++    definition = ProviderConfig(adapter='deepseek',api_protocol='chat_completions',base_url=wire.url,
++                                credential_ref='fixture')
++    config = write_config(tmp_path/'config',process_pg,name,ModelRegistry({'general-primary':model},{'wire':definition}))
++    try:
++        migrate(config)
++        provision(config)
++        (config/'credentials.yaml').write_text('credentials: {fixture: {api_key: loopback-only}}')
++        rates = {'hit':'0','miss':'0','output':'1000'}
++        (config/'prices.yaml').write_text(yaml.safe_dump({'bindings':{'wire':'fixture'},'versions':[{
++            'model':'deepseek-flash','supplier':'fixture','version':'v1','effective_from':'2020-01-01T00:00:00Z',
++            'peak':rates,'off_peak':rates}]}))
++        (tmp_path/'f5o1_bootstrap.py').write_text(BOOTSTRAP)
++        if not calls:
++            (tmp_path/'pause-before-provider').touch()
++        wire.delay = 2
++        with gateway(tmp_path) as (process,client), ThreadPoolExecutor() as pool:
++            created = client.post('/v1/llm/stream',json=body('A123') | {'max_output_tokens':8})
++            rid = created.json()['data']['request_id']
++            path = f'/v1/llm/stream/{rid}/events'
++            response = pool.submit(client.get,path)
++            wait_for(lambda:(tmp_path/'committed').exists())
++            if calls:
++                wait_for(lambda:len(wire.calls)==1)
++            assert len(wire.calls)==calls
++            process.kill()
++            process.wait(timeout=5)
++            with pytest.raises(httpx.TransportError):
++                response.result(timeout=5)
++        with gateway(tmp_path) as (_,client):
++            for _ in range(2):
++                replay = client.get(path)
++                assert replay.status_code==200 and 'execution_interrupted' in replay.text
++                bills = client.get('/v1/billing/requests/'+rid).json()['data']
++                item, = bills['attempts']
++                assert item['state']=='pending' and item['agent_charge'] is item['supplier_cost'] is None
++                totals = client.get('/v1/billing/summary').json()['data']
++                assert Decimal(totals['available']) == Decimal('9999.992')
++                assert Decimal(totals['pending']) == Decimal('.008')
++        with process_pg.connect(name) as sql:
++            assert sql.execute('SELECT state,reserved_amount,supplier_cost,agent_charge FROM tb_billing_attempt').fetchall() == [
++                ('pending',Decimal('.008'),None,None)]
++        assert len(wire.calls)==calls
++    finally:
++        process_pg.drop_database(name)
+--- baseline/tests/smoke/test_http_server.py
++++ current/tests/smoke/test_http_server.py
+@@ -8,6 +8,7 @@
+ from uuid import UUID
+ 
+ import httpx
++from legacy_identity import HEADERS
+ import pytest
+ 
+ 
+@@ -24,7 +25,7 @@
+             pass_fds=(listener.fileno(),), stdout=log, stderr=subprocess.STDOUT,
+         )
+         try:
+-            with httpx.Client(base_url=f"http://127.0.0.1:{port}", timeout=0.4, trust_env=False) as client:
++            with httpx.Client(headers=HEADERS, base_url=f"http://127.0.0.1:{port}", timeout=0.4, trust_env=False) as client:
+                 deadline = time.monotonic() + 10
+                 while True:
+                     try:
+@@ -133,7 +134,7 @@
+         ],cwd=runtime_dir/'unrelated-cwd',env={'PATH':os.defpath},pass_fds=(listener.fileno(),),stdout=log,stderr=subprocess.STDOUT)
+         ids={}
+         try:
+-            with httpx.Client(base_url=f'http://127.0.0.1:{port}',timeout=2,trust_env=False) as client:
++            with httpx.Client(headers=HEADERS, base_url=f'http://127.0.0.1:{port}',timeout=2,trust_env=False) as client:
+                 deadline=time.monotonic()+10
+                 while True:
+                     try:
+--- baseline/tests/unit/test_f9_prices.py
++++ current/tests/unit/test_f9_prices.py
+@@ -0,0 +1,134 @@
++from datetime import datetime
++from decimal import Decimal
++
++import pytest
++
++from contracts import Usage
++from errors import GatewayError, ProviderCallError
++from providers.base import parse_response, parse_responses_response
++from services.models import DEFAULT_CONFIG_DIR
++
++
++def test_flash_sample_quote():
++    from services.prices import PriceBook, PriceQuote
++    book = PriceBook.load(DEFAULT_CONFIG_DIR)
++    now = datetime.fromisoformat('2026-11-03T09:30:00+08:00')
++    quote = book.quote('deepseek-main', 'deepseek-flash', now, 250, 100)
++    usage = Usage(input_tokens=200, output_tokens=20, total_tokens=220)
++    assert quote.reserve_amount == Decimal('0.0013')
++    assert quote.cost(usage, 150) == Decimal('0.000266')
++    assert quote.cost(usage, None) is None
++    assert quote.cost(usage, -1) is None
++    assert quote.cost(usage, 150, ended_at=now.replace(hour=12)) is None
++    assert PriceQuote.from_snapshot(quote.snapshot()) == quote
++    assert book.quote('openai-main', 'deepseek-flash', now, 250, 100) == quote
++    with pytest.raises(GatewayError, match='价格'):
++        book.quote('new-provider', 'deepseek-flash', now, 250, 100)
++
++
++@pytest.mark.parametrize('chat', [True, False])
++@pytest.mark.parametrize('bad_result', [True, False])
++@pytest.mark.parametrize('cached', [4, 0, True, '4', 12, None])
++def test_split_survives_independently_from_text(chat, bad_result, cached):
++    if chat:
++        report = dict(prompt_tokens=10, completion_tokens=5, total_tokens=15,
++                      prompt_cache_hit_tokens=cached, prompt_cache_miss_tokens=6 if cached else 10)
++        raw = dict(model='deepseek-flash', usage=report, choices=[] if bad_result else [
++            dict(finish_reason='stop', message=dict(role='assistant', content='ok'))])
++        parse = parse_response
++    else:
++        report = dict(input_tokens=10, output_tokens=5, total_tokens=15,
++                      input_tokens_details={'cached_tokens': cached})
++        raw = dict(object='response', model='deepseek-flash', status='completed',
++                   usage=report, output=[] if bad_result else [dict(type='message', role='assistant',
++                   status='completed', content=[dict(type='output_text', text='ok')])])
++        parse = parse_responses_response
++    if bad_result:
++        with pytest.raises(ProviderCallError) as caught:
++            parse(raw)
++        result = caught.value
++    else:
++        result = parse(raw)
++    assert result.usage.total_tokens == 15
++    assert result.cached_input_tokens == (cached if type(cached) is int and cached <= 10 else None)
++
++
++def test_operator_prices_are_explicit_and_versioned(tmp_path):
++    from services.prices import PriceBook
++    config = """
++bindings: {wire: fixture}
++versions:
++  - supplier: fixture
++    model: flash
++    version: v1
++    effective_from: '2026-01-01T00:00:00Z'
++    peak: &v1 {hit: '0.4', miss: '2', output: '8'}
++    off_peak: *v1
++  - supplier: fixture
++    model: flash
++    version: v2
++    effective_from: '2026-11-03T00:00:00Z'
++    peak: &v2 {hit: '1', miss: '1', output: '3'}
++    off_peak: *v2
++"""
++    (tmp_path/'prices.yaml').write_text(config)
++    book = PriceBook.load(tmp_path)
++    usage = Usage(input_tokens=200, output_tokens=20, total_tokens=220)
++    before = datetime.fromisoformat('2026-11-02T23:59:59Z')
++    after = datetime.fromisoformat('2026-11-03T00:00:00Z')
++    quote1 = book.quote('wire', 'flash', before, 250, 100)
++    quote2 = book.quote('wire', 'flash', after, 250, 100)
++    assert quote1.cost(usage, 150, ended_at=before) == Decimal('0.000320')
++    assert quote1.cost(usage, 150, ended_at=after) is None
++    assert quote2.cost(usage, None) == Decimal('0.000260')
++    assert quote1.cost(None, 0) is None
++
++
++@pytest.mark.parametrize('at,period', [
++    ('2026-11-03T00:59:59Z', 'off_peak'), ('2026-11-03T01:00:00Z', 'peak'),
++    ('2026-11-03T04:00:00Z', 'off_peak'), ('2026-11-03T06:00:00Z', 'peak'),
++    ('2026-11-03T10:00:00Z', 'off_peak'), ('2026-11-07T02:00:00Z', 'off_peak'),
++    ('2027-01-01T02:00:00Z', 'unknown'),
++])
++def test_cny_periods_and_unmaintained_calendar(at, period):
++    from services.prices import PriceBook
++    quote = PriceBook.load(DEFAULT_CONFIG_DIR).quote(
++        'deepseek-main', 'deepseek-flash', datetime.fromisoformat(at), 250, 100)
++    assert quote.period == period
++    assert quote.reserve_amount == Decimal('0.0013')
++    if period == 'unknown':
++        assert quote.cost(Usage(input_tokens=100, output_tokens=1, total_tokens=101), 5) is None
++
++
++def test_conflicting_chat_splits_do_not_erase_valid_token_counts():
++    from providers.base import observe_reported_metadata
++
++    observed = {}
++    counts = dict(prompt_tokens=10, completion_tokens=5, total_tokens=15,
++                  prompt_cache_hit_tokens=7, prompt_cache_miss_tokens=5)
++    observe_reported_metadata(dict(usage=counts, model='x'), observed, chat=True)
++    assert observed['cached_input_tokens'] is None
++    assert observed['usage'].input_tokens == 10
++
++
++def test_incremental_event_cannot_supply_cached_counts_for_a_later_terminal():
++    from providers.base import ProviderStreamEvent
++    # A cache split can only describe the total usage on its own event.
++    event = ProviderStreamEvent(delta='text', cached_input_tokens=7)
++    assert event.cached_input_tokens is None
++
++
++def test_r1_quote_reserves_for_each_known_version_before_deadline(tmp_path):
++    from services.prices import PriceBook
++    (tmp_path/'prices.yaml').write_text("""
++bindings: {chat: account}
++versions:
++  - {supplier: account, model: x, version: old, effective_from: '2026-01-01T00:00:00Z', peak: &a {hit: '1', miss: '1', output: '1'}, off_peak: *a}
++  - {supplier: account, model: x, version: new, effective_from: '2026-11-03T00:00:00Z', peak: &b {hit: '10', miss: '10', output: '10'}, off_peak: *b}
++  - {supplier: account, model: x, version: later, effective_from: '2026-11-04T00:00:00Z', peak: &c {hit: '50', miss: '50', output: '50'}, off_peak: *c}
++""")
++    book = PriceBook.load(tmp_path)
++    start = datetime.fromisoformat('2026-11-02T23:59:58Z')
++    boundary = datetime.fromisoformat('2026-11-03T00:00:00Z')
++    assert book.quote('chat','x',start,100,100, latest_end=start).reserve_amount == Decimal('.0002')
++    assert book.quote('chat','x',start,100,100, latest_end=boundary).reserve_amount == Decimal('.002')

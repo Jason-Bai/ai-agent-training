@@ -1,0 +1,1 @@
+{"command": [".venv/bin/python", "-W", "error", "-m", "pytest", "tests/unit/test_f13_pricing.py::test_low_estimate_reserves_highest_tier_and_actual_usage_reselects_tier", "-q"], "at": "2026-11-03T15:00:59.200885+00:00", "exit_code": 1}

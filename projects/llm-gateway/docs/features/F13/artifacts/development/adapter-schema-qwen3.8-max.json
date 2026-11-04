@@ -1,0 +1,1 @@
+{"actual_model":"qwen3.8-max","usage":{"input_tokens":70,"output_tokens":10,"total_tokens":80},"billing_observed_at":"2026-11-03T15:05:19.067528Z","cached_input_tokens":0,"text":"{\"order_id\": \"A123\"}","finish_reason":"stop","upstream_status":"completed","upstream_finish_reason":null}

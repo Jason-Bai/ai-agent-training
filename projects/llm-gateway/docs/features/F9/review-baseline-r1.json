@@ -1,0 +1,386 @@
+{
+  "manifest": {
+    "AGENTS.md": "e57f7e7afa3f8ebbb3ee7716507cac004b4b9b7e67d60441c7ea9eadb4338c6c",
+    "README.md": "feb14ead8fd016cc20b00670054ea1f406d5bea818b6332728404b61da88f57d",
+    "alembic.ini": "8965c450bfd77867a3b02b26c5a0cfce35002fbba0f57fd2cd25aa0009393d70",
+    "compose.yaml": "8c6b4dfb37806796ce4290732d96445c464596e84e1a517c18cb208eb0b2c2f6",
+    "config/gateway.example.yaml": "f60da35eea3393a1606717cad07954e5de7fe4c684b5ff4df88298969928340a",
+    "config/gateway.yaml": "25e747b9cb1d86ff58272464286c25cd1519501c39ca3f4a57e90db5858e7496",
+    "config/prices.yaml": "d27a38358ecb61770b5a12fe68d24bbd61b4f089ab4827c18fa80f6d8edcb494",
+    "docs/AGENTS.md": "67e13f36f3099967f15f27eb069918ca73282cddbfe758619b227002d40ebcd9",
+    "docs/architecture.md": "23ed9452f5fa9e541ca34adb9621d23aa37c7e6f31f14a26a94b3c8a009d7dbc",
+    "docs/contracts.md": "e6a871c55247b6954d7540f87b709d091279e970534f9c3cacfe552b74b0146f",
+    "docs/progress.md": "c6a539ceba5961989011e6c8a0052dc4bf80172fd0c5c7543ec1ae27148c2198",
+    "migrations/env.py": "e61c6e7cb2ade07ce8be12164fa6918b6adcb9051e4109846217a6ec145ce0ea",
+    "migrations/versions/f5o1_001.py": "69bf5aedf6d9e2f51eb9cea496b99d6535aedf448a07b175342d2be41d823de5",
+    "migrations/versions/f6_001.py": "93658b741336060e459efe41e9add9ca0234f8b192bdb457d1b190b347603015",
+    "migrations/versions/f7_001.py": "b43f4f25308dfaa61264986e655ac194f462a70d06daf0911ebe586f64c0ec0d",
+    "migrations/versions/f8_001.py": "4d9aed18217b49303d9fdeb194b3f0953584d42c062d362b6adeb62689a1f5a2",
+    "migrations/versions/f9_001.py": "163d9d1ed58bb60f277c3d5c9ff6fb4bb2bed296b97e31fa1d464b09009a6f19",
+    "pyproject.toml": "cda3e8305a2acc994dc8eb0bbc2eee08684cf19cde1e53946871a647a9efebad",
+    "src/admin.py": "aa52bd423ccd909436f8f44c0f111147c3a189fb427883f58943c28a82e3f427",
+    "src/api/billing.py": "e0baa66f9f6a0308295a66478bd13c029d3b71094352c384389758669857bfab",
+    "src/api/dependencies.py": "a6e9d833b1e3c625ada8a008a53578c800b0b89b3b6465a5ed5bf23ab060abb8",
+    "src/api/errors.py": "b3af9cfd9608fa439cb142bc051b8d6c964ec0be2a31a25a9be784d8a685560a",
+    "src/api/identity.py": "a429ab91ac811ee4f37389e78f05af31ec3fba0dfc945bb028219f102ca3182c",
+    "src/api/routes.py": "6b9cb4f89ce470431ae6076037f22e124e6c82ca7cc12470895db405a85f90e4",
+    "src/api/sse.py": "39e84a675ed5e34c549d9f4adad9d9c4737e2516d39ece5805553283ecd0ccc6",
+    "src/constants.py": "b591a28ec18c60ec20c714a4a1f87e68b7a151068eb8dab6fc8ba4722db31d8e",
+    "src/contracts.py": "4ee998cf298f4478ed9fc46422d4ab464bfa943e44fc0096514e5fdc362cb9da",
+    "src/errors.py": "73aee74abba230ac9b2884ddddfe7b6450b590f57334c22ece2c47a0101b45db",
+    "src/main.py": "6feee20d5a7b638c7affb2c9cd53818efcad51a0a297b013566c720ad60a3f8f",
+    "src/middleware/request_context.py": "5462159554de8fb8558a7985bad57cafa7d2c8f540e474d23fee45cff7e6e849",
+    "src/persistence/__init__.py": "5f00d967cb188a73e190f43a27ba80457a20fd5e9acf8952a293d46803d22074",
+    "src/persistence/billing.py": "3dabe18c2cc20d0a8f9754b9f0e806dd13cc54b00add1052c778581b8285116c",
+    "src/persistence/billing_query.py": "cd8a3810f409cadf99a528916a8a713174fb592c088a0f7ec2685b1a1445ce24",
+    "src/persistence/database.py": "2fa36441b843f1eaff24532597c7323fb5aa5548d60157b6a104dc960ee7010c",
+    "src/persistence/store.py": "68de1a9b02e5fe1c88c119bc7f07b849cf51297817b1f441c03d205926fbd845",
+    "src/persistence/tables.py": "e0b61445e7ed4e62dee42202a55b94af28584d6ae3712d0577287a279a20a033",
+    "src/persistence/trace_query.py": "5424fa48b2d88706aa71f2871e2f7b889f32ed0ea625843c4c7ec2e85e3e080e",
+    "src/providers/base.py": "a4b8125b603f400a99758eb8740ff062068081583ffb5d6885b17d7ab062dbdb",
+    "src/providers/deepseek.py": "4e5d377c63710dff49ca5f41f40dca4539b4a1ff46f0a0b0b55be84e8e87ec8e",
+    "src/providers/factory.py": "d920f6b7685de029db9a6ce3b5de107b5c352f8aeedd1ae67fe938c951b50c8c",
+    "src/providers/mock.py": "13dfc76e185c0b5a5db488e6d4e5396bc71af9c4bff9d7aa3adfeddafadfe2f6",
+    "src/providers/openai_compatible.py": "d2adcf48d48951afc745da97ad0ee6a4061b6b2bb608bb7ac7f42059db9f5ba1",
+    "src/providers/streaming.py": "87aeb876fd8376fae06ee606c6a544cfb14e8314b8bad9f5e31e9bc7c64c8894",
+    "src/services/credentials.py": "886b780b3b31640985cc8f041167141ab0d846c4441742ff7a0e3748f1de3760",
+    "src/services/gateway.py": "2e3369277ead3db64b86eecbd45ce156cc4b54847efd9ddef4a1529bec2fd4db",
+    "src/services/models.py": "a8af8ee22f0ee0ba8d2b7a4260dd5a95bd365cd04ad7fc6d36ceaca7bf566aa7",
+    "src/services/prices.py": "88f5bbca7919e176c8b5c9482fb8fa5d242102c1dced3157184f3f1ba5aaaab4",
+    "src/services/prompts.py": "73c69b68733ba8e12d00091e684de0df6a885ac255e6eb4f5d72352c712a2715",
+    "src/services/recovery.py": "41a30b723dbfe56951822efa72ef76d34b28380e91174f11ec9facc877b12540",
+    "src/services/streaming.py": "dfc12441a6e483e5b95b9ec08bf1f762d8dcd76604eff9dc418497137437d20f",
+    "src/services/streaming_manager.py": "9fce540ff274d8737fcb963d83c4618de0360f7b826c32bb9bec72ee0c7c69a2",
+    "src/services/subscriptions.py": "55d7cc623daa232078cd40a652f740c0969c5c105ddfeba418a5e65e2c04204e",
+    "src/services/token_budget.py": "4ef87863d5e4841040f173f1db999a1559a240b1250607cde11bb91600d18d33",
+    "src/services/token_counters/__init__.py": "126c74feed40ab8f72675fcb055f7150d268a166c11e6c8a8a896a32bc7ea3a8",
+    "src/services/token_counters/base.py": "d2ffd1811bde996b3e5b28c49e500176a9c8517364ee03e3aad14d72f4a385b2",
+    "src/services/token_counters/deepseek_v41.py": "5030955428bef3b7b2e0d97789bfe15d888d241852d3cc52f3a01dfc9184337c",
+    "src/services/trace.py": "b952ceedc9d2aea77c623e54abbef987dd0260282769b789dd3b6742de0924b5",
+    "src/services/validation.py": "574dffd1657c634d36ec7dfdb4e9f8f4f223166e975e37a7cf1342b296ba417a",
+    "src/settings.py": "2dc76e55cea3a0d84fff6fa71750ef3429678153e784226d1c4d0e60cd2831b3",
+    "src/trace_contracts.py": "2d23086527193f7c4276a9b44134663c6dc436090cdf4dd16f2e24769f80d441",
+    "src/utils/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/utils/diagnostic_values.py": "f09f6d770a99b0847a42ae0ed2b0bd4036e9511bd64b14123b0e3646f42ccba7",
+    "src/utils/json_codec.py": "07910b5a075b7c2c4c12e2b18a325d8777d154817bfbc7e18c4ec26980b8998c",
+    "tests/conftest.py": "a56c90fae7370be44ce3670fa74d100059f8a18a0cb253d90d95849171278e1e",
+    "tests/f3_cases.py": "06bdf8985205ee6bb8687dccecc4b6133a96d5fd01d7d7a6902fe3e89f6903e2",
+    "tests/f4_cases.py": "21c4676b9de360adcfc66c16426bc548af40c4212571d320540df4dfc12fbde9",
+    "tests/f6_cases.py": "e13acde300c5ea0523f69894efa273fc8895c56f42b6f5a60a12f8eaa1a36ea4",
+    "tests/f7_cases.py": "156772caea62ef7d6116c443c461f0e1f9cd1279c0171a55a62d849d1c5b1d7b",
+    "tests/f7_stream_cases.py": "7513e22acf9ed2719b9c8158dd48e20d58d638f8c7b314ed13baeb6806c64ac6",
+    "tests/fixtures/f3_token_goldens.json": "a0ae37821e847d94eaa700b3f513b3d250d64715c3d18c1f4200953fd291ec6d",
+    "tests/fixtures/f4_token_goldens.json": "67545757652269da84089d18eb68d156b656571d1c6da3b7b287c65f6f0dd71b",
+    "tests/fixtures/wire_prices/prices.yaml": "46ed745d01043b095c83750668ba01d8316dfdc21b554d9c4eaea1b34e0d0d91",
+    "tests/integration/test_f2_prompts.py": "150306723af968efaa9c96fe4b465433cb28c83efd6818a97280285216e8b3f6",
+    "tests/integration/test_f3_gateway.py": "87c76beebc3c07660f382b51bc88203a403a852d8505b89f7f76f5b4b6e82288",
+    "tests/integration/test_f3o1_dispatch.py": "e5503ef2d06a90ce65b772aae0a1371367fbb7e631c6f28003a82d5391b3eda2",
+    "tests/integration/test_f4_gateway.py": "ae5a55d368abddb5355800c96fdd68b9133c8371f48578156f6d5347f852320b",
+    "tests/integration/test_f4_schema_red.py": "caa470e1f33d0af5ae3bedb730ffcb00d58e483d038a1ff2a1619650954657c5",
+    "tests/integration/test_f4o1_boundaries.py": "d5d94beadbbd606857cfd640d9bdd337a179496ad6e0f5297db21a5eee6837fb",
+    "tests/integration/test_f5_gateway.py": "8f83bbfd2bef51ad086d5c94db68b11806d126a40c4aa16765102f1510a533c2",
+    "tests/integration/test_f5o1_http.py": "2f88b6f558769023b333a0ae9cf20422eb76c7b70852bece43bf64f1d1503236",
+    "tests/integration/test_f5o2_delivery.py": "9938de3b0e54d91ff6a2f892981ad6b3140d1310ce84e2745c565e54aa1c2c7b",
+    "tests/integration/test_f5o2_faults.py": "77b47518594ce84a543a38e4aa8a1742addb214d50098fe71c55776b086dd411",
+    "tests/integration/test_f5o2_http.py": "cc57b18f96abfd7c92b148e1db5b5bec7eef0e0bc40c99a9a4a5d2a83377e39c",
+    "tests/integration/test_f5o2_lifecycle.py": "57620d890bca955f80915ccd8a8b205f389a9d6445d5250b984596af8be7bf6d",
+    "tests/integration/test_f5o2_metrics.py": "7785522c84d7ce456250f0fa78c0355d686aad06f463eb0ea518224d10481e6a",
+    "tests/integration/test_f5o2_recovery_claim.py": "e905a87587cbfa8e2a3c5a8ed063c57c4326cb12765cee55d1e64139426540cc",
+    "tests/integration/test_f5o2_replay.py": "d3d05505391441a45f071fc792e6490ebedcddc4a84e1b013ac7c797c5e4ec43",
+    "tests/integration/test_f6_admission.py": "368e3295489cbb0681d2d73d84ee5f9f9953f573cadf6a52983b118cf423f1fe",
+    "tests/integration/test_f6_faults.py": "feb09b09097250041a1f6369dfed8b546b2412192d5267393fbc0e996a587a00",
+    "tests/integration/test_f6_http.py": "f67ea736edeac3f12941460a4123b4ddb1acd4063f09ede61250b237e9e0286c",
+    "tests/integration/test_f6_protocol.py": "e642028ca70b9d3f934b847e309697f5d82db0910964bf784850154914c969a7",
+    "tests/integration/test_f6_races.py": "821ab0d0c0dee4cb2f4733b783b07a3909f959b8db21ac418e58ebc0fde06e13",
+    "tests/integration/test_f6_replay.py": "3f37b0e896003f26fbcb95c2cd71a88a6d8682ca873ef7124695f5503853abdd",
+    "tests/integration/test_f7_cancel_history.py": "6f04685ff5729a85845bea396237468cf426d0f24f11a8a5e525d8fd59b77ddb",
+    "tests/integration/test_f7_deadline.py": "d16858c384213886be4ae32cb2d5bc781295c47d5a56eb0322233e492cf2fd7f",
+    "tests/integration/test_f7_http.py": "86eb6b5bd126158bc7f314e21c153885b310cf187d342693fa728d38101e3010",
+    "tests/integration/test_f7_protocol.py": "07ce123b9eda2792df44fb6dc6b04ea8fbb1e1823fc940799cb1f0d89c1d425a",
+    "tests/integration/test_f7_races.py": "aa1358ce2e3b98cd9e76c886aee77e2c9945ffdd7a2f32a6714962f51103fc15",
+    "tests/integration/test_f7_review_failure_deadline.py": "fb2c51cc19aa51e9ce558e9077e464ddf366ace00121d5256a11f6047953e6bb",
+    "tests/integration/test_f7_review_legacy_pending.py": "dc145be939a679c9069abd5525d4783c88b174a0d8b2f9487d8dee8ab5044d10",
+    "tests/integration/test_f7_review_stream_deadline.py": "70075a320ff13bfe5147786dc0b2be2edc1df3975ad6873f95ce5c43ce221395",
+    "tests/integration/test_f7_streaming_integration.py": "e8a17087ef6b4db52db022fbfcc0950c13ef59f6bb8ef47b4b61009a7dc7ee03",
+    "tests/integration/test_f8_lifecycle.py": "a1d7d011705e9677a86b185e94eb342c4405a140ffd2d408fe93ab7d1137f19f",
+    "tests/integration/test_f8_metadata_storage.py": "9c37a5c5d33387243269c88acb5a5620bb09b371b3d3d113c55e4aa35903531d",
+    "tests/integration/test_f8_probe.py": "6428223c881e456554767a8ca541fc7066fe882d23920c25632cceeb77d69681",
+    "tests/integration/test_f8_retry_diagnostics.py": "fd54d39bc198ad00b91433eaf6a826e650ac41b309034b0a130658fd467b45c1",
+    "tests/integration/test_f8_trace_query.py": "f53efcf406c0f0c0bd1ef6bcdd34fdaedc04095acb64ebebf4cc1e3655fa71a6",
+    "tests/integration/test_f8o1_mock_usage.py": "3d1ea7314c9579db31d8de86f74dd1f53da8c41d61f13452be292a4a943690fa",
+    "tests/integration/test_f9_billing_queries.py": "faa860e2d78175c13ee13d7724ea6ff7703b008889fad09690a2f4bfd495203d",
+    "tests/integration/test_f9_identity.py": "e96c0874e3e393abed9aad623bf2958333a8352f0e30804eee8aee0cbd9393ad",
+    "tests/integration/test_f9_paid_flow.py": "e67f44809af016fa37c7dc911b3c493f7342c701577e9e922ef67e1e45f4facb",
+    "tests/integration/test_f9_stream_budget.py": "7beac35c11550d08f2271b6069bf5275a88e6329ecdd31db8373e768acf787ad",
+    "tests/integration/test_http.py": "36ce55a961bf70abde52172323985a87bac59b2bc9183f834d5e6972ae8fe935",
+    "tests/integration/test_trace_integrity.py": "ffef23ac6143d499ec7f653117fcbc2e78f78a8fa17d12637b852f41b2b88361",
+    "tests/legacy_identity.py": "18ade69ae372aef7fb794c316dfb14b4668e302dd624a47c5927090a5337c2a3",
+    "tests/live/test_f5_streaming.py": "43540a8a0492435e44054c8aa6cb28fd12d4976ae129f0dacc32c079641668e9",
+    "tests/live/test_f5o1_acceptance.py": "fe652c5848fcd6eabe97242c467abb3b4e94ff4e20968c691e7a847583a790b9",
+    "tests/live/test_f5o2_acceptance.py": "918d180981fd3072a1f9f90cc239e01fe67c239ff576f8edd0967ba98818d582",
+    "tests/live/test_real_providers.py": "b20a846b8d49cbda1344d2b93a8689360ebcb58cb14cb6173c9c9b9eb656d06e",
+    "tests/postgres/test_f5o1_persistence.py": "ef5cfdf118d2f84faf6aab4dc5887a6a21980d9a520144922e037f497a03fc01",
+    "tests/postgres/test_f5o2_storage.py": "7c092814e7301a6a7f8cb7c60adcf7ac4e6828106e5cdb891ac078be8a0eda2e",
+    "tests/postgres/test_f6_storage.py": "3c2544d25133d819aab94d66cece1b131cef989fe015fd5a4b9b934a95ba2d62",
+    "tests/postgres/test_f7_storage.py": "ccfec5b7e88be4a8ceeecb4dc6e399840bbfb474506203222070c950cbc9b052",
+    "tests/postgres/test_f9_ledger.py": "513c059b69e2c2fd0c2e345c5bee2fee86d1863462933b502dc43a7a3f3bc08a",
+    "tests/postgres_support.py": "17c89e68052c67108e284d1254eed895dbd0b0ed3698aa1a347c24d9eb7d76d1",
+    "tests/prompt_cases.py": "97358e859d739935dfc669615eb72fb9ff388c2e1f2131285d464609683db9fb",
+    "tests/protocol/test_f3_gateway_probe.py": "3cfdeee0991f204699040691ef002873eb5ed7b1fde0d1c6f174e9dd65e46223",
+    "tests/protocol/test_f3_prompt_wire.py": "322137241104a2c928cb8b7619f78356680493ced26ba6643d8cc3caf07bfc55",
+    "tests/protocol/test_f4_providers.py": "009881ac7eeb65c53219598494ee78749fba99a682d82d5d5e32f1a2201998c7",
+    "tests/protocol/test_f5_providers.py": "037603a91e6b23b7b81481ccdf768477165a48105aeb355ccf00635d8d753bbe",
+    "tests/protocol/test_f8_rejected_usage.py": "8c9acc85192bb65f5b3b6054cf73baecd7c034935d89600631ccdee1e53fcf3d",
+    "tests/protocol/test_f8_wire_diagnostic_values.py": "75f426060579aadbca00c111b54a494e668d4158eae44eddc958aaacf9667bc0",
+    "tests/protocol/test_f9_stream_usage.py": "97a9aeb93b9acece2eef154737a133dbecb1106a64a84ccd1ed1cc29228700f7",
+    "tests/protocol/test_providers.py": "128d25a857d26d2bc8def29361e58e01d2046a7f4b42ddddc6ad348530dd2b3c",
+    "tests/smoke/conftest.py": "af671fd0e226f967e78f50e6d9a5d70f944a15183bf7e9b750a270375af1e505",
+    "tests/smoke/test_f5_http_server.py": "9c7026dcdfbbd3f2ae3bd30058eef01615805274c27b4b640bc1ee5731f0c9d1",
+    "tests/smoke/test_f5o1_process.py": "c3aaa66e089262996f22a46709de20cb62e2dc3a6093c4ab73cafbb4109afd1f",
+    "tests/smoke/test_f5o2_process.py": "43fea9f271f80a40c44cff21cc10ca26304802117470e573d3e5f6f239156717",
+    "tests/smoke/test_f6_process.py": "0cd55f79ac3d06137c36e46160da28c818eef0250ac794a06fdfe9cec119ef11",
+    "tests/smoke/test_f7_process.py": "8fa2d7f399b3fac311cc087380137952bdbddbff5ff6eb1d73b5784b56ee801c",
+    "tests/smoke/test_f8_interrupted_attempt.py": "ebc191eebd0dfcdf98419b62e8fdd35c29007192740d4532c59266d4def3f395",
+    "tests/smoke/test_f8_process.py": "794283fcdb3dab2215169e9b26535ff8de60ef0c7efc30d728a2cc1519aea161",
+    "tests/smoke/test_http_server.py": "e2b2de52976cb526b2e69d8ce8d4f8ce4eeacd0d7e6aebc1cb2c862b61ec5b41",
+    "tests/test_f5o2_subscriptions.py": "b9017f98346251fc48137ecd4ef09a227d083a73ad6a64bfaa3814f38e0a36fb",
+    "tests/unit/test_app_factory.py": "d0d726c592e2ededa361f8407d6b6ed9255ff9fd54bcd3dd7c7cbc8cee51d567",
+    "tests/unit/test_core.py": "033b671bd102e2d60348952f8d2b0e56816d778b421d6a49a208a65e9cab44bc",
+    "tests/unit/test_f3_app_resources.py": "31ad6599cc31817c38dca4cb7a110fabf1fb9d96af6bba67877bf45cc555c506",
+    "tests/unit/test_f3_config.py": "60d08c609696d78df0225fca295acd5ce60e049d9d0876c5a302d5f28023f2bf",
+    "tests/unit/test_f3_config_boundaries.py": "d2d16e071b86dce58e3b89fd22a5f26d968986717d7c72ef56677995e731b9c7",
+    "tests/unit/test_f3_contracts.py": "18f64e9d9cf7bc8b25c2f1d88fef0eca7c7dbf5aea7a78877a2dfbd91eead6d2",
+    "tests/unit/test_f3_provider_results.py": "531f12cba0a465994596b4679edd4ad2435ee84f4497986f68c4a5c7ee9eae97",
+    "tests/unit/test_f3_result_boundaries.py": "402e7f63b50be986cef2cd486db25c4939da0282ce76f2881f0df912323172f4",
+    "tests/unit/test_f3_token_budget.py": "c24ced7d3ba66c358e3b5870aa44c53bf70b6824a0333a69ae448469d04e6fcb",
+    "tests/unit/test_f3o1_counters.py": "27a377ef7ac8c4c97ab8d263628a851c6a5d5101e6062008ae588af3ae57e19b",
+    "tests/unit/test_f3o1_provider_clients.py": "426f53d798b3447f061cf6c2d8165fbbfac3ea757629492b4a74193fce8c86fd",
+    "tests/unit/test_f4_budget.py": "e7abbc715fe3a012cb4d87137edb8427c782f3484cb9f6812335489c1c2ddf45",
+    "tests/unit/test_f4_contracts.py": "9bbace80f449ce86c2a9b98528e2852348a1c7216a625e5e7864fb711f63424b",
+    "tests/unit/test_f4_json_codec.py": "f8542a055436e4038b62e86e93befac4e81f161049b27b91e5caaee1010185c5",
+    "tests/unit/test_f4_prompts.py": "70113f2e1f4b58cc6e6c5f444e32ae4f8320decd85f50f72c4152d8033c3d3fc",
+    "tests/unit/test_f4_validation.py": "9d48137bc447890f7d2f4aed749a1855f8b0575c94e6168c8a4b86ee36bd12b6",
+    "tests/unit/test_f5_contracts.py": "b7c62595ffb5b37cb0fda2ed791e621f9907612d8f6732a6ed13674bf9f66a17",
+    "tests/unit/test_f5_execution.py": "59527076f56e92a61be4f0b596772d12d81ebc2467e73707c5396ba6d51ba0b7",
+    "tests/unit/test_f5o1_configuration.py": "c59c2e3f411ff034829f9d7b9d46b08ba0a58d82156258d3005b908a7ae97aa2",
+    "tests/unit/test_f5o2_manager.py": "055d3a30f3f62013554739cce80bc8767838dd8951f6fa4ef2980c93c820d758",
+    "tests/unit/test_f5o2_openapi.py": "ec2570ff29e933e609006450f08c6ff786cd251d8e147d6d0137cfc6e0a3b8b2",
+    "tests/unit/test_f6_execution.py": "078969ae5d96fdaf4bdbe73d2d359e4cc373dbf4f3c2e048379ed88d1ac3c3ca",
+    "tests/unit/test_f7_acceptance_edges.py": "f20c8ad4efc6d49a835f55e32d37bdd9ddac3be15f0e5a6962bb7e4207af80e3",
+    "tests/unit/test_f7_budget_and_repair.py": "b2827253c97bedbfbc4de94cc233e9e1aa156b27071aa0c0a997f73101a34514",
+    "tests/unit/test_f7_ordinary_edges.py": "a4a49786f9fd0390aa3a0ce1d0b5240a8a3b515b7561c15ee0bce593fe83a477",
+    "tests/unit/test_f7_recovery.py": "0e724a95c9aca8dc9ce3409737a74af706dd79b658980a16009534f984111ba7",
+    "tests/unit/test_f7_streaming.py": "778e77b0998684db11a207cf824a37f8a6f3d625c7834efe8a54beff24297c23",
+    "tests/unit/test_f8_timing.py": "885b9b76e0aadda09cd9af0ae64b80fbfeb9533ee6116633825ee1dee6cceecb",
+    "tests/unit/test_f9_prices.py": "9ffe99c9b6fee424d22ea37b245fc76ad28480f352ff88f662a3e616547cd7c4",
+    "tests/unit/test_prompts.py": "01436fff3deca76dd8feec8198121875dbecd368d79fc368058c81931d8af15e",
+    "tests/unit/test_request_context.py": "ef5dbe315d11f154435f916bc717f727f33b09e6c4bc6122aac957900a099ebe",
+    "tests/unit/test_settings.py": "0333b82eeedb26d93e5b53a176955bf18486384841ceef14984c2a9d3ad4f962"
+  },
+  "changes": {
+    "README.md": {
+      "old": "a04ce7841ba0e3ac71a368e6aa61e8b5bca149d5193d46571322515ba6295a9e",
+      "new": "feb14ead8fd016cc20b00670054ea1f406d5bea818b6332728404b61da88f57d"
+    },
+    "config/prices.yaml": {
+      "old": null,
+      "new": "d27a38358ecb61770b5a12fe68d24bbd61b4f089ab4827c18fa80f6d8edcb494"
+    },
+    "docs/architecture.md": {
+      "old": "d07e487427c77792b6c2478622a61d9eb91fb530a3244ddd9e0c4b3eed4907f5",
+      "new": "23ed9452f5fa9e541ca34adb9621d23aa37c7e6f31f14a26a94b3c8a009d7dbc"
+    },
+    "docs/contracts.md": {
+      "old": "87689a204ba14b62f7be972dde7a20c058b7ad06dcac6561140ead3cded633bf",
+      "new": "e6a871c55247b6954d7540f87b709d091279e970534f9c3cacfe552b74b0146f"
+    },
+    "docs/progress.md": {
+      "old": "52909e5c076b2f09f158b01c63d670feeabd569632f7ad474b98e0ce76dc4ff6",
+      "new": "c6a539ceba5961989011e6c8a0052dc4bf80172fd0c5c7543ec1ae27148c2198"
+    },
+    "migrations/versions/f9_001.py": {
+      "old": null,
+      "new": "163d9d1ed58bb60f277c3d5c9ff6fb4bb2bed296b97e31fa1d464b09009a6f19"
+    },
+    "src/admin.py": {
+      "old": null,
+      "new": "aa52bd423ccd909436f8f44c0f111147c3a189fb427883f58943c28a82e3f427"
+    },
+    "src/api/billing.py": {
+      "old": null,
+      "new": "e0baa66f9f6a0308295a66478bd13c029d3b71094352c384389758669857bfab"
+    },
+    "src/api/identity.py": {
+      "old": null,
+      "new": "a429ab91ac811ee4f37389e78f05af31ec3fba0dfc945bb028219f102ca3182c"
+    },
+    "src/errors.py": {
+      "old": "89c62cac02bb47eb4afc125259e99594ad10588b009fe65d16b5efebdf0165a0",
+      "new": "73aee74abba230ac9b2884ddddfe7b6450b590f57334c22ece2c47a0101b45db"
+    },
+    "src/main.py": {
+      "old": "a60d7ee8b9c3e2ccff9ef3e5b16ee379c3e98631d2ebe5aef730433bfc53d9fd",
+      "new": "6feee20d5a7b638c7affb2c9cd53818efcad51a0a297b013566c720ad60a3f8f"
+    },
+    "src/middleware/request_context.py": {
+      "old": "e815d3ab2f6feb478008b4d7fb84c0b180722d9fe1febb0f8f4190e78296a0b1",
+      "new": "5462159554de8fb8558a7985bad57cafa7d2c8f540e474d23fee45cff7e6e849"
+    },
+    "src/persistence/billing.py": {
+      "old": null,
+      "new": "3dabe18c2cc20d0a8f9754b9f0e806dd13cc54b00add1052c778581b8285116c"
+    },
+    "src/persistence/billing_query.py": {
+      "old": null,
+      "new": "cd8a3810f409cadf99a528916a8a713174fb592c088a0f7ec2685b1a1445ce24"
+    },
+    "src/persistence/database.py": {
+      "old": "5774e6ed47c69ed89081cddf30a5f6fa3b8bdb58a952106a449b245fd4234fb4",
+      "new": "2fa36441b843f1eaff24532597c7323fb5aa5548d60157b6a104dc960ee7010c"
+    },
+    "src/persistence/store.py": {
+      "old": "b76522e4a54ad9a397aa9d94f5b225cd34ec785b220c00d75e8f57a18df11d8b",
+      "new": "68de1a9b02e5fe1c88c119bc7f07b849cf51297817b1f441c03d205926fbd845"
+    },
+    "src/persistence/tables.py": {
+      "old": "149745cc1d64884f18352412a66f73a926493893086922d533cc698dc5c1a6c8",
+      "new": "e0b61445e7ed4e62dee42202a55b94af28584d6ae3712d0577287a279a20a033"
+    },
+    "src/providers/base.py": {
+      "old": "1bba88ffaf88776683b63bdaf0634d015cc48d73297c6b1cf479f283e077ed9e",
+      "new": "a4b8125b603f400a99758eb8740ff062068081583ffb5d6885b17d7ab062dbdb"
+    },
+    "src/providers/mock.py": {
+      "old": "0899aba69c607bfe3bc9498d798905b16b3b501a98bdf97e09d7ba3b43a2f1c2",
+      "new": "13dfc76e185c0b5a5db488e6d4e5396bc71af9c4bff9d7aa3adfeddafadfe2f6"
+    },
+    "src/providers/streaming.py": {
+      "old": "0405aa8662be162f4977b4b519c716de0b72c769f6042812256755efdda2c0b8",
+      "new": "87aeb876fd8376fae06ee606c6a544cfb14e8314b8bad9f5e31e9bc7c64c8894"
+    },
+    "src/services/gateway.py": {
+      "old": "4d89e673e2f2ce7ff825e15553881198c8d2ed60895e5bcb6999a44484efc18c",
+      "new": "2e3369277ead3db64b86eecbd45ce156cc4b54847efd9ddef4a1529bec2fd4db"
+    },
+    "src/services/prices.py": {
+      "old": null,
+      "new": "88f5bbca7919e176c8b5c9482fb8fa5d242102c1dced3157184f3f1ba5aaaab4"
+    },
+    "src/services/streaming.py": {
+      "old": "52d249a0ea0fbe06ced0da74068c0c44484c407f19fb4b6c44bcd6271e26f68e",
+      "new": "dfc12441a6e483e5b95b9ec08bf1f762d8dcd76604eff9dc418497137437d20f"
+    },
+    "src/services/trace.py": {
+      "old": "924aba9fdb80eb49f2cf4082d3fed681b19219dbd26d19fecf99b8b2db5f22ed",
+      "new": "b952ceedc9d2aea77c623e54abbef987dd0260282769b789dd3b6742de0924b5"
+    },
+    "tests/conftest.py": {
+      "old": "723ff958b623543702155d318e7ef2b10a57cef563aa2d46fce719982d98801c",
+      "new": "a56c90fae7370be44ce3670fa74d100059f8a18a0cb253d90d95849171278e1e"
+    },
+    "tests/fixtures/wire_prices/prices.yaml": {
+      "old": null,
+      "new": "46ed745d01043b095c83750668ba01d8316dfdc21b554d9c4eaea1b34e0d0d91"
+    },
+    "tests/integration/test_f5_gateway.py": {
+      "old": "2a8d09b2816361b84131339fed39c2ea82ff66d0c692aeaaaaa984f8fd6255c2",
+      "new": "8f83bbfd2bef51ad086d5c94db68b11806d126a40c4aa16765102f1510a533c2"
+    },
+    "tests/integration/test_f5o1_http.py": {
+      "old": "96aec2954fa1739f29aeda218f8b175578030fb7e08f6af83ab8d3ff786e7f19",
+      "new": "2f88b6f558769023b333a0ae9cf20422eb76c7b70852bece43bf64f1d1503236"
+    },
+    "tests/integration/test_f5o2_delivery.py": {
+      "old": "f07c66dfee7172942550383ad8132d739b6bc23ea17c85c0905c51ebdf1d4f7f",
+      "new": "9938de3b0e54d91ff6a2f892981ad6b3140d1310ce84e2745c565e54aa1c2c7b"
+    },
+    "tests/integration/test_f5o2_faults.py": {
+      "old": "996f8d12521f80994224de79dc0020fc380fc458d6de5489fd94294c874425d1",
+      "new": "77b47518594ce84a543a38e4aa8a1742addb214d50098fe71c55776b086dd411"
+    },
+    "tests/integration/test_f5o2_replay.py": {
+      "old": "2052e52f0b43b101f3a89173308e4c89d25457e3a67c295b785506db03d58fa5",
+      "new": "d3d05505391441a45f071fc792e6490ebedcddc4a84e1b013ac7c797c5e4ec43"
+    },
+    "tests/integration/test_f8_probe.py": {
+      "old": "2b7e2471184a615ddd54f7fd052033f6fad82dd49399227109fe8ccd99923207",
+      "new": "6428223c881e456554767a8ca541fc7066fe882d23920c25632cceeb77d69681"
+    },
+    "tests/integration/test_f8_trace_query.py": {
+      "old": "36f514cdb4002cbe0648787975d1347879db662e02e1691e90e14ae8fb375855",
+      "new": "f53efcf406c0f0c0bd1ef6bcdd34fdaedc04095acb64ebebf4cc1e3655fa71a6"
+    },
+    "tests/integration/test_f9_billing_queries.py": {
+      "old": null,
+      "new": "faa860e2d78175c13ee13d7724ea6ff7703b008889fad09690a2f4bfd495203d"
+    },
+    "tests/integration/test_f9_identity.py": {
+      "old": null,
+      "new": "e96c0874e3e393abed9aad623bf2958333a8352f0e30804eee8aee0cbd9393ad"
+    },
+    "tests/integration/test_f9_paid_flow.py": {
+      "old": null,
+      "new": "e67f44809af016fa37c7dc911b3c493f7342c701577e9e922ef67e1e45f4facb"
+    },
+    "tests/integration/test_f9_stream_budget.py": {
+      "old": null,
+      "new": "7beac35c11550d08f2271b6069bf5275a88e6329ecdd31db8373e768acf787ad"
+    },
+    "tests/legacy_identity.py": {
+      "old": null,
+      "new": "18ade69ae372aef7fb794c316dfb14b4668e302dd624a47c5927090a5337c2a3"
+    },
+    "tests/live/test_f5o1_acceptance.py": {
+      "old": "2c0317a91d77b35b8024d8ca5365d951e88ba8f0f958c4c585b55cb904f8e32c",
+      "new": "fe652c5848fcd6eabe97242c467abb3b4e94ff4e20968c691e7a847583a790b9"
+    },
+    "tests/live/test_real_providers.py": {
+      "old": "a5f8fba6cf3c7822555ca0596ccfe4b5af962038f88cfc3a2cfcbddfa5a89663",
+      "new": "b20a846b8d49cbda1344d2b93a8689360ebcb58cb14cb6173c9c9b9eb656d06e"
+    },
+    "tests/postgres/test_f5o1_persistence.py": {
+      "old": "44238b2c4fbbfb0888fa3e982d21a8333361645c670d1aecc45e139b95cd4adb",
+      "new": "ef5cfdf118d2f84faf6aab4dc5887a6a21980d9a520144922e037f497a03fc01"
+    },
+    "tests/postgres/test_f6_storage.py": {
+      "old": "33d2c29724cb65125418038ff938031fe2777a0d0a9d56d7abe066508b4e4bb3",
+      "new": "3c2544d25133d819aab94d66cece1b131cef989fe015fd5a4b9b934a95ba2d62"
+    },
+    "tests/postgres/test_f7_storage.py": {
+      "old": "b0d05b1b14089d5eaa03f15dec97d0b34837841b38d792c40d717a241e7cbfba",
+      "new": "ccfec5b7e88be4a8ceeecb4dc6e399840bbfb474506203222070c950cbc9b052"
+    },
+    "tests/postgres/test_f9_ledger.py": {
+      "old": null,
+      "new": "513c059b69e2c2fd0c2e345c5bee2fee86d1863462933b502dc43a7a3f3bc08a"
+    },
+    "tests/protocol/test_f9_stream_usage.py": {
+      "old": null,
+      "new": "97a9aeb93b9acece2eef154737a133dbecb1106a64a84ccd1ed1cc29228700f7"
+    },
+    "tests/smoke/test_f5_http_server.py": {
+      "old": "2da2075ca08ef03ec951f283666d4de9fe4acd5a39c46a56af9924520f27e6d4",
+      "new": "9c7026dcdfbbd3f2ae3bd30058eef01615805274c27b4b640bc1ee5731f0c9d1"
+    },
+    "tests/smoke/test_f5o1_process.py": {
+      "old": "e70a69dc3ffd9ea021a711ab86eb4329e650d6aef24d2b17f1121a82fe4379ef",
+      "new": "c3aaa66e089262996f22a46709de20cb62e2dc3a6093c4ab73cafbb4109afd1f"
+    },
+    "tests/smoke/test_f5o2_process.py": {
+      "old": "c2522fab7a9b5ae2066fba03c5363acd2b21ae74a697ef0ea8fdc9ab8ff50a95",
+      "new": "43fea9f271f80a40c44cff21cc10ca26304802117470e573d3e5f6f239156717"
+    },
+    "tests/smoke/test_f6_process.py": {
+      "old": "98dfa999a2b89b363519315135a9225d144c194c44957d8de7f3e13250e7f530",
+      "new": "0cd55f79ac3d06137c36e46160da28c818eef0250ac794a06fdfe9cec119ef11"
+    },
+    "tests/smoke/test_http_server.py": {
+      "old": "0f4f14dd8febae5b59cff42e88d5b973073b91fe17ce66803d7052567e877600",
+      "new": "e2b2de52976cb526b2e69d8ce8d4f8ce4eeacd0d7e6aebc1cb2c862b61ec5b41"
+    },
+    "tests/unit/test_f9_prices.py": {
+      "old": null,
+      "new": "9ffe99c9b6fee424d22ea37b245fc76ad28480f352ff88f662a3e616547cd7c4"
+    }
+  }
+}

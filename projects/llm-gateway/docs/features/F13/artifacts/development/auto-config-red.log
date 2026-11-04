@@ -1,0 +1,30 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_______ test_valid_automatic_alias_and_defaults_are_loaded_without_calls _______
+
+tmp_path = PosixPath('/private/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/pytest-of-baiyu/pytest-486/test_valid_automatic_alias_and0')
+
+    def test_valid_automatic_alias_and_defaults_are_loaded_without_calls(tmp_path):
+>       registry=load(tmp_path,auto_document())
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_f13_auto_config.py:24: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/unit/test_f12_config.py:28: in load
+    return load_registry(tmp_path)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+config_dir = PosixPath('/private/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/pytest-of-baiyu/pytest-486/test_valid_automatic_alias_and0')
+
+    def load_registry(config_dir: Path = DEFAULT_CONFIG_DIR) -> ModelRegistry:
+        data = read_yaml(config_dir / 'gateway.yaml')
+        required = {'endpoints', 'model_groups', 'providers', 'concurrency'}
+        if not required <= set(data) or set(data) - (required | {'database', 'recovery'}):
+>           raise ConfigurationError('gateway.yaml 必须包含 endpoints、model_groups、providers、concurrency，可包含 database、recovery，不能包含其他顶层字段')
+E           services.models.ConfigurationError: gateway.yaml 必须包含 endpoints、model_groups、providers、concurrency，可包含 database、recovery，不能包含其他顶层字段
+
+src/services/models.py:221: ConfigurationError
+=========================== short test summary info ============================
+FAILED tests/unit/test_f13_auto_config.py::test_valid_automatic_alias_and_defaults_are_loaded_without_calls
+1 failed, 110 deselected in 0.08s

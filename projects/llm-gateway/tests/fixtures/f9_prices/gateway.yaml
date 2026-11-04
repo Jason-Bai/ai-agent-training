@@ -1,0 +1,19 @@
+pricing:
+  bindings:
+    deepseek-main: deepseek
+    openai-main: deepseek
+  versions:
+  - calendar_until: '2027-01-01'
+    effective_from: '2026-11-03T00:00:00+08:00'
+    holidays: []
+    model: deepseek-flash
+    off_peak:
+      hit: '0.02'
+      miss: '1'
+      output: '4'
+    peak:
+      hit: '0.04'
+      miss: '2'
+      output: '8'
+    supplier: deepseek
+    version: flash-cny-20261103

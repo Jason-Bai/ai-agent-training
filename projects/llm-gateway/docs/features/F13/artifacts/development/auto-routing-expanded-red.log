@@ -1,0 +1,118 @@
+.....FFFFFF..............                                                [100%]
+=================================== FAILURES ===================================
+___ test_invalid_classification_uses_checked_default_without_repair[broken] ____
+
+text = 'broken'
+
+    @pytest.mark.parametrize('text',['broken','[]','{}','{"group":"unknown"}',
+        '{"group":"auto-general"}','{"group":"general","extra":true}'])
+    async def test_invalid_classification_uses_checked_default_without_repair(text):
+        gateway,trace,provider,traces=service(None,ProviderResult(text=text),ProviderResult(text='默认回答'))
+        result=await gateway.complete(request(model='auto-general'),trace)
+        assert result.text=='默认回答' and len(provider.calls)==2
+        assert trace.auto_routing['resolved_group']=='general'
+        assert trace.auto_routing['source']=='default_fallback' and trace.auto_routing['fallback_reason']
+        assert traces.attempts[0].status=='failed' and traces.attempts[0].purpose=='classification'
+>       assert getattr(trace,'_recovery_stop_reason',None) is None
+E       AssertionError: assert 'attempts_exhausted' is None
+E        +  where 'attempts_exhausted' = getattr(RequestTrace(request_id='0409e3d1-1cfe-4590-810b-37d7e9249a43', operation='completion', requested_model='auto-general'..._prompt_name': 'task_router', 'classifier_prompt_version': '1.0.0', 'classification_duration_ms': 0.08516700472682714}), '_recovery_stop_reason', None)
+
+tests/unit/test_f13_auto_routing.py:59: AssertionError
+_____ test_invalid_classification_uses_checked_default_without_repair[[]] ______
+
+text = '[]'
+
+    @pytest.mark.parametrize('text',['broken','[]','{}','{"group":"unknown"}',
+        '{"group":"auto-general"}','{"group":"general","extra":true}'])
+    async def test_invalid_classification_uses_checked_default_without_repair(text):
+        gateway,trace,provider,traces=service(None,ProviderResult(text=text),ProviderResult(text='默认回答'))
+        result=await gateway.complete(request(model='auto-general'),trace)
+        assert result.text=='默认回答' and len(provider.calls)==2
+        assert trace.auto_routing['resolved_group']=='general'
+        assert trace.auto_routing['source']=='default_fallback' and trace.auto_routing['fallback_reason']
+        assert traces.attempts[0].status=='failed' and traces.attempts[0].purpose=='classification'
+>       assert getattr(trace,'_recovery_stop_reason',None) is None
+E       AssertionError: assert 'attempts_exhausted' is None
+E        +  where 'attempts_exhausted' = getattr(RequestTrace(request_id='4657b693-e357-41aa-99ca-18048776caba', operation='completion', requested_model='auto-general'..._prompt_name': 'task_router', 'classifier_prompt_version': '1.0.0', 'classification_duration_ms': 0.11325004743412137}), '_recovery_stop_reason', None)
+
+tests/unit/test_f13_auto_routing.py:59: AssertionError
+_____ test_invalid_classification_uses_checked_default_without_repair[{}] ______
+
+text = '{}'
+
+    @pytest.mark.parametrize('text',['broken','[]','{}','{"group":"unknown"}',
+        '{"group":"auto-general"}','{"group":"general","extra":true}'])
+    async def test_invalid_classification_uses_checked_default_without_repair(text):
+        gateway,trace,provider,traces=service(None,ProviderResult(text=text),ProviderResult(text='默认回答'))
+        result=await gateway.complete(request(model='auto-general'),trace)
+        assert result.text=='默认回答' and len(provider.calls)==2
+        assert trace.auto_routing['resolved_group']=='general'
+        assert trace.auto_routing['source']=='default_fallback' and trace.auto_routing['fallback_reason']
+        assert traces.attempts[0].status=='failed' and traces.attempts[0].purpose=='classification'
+>       assert getattr(trace,'_recovery_stop_reason',None) is None
+E       AssertionError: assert 'attempts_exhausted' is None
+E        +  where 'attempts_exhausted' = getattr(RequestTrace(request_id='ede4c09a-6e47-4383-adab-7df3a12e78a5', operation='completion', requested_model='auto-general'..._prompt_name': 'task_router', 'classifier_prompt_version': '1.0.0', 'classification_duration_ms': 0.10908395051956177}), '_recovery_stop_reason', None)
+
+tests/unit/test_f13_auto_routing.py:59: AssertionError
+_ test_invalid_classification_uses_checked_default_without_repair[{"group":"unknown"}] _
+
+text = '{"group":"unknown"}'
+
+    @pytest.mark.parametrize('text',['broken','[]','{}','{"group":"unknown"}',
+        '{"group":"auto-general"}','{"group":"general","extra":true}'])
+    async def test_invalid_classification_uses_checked_default_without_repair(text):
+        gateway,trace,provider,traces=service(None,ProviderResult(text=text),ProviderResult(text='默认回答'))
+        result=await gateway.complete(request(model='auto-general'),trace)
+        assert result.text=='默认回答' and len(provider.calls)==2
+        assert trace.auto_routing['resolved_group']=='general'
+        assert trace.auto_routing['source']=='default_fallback' and trace.auto_routing['fallback_reason']
+        assert traces.attempts[0].status=='failed' and traces.attempts[0].purpose=='classification'
+>       assert getattr(trace,'_recovery_stop_reason',None) is None
+E       AssertionError: assert 'attempts_exhausted' is None
+E        +  where 'attempts_exhausted' = getattr(RequestTrace(request_id='149613c1-041e-4c01-a8f5-86a001c9a687', operation='completion', requested_model='auto-general'..._prompt_name': 'task_router', 'classifier_prompt_version': '1.0.0', 'classification_duration_ms': 0.11212500976398587}), '_recovery_stop_reason', None)
+
+tests/unit/test_f13_auto_routing.py:59: AssertionError
+_ test_invalid_classification_uses_checked_default_without_repair[{"group":"auto-general"}] _
+
+text = '{"group":"auto-general"}'
+
+    @pytest.mark.parametrize('text',['broken','[]','{}','{"group":"unknown"}',
+        '{"group":"auto-general"}','{"group":"general","extra":true}'])
+    async def test_invalid_classification_uses_checked_default_without_repair(text):
+        gateway,trace,provider,traces=service(None,ProviderResult(text=text),ProviderResult(text='默认回答'))
+        result=await gateway.complete(request(model='auto-general'),trace)
+        assert result.text=='默认回答' and len(provider.calls)==2
+        assert trace.auto_routing['resolved_group']=='general'
+        assert trace.auto_routing['source']=='default_fallback' and trace.auto_routing['fallback_reason']
+        assert traces.attempts[0].status=='failed' and traces.attempts[0].purpose=='classification'
+>       assert getattr(trace,'_recovery_stop_reason',None) is None
+E       AssertionError: assert 'attempts_exhausted' is None
+E        +  where 'attempts_exhausted' = getattr(RequestTrace(request_id='41614fa6-87f7-4adc-a9e5-f17a05fef059', operation='completion', requested_model='auto-general'..._prompt_name': 'task_router', 'classifier_prompt_version': '1.0.0', 'classification_duration_ms': 0.11479202657938004}), '_recovery_stop_reason', None)
+
+tests/unit/test_f13_auto_routing.py:59: AssertionError
+_ test_invalid_classification_uses_checked_default_without_repair[{"group":"general","extra":true}] _
+
+text = '{"group":"general","extra":true}'
+
+    @pytest.mark.parametrize('text',['broken','[]','{}','{"group":"unknown"}',
+        '{"group":"auto-general"}','{"group":"general","extra":true}'])
+    async def test_invalid_classification_uses_checked_default_without_repair(text):
+        gateway,trace,provider,traces=service(None,ProviderResult(text=text),ProviderResult(text='默认回答'))
+        result=await gateway.complete(request(model='auto-general'),trace)
+        assert result.text=='默认回答' and len(provider.calls)==2
+        assert trace.auto_routing['resolved_group']=='general'
+        assert trace.auto_routing['source']=='default_fallback' and trace.auto_routing['fallback_reason']
+        assert traces.attempts[0].status=='failed' and traces.attempts[0].purpose=='classification'
+>       assert getattr(trace,'_recovery_stop_reason',None) is None
+E       AssertionError: assert 'attempts_exhausted' is None
+E        +  where 'attempts_exhausted' = getattr(RequestTrace(request_id='ff9c15db-fbe2-4b12-afa6-c8d0edd14d67', operation='completion', requested_model='auto-general'...r_prompt_name': 'task_router', 'classifier_prompt_version': '1.0.0', 'classification_duration_ms': 0.1087500131689012}), '_recovery_stop_reason', None)
+
+tests/unit/test_f13_auto_routing.py:59: AssertionError
+=========================== short test summary info ============================
+FAILED tests/unit/test_f13_auto_routing.py::test_invalid_classification_uses_checked_default_without_repair[broken]
+FAILED tests/unit/test_f13_auto_routing.py::test_invalid_classification_uses_checked_default_without_repair[[]]
+FAILED tests/unit/test_f13_auto_routing.py::test_invalid_classification_uses_checked_default_without_repair[{}]
+FAILED tests/unit/test_f13_auto_routing.py::test_invalid_classification_uses_checked_default_without_repair[{"group":"unknown"}]
+FAILED tests/unit/test_f13_auto_routing.py::test_invalid_classification_uses_checked_default_without_repair[{"group":"auto-general"}]
+FAILED tests/unit/test_f13_auto_routing.py::test_invalid_classification_uses_checked_default_without_repair[{"group":"general","extra":true}]
+6 failed, 19 passed in 3.10s

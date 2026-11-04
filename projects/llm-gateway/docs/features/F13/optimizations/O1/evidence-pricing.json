@@ -1,0 +1,63 @@
+{
+  "scope": "F13-O1 unified gateway.yaml.pricing; pricing implementation slice only",
+  "baseline": "/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llmgw-f13o1-n0t72dvw/baseline-manifest.json",
+  "changed_baseline_files": [
+    "src/services/models.py",
+    "src/services/prices.py",
+    "tests/conftest.py",
+    "tests/f10_support.py",
+    "tests/f13_real_support.py",
+    "tests/f11_support.py",
+    "tests/f13_capacity_support.py",
+    "tests/smoke/test_f9_paid_restart.py",
+    "tests/smoke/test_f10_fault_chain.py",
+    "tests/unit/test_f13_pricing.py",
+    "tests/unit/test_f9_prices.py",
+    "tests/integration/test_f13_lifecycle.py",
+    "tests/integration/test_f13_metering.py",
+    "tests/integration/test_f9_paid_flow.py",
+    "tests/integration/test_f9_stream_budget.py",
+    "tests/integration/test_f12_trace_billing.py",
+    "tests/live/test_f5o1_acceptance.py",
+    "tests/live/test_f13_streaming.py",
+    "tests/live/test_f12_real_routing.py",
+    "config/prices.bailian.example.yaml",
+    "config/gateway.example.yaml",
+    "config/gateway.bailian.example.yaml",
+    "config/gateway.yaml",
+    "config/prices.yaml"
+  ],
+  "new_pricing_files": [
+    "tests/pricing_support.py",
+    "tests/unit/test_f13o1_configuration.py",
+    "tests/fixtures/f9_prices/gateway.yaml",
+    "tests/fixtures/wire_prices/gateway.yaml"
+  ],
+  "other_removed_fixture": "tests/fixtures/wire_prices/prices.yaml (replaced with gateway.yaml wrapping same catalog)",
+  "red": {
+    "command": "uv run --python 3.12 python -W error -m pytest tests/unit/test_f13o1_configuration.py -q",
+    "result": "9 failed: unified source, strict pricing, no legacy fallback and complete sample absent",
+    "receipt": "/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llmgw-f13o1-n0t72dvw/pricing-red.log"
+  },
+  "green": {
+    "command": "uv run --python 3.12 python -W error -m pytest tests/unit/test_f13o1_configuration.py tests/unit/test_f13_pricing.py tests/unit/test_f9_prices.py tests/unit/test_f12_config.py -q",
+    "result": "197 passed",
+    "receipt": "/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llmgw-f13o1-n0t72dvw/pricing-green.log"
+  },
+  "collection": {
+    "result": "2963 tests collected at this slice snapshot (root may add tests subsequently)",
+    "receipt": "/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llmgw-f13o1-n0t72dvw/pricing-collect.log"
+  },
+  "operator_migration": "Verified parsed gateway-after equals original gateway union pricing=original prices; retained original price file in private task work, removed active prices.yaml.",
+  "not_run": "DB integration, real Provider, final full regression and independent review delegated to root integration; no tests or AGENTS assertions removed.",
+  "live_fixture_followup": {
+    "issue": "Historical live tests must retain real pricing rather than offline empty catalog.",
+    "test": "Four marked_live/enabled combinations drive original conftest fixture generator with isolated default path; no DB or real network.",
+    "red": "1 failed, 12 passed; only marked_live=True/enabled=True failed",
+    "green": "201 passed across configuration/F9/F13 pricing/F12 configuration",
+    "receipts": [
+      "/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llmgw-f13o1-n0t72dvw/pricing-live-fixture-red.log",
+      "/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llmgw-f13o1-n0t72dvw/pricing-live-fixture-green.log"
+    ]
+  }
+}

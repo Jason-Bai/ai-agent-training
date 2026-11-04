@@ -1,0 +1,135 @@
+F.FFF...F.                                                               [100%]
+=================================== FAILURES ===================================
+___ test_two_phase_completion_persists_purposes_aggregates_usage_and_reloads ___
+
+lifecycle_case = (<postgres_support.PostgresServer object at 0x10d2b22d0>, 'case_8949db173b294bf1a0c455501a340d16', PosixPath('/private...tokens=128, default_output_tokens=128, max_output_tokens=4096, default_timeout_seconds=30, max_timeout_seconds=120)})))
+
+    def test_two_phase_completion_persists_purposes_aggregates_usage_and_reloads(lifecycle_case):
+        provider = PhaseProvider(('classification', '{"group":"general"}'), ('generation', '订单A123充电器'))
+        app = application(lifecycle_case, provider)
+        with TestClient(app, headers=HEADERS) as client:
+            result = client.post('/v1/llm', json=body()); assert result.status_code == 200, result.text
+            rid = result.headers['x-request-id']; data = get_trace(client, rid)
+            assert result.json()['data']['usage'] == {'input_tokens':100, 'output_tokens':20, 'total_tokens':120}
+            assert result.json()['data']['text'] == '订单A123充电器'
+            assert_auto(data)
+            assert [(item['attempt_no'],item['purpose']) for item in data['attempts']] == [(1,'classification'),(2,'generation')]
+            saved = persisted(lifecycle_case, rid)
+            assert saved['status'] == 'completed'
+            assert saved['metadata']['attempt_purposes'] == {'1':'classification','2':'generation'}
+>           assert saved['metadata']['auto_routing'] == data['auto_routing']
+E           AssertionError: assert {'version': 1...general', ...} == {'version': 1...general', ...}
+E             
+E             Omitting 8 identical items, use -vv to show
+E             Differing items:
+E             {'classification_duration_ms': Decimal('10.938875027932227')} != {'classification_duration_ms': 10.938875027932227}
+E             Use -v to get more diff
+
+tests/integration/test_f13_lifecycle.py:197: AssertionError
+_ test_pending_is_free_first_subscription_classifies_once_and_replays_read_only _
+
+lifecycle_case = (<postgres_support.PostgresServer object at 0x10d2b22d0>, 'case_ce9e509a866c4cb7892718df65bb7cd1', PosixPath('/private...tokens=128, default_output_tokens=128, max_output_tokens=4096, default_timeout_seconds=30, max_timeout_seconds=120)})))
+
+    def test_pending_is_free_first_subscription_classifies_once_and_replays_read_only(lifecycle_case):
+        provider = PhaseProvider(('classification','{"group":"general"}'),('generation','订单A123充电器'))
+        app = application(lifecycle_case,provider)
+        with TestClient(app,headers=HEADERS) as client:
+            rid = pending(client); before = persisted(lifecycle_case,rid)
+            assert before['status'] == 'pending' and not before['attempts'] and not before['charges'] and not before['events']
+            assert not provider.calls and app.state.concurrency_limiter.snapshot() == NO_PERMITS
+            url = '/v1/llm/stream/'+rid+'/events'
+            first = client.get(url); assert first.status_code == 200,first.text
+>           assert 'response.completed' in first.text
+E           assert 'response.completed' in 'id: 1\nevent: response.failed\ndata: {"request_id":"2aef0a73-6fb0-4c09-97c2-1a5d2ea0bc15","code":"execution_configuration_changed","message":"执行配置已变更"}\n\n'
+E            +  where 'id: 1\nevent: response.failed\ndata: {"request_id":"2aef0a73-6fb0-4c09-97c2-1a5d2ea0bc15","code":"execution_configuration_changed","message":"执行配置已变更"}\n\n' = <Response [200 OK]>.text
+
+tests/integration/test_f13_lifecycle.py:236: AssertionError
+__ test_cancel_during_classification_stops_generation_and_releases_one_permit __
+
+lifecycle_case = (<postgres_support.PostgresServer object at 0x10d2b22d0>, 'case_e39264b0685b47c98e2fd616e9f3673c', PosixPath('/private...tokens=128, default_output_tokens=128, max_output_tokens=4096, default_timeout_seconds=30, max_timeout_seconds=120)})))
+
+    def test_cancel_during_classification_stops_generation_and_releases_one_permit(lifecycle_case):
+        entered = threading.Event(); cleaned = threading.Event()
+        async def held(model):
+            entered.set()
+            try: await asyncio.sleep(60)
+            finally: cleaned.set()
+        provider = PhaseProvider(('classification',held))
+        app = application(lifecycle_case,provider)
+        with TestClient(app,headers=HEADERS) as client:
+            rid = pending(client)
+            with ThreadPoolExecutor(max_workers=1) as pool:
+                read = pool.submit(client.get,'/v1/llm/stream/'+rid+'/events')
+>               assert entered.wait(4), 'classification did not start'
+E               AssertionError: classification did not start
+E               assert False
+E                +  where False = wait(4)
+E                +    where wait = <threading.Event at 0x10da1c830: unset>.wait
+
+tests/integration/test_f13_lifecycle.py:262: AssertionError
+_ test_cancel_after_classification_commit_prevents_generation_without_losing_charge _
+
+lifecycle_case = (<postgres_support.PostgresServer object at 0x10d2b22d0>, 'case_4e0618d76f6c413b989ae5b191c6384b', PosixPath('/private...tokens=128, default_output_tokens=128, max_output_tokens=4096, default_timeout_seconds=30, max_timeout_seconds=120)})))
+
+    def test_cancel_after_classification_commit_prevents_generation_without_losing_charge(lifecycle_case):
+        entered = threading.Event(); cleaned = threading.Event()
+        provider = PhaseProvider(('classification','{"group":"general"}'))
+        app = application(lifecycle_case,provider); finish = app.state.storage.finish_attempt
+        async def observed_finish(trace,attempt,**options):
+            status = await finish(trace,attempt,**options)
+            if attempt.purpose == 'classification' and status == 'running':
+                entered.set()
+                try: await asyncio.sleep(60)
+                finally: cleaned.set()
+            return status
+        app.state.storage.finish_attempt = observed_finish
+        with TestClient(app,headers=HEADERS) as client:
+            rid = pending(client)
+            with ThreadPoolExecutor(max_workers=1) as pool:
+                read = pool.submit(client.get,'/v1/llm/stream/'+rid+'/events')
+>               assert entered.wait(4), 'classification commit barrier was not reached'
+E               AssertionError: classification commit barrier was not reached
+E               assert False
+E                +  where False = wait(4)
+E                +    where wait = <threading.Event at 0x10dad2e40: unset>.wait
+
+tests/integration/test_f13_lifecycle.py:292: AssertionError
+___ test_pending_configuration_is_frozen_only_for_related_assets[unrelated] ____
+
+lifecycle_case = (<postgres_support.PostgresServer object at 0x10d2b22d0>, 'case_519486a32b77485a8ed7d1becb0b1ea0', PosixPath('/private...tokens=128, default_output_tokens=128, max_output_tokens=4096, default_timeout_seconds=30, max_timeout_seconds=120)})))
+change = 'unrelated'
+
+    @pytest.mark.parametrize('change',['profile','endpoint','unrelated'])
+    def test_pending_configuration_is_frozen_only_for_related_assets(lifecycle_case,change):
+        _,_,_,definition = lifecycle_case
+        before = PhaseProvider()
+        with TestClient(application(lifecycle_case,before),headers=HEADERS) as client: rid = pending(client)
+        if change == 'profile':
+            profile = definition.auto_routes['auto-general'].model_copy(update={'default_group':'analysis'})
+            updated = replace(definition,auto_routes={'auto-general':profile})
+        elif change == 'endpoint':
+            endpoints = dict(definition.endpoints)
+            endpoints['analysis-e'] = endpoints['analysis-e'].model_copy(update={'max_output_tokens':2048})
+            updated = replace(definition,endpoints=endpoints)
+        else:
+            groups = dict(definition.model_groups)
+            groups['unrelated'] = groups['general'].model_copy(update={'routing_description':'unreferenced group'})
+            updated = replace(definition,model_groups=groups)
+        provider = PhaseProvider(('classification','{"group":"general"}'),('generation','订单A123充电器'))
+        app = application(lifecycle_case,provider,definition=updated)
+        with TestClient(app,headers=HEADERS) as client:
+            response = client.get('/v1/llm/stream/'+rid+'/events')
+            data = get_trace(client,rid); saved = persisted(lifecycle_case,rid)
+            if change == 'unrelated':
+>               assert 'response.completed' in response.text and data['status'] == 'completed'
+E               assert ('response.completed' in 'id: 1\nevent: response.failed\ndata: {"request_id":"e9e499b0-4497-4c77-a0a4-bd1cef59a957","code":"execution_configuration_changed","message":"执行配置已变更"}\n\n')
+E                +  where 'id: 1\nevent: response.failed\ndata: {"request_id":"e9e499b0-4497-4c77-a0a4-bd1cef59a957","code":"execution_configuration_changed","message":"执行配置已变更"}\n\n' = <Response [200 OK]>.text
+
+tests/integration/test_f13_lifecycle.py:347: AssertionError
+=========================== short test summary info ============================
+FAILED tests/integration/test_f13_lifecycle.py::test_two_phase_completion_persists_purposes_aggregates_usage_and_reloads
+FAILED tests/integration/test_f13_lifecycle.py::test_pending_is_free_first_subscription_classifies_once_and_replays_read_only
+FAILED tests/integration/test_f13_lifecycle.py::test_cancel_during_classification_stops_generation_and_releases_one_permit
+FAILED tests/integration/test_f13_lifecycle.py::test_cancel_after_classification_commit_prevents_generation_without_losing_charge
+FAILED tests/integration/test_f13_lifecycle.py::test_pending_configuration_is_frozen_only_for_related_assets[unrelated]
+5 failed, 5 passed in 13.27s

@@ -1,0 +1,25 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_____________ test_bailian_schema_uses_documented_nested_contract ______________
+
+server = namespace(calls=[{'path': '/compatible-mode/v1/responses', 'headers': {'host': '127.0.0.1:54740', 'accept-encoding': '...{'prompt_tokens': 120, 'completion_tokens': 30, 'total_tokens': 150}}, raw=None, delay=0, url='http://127.0.0.1:54740')
+
+    async def test_bailian_schema_uses_documented_nested_contract(server):
+        provider=OpenAICompatibleProvider(server.url+'/compatible-mode/v1','FAKE-F13-KEY')
+        try:
+            await provider.complete(SimpleNamespace(model_id='qwen3.8-flash'),
+                [Message(role='system',content='Fixed'),Message(role='user',content='JSON')],
+                max_output_tokens=128,timeout_seconds=2,
+                response_schema={'type':'object','properties':{'x':{'type':'number','minimum':Decimal('1.0000000000000001')}},
+                                 'required':['x'],'additionalProperties':False})
+        finally:await provider.aclose()
+        sent=server.calls[0]
+        assert sent['path']=='/compatible-mode/v1/responses'
+>       assert sent['body']['text']['format']['json_schema']['strict'] is True
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'json_schema'
+
+tests/protocol/test_f13_bailian.py:23: KeyError
+=========================== short test summary info ============================
+FAILED tests/protocol/test_f13_bailian.py::test_bailian_schema_uses_documented_nested_contract
+1 failed in 0.22s

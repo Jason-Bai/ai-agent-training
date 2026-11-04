@@ -1,0 +1,1385 @@
+--- baseline/README.md
++++ candidate/README.md
+@@ -2,7 +2,7 @@
+ 
+ > **1.6 已收尾（2026-11-03）**：当前限定内部Agent、本机或隔离网络、单实例单worker。完成范围、最终证据、Mock/真实Provider定位及非阻断遗留统一见[1.6收尾记录](docs/1.6-closeout.md)。
+ 
+-> **1.7交付顺序已确认，当前为文档阶段**：[BUG-002测试隔离 → 并发治理 → 模型管理与路由](docs/1.7-plan.md)。后两项分别作为独立Feature，逐项确认完整设计与测试后实施；当前首先确认BUG-002测试方案，不提前实现后续功能。
++> **1.7交付顺序已确认，BUG-002实施中**：[BUG-002测试隔离 → 并发治理 → 模型管理与路由](docs/1.7-plan.md)。后两项分别作为独立Feature，逐项确认完整设计与测试后实施；BUG-002修复及9组测试已确认、按TDD实施，后续功能按序推进。
+ 
+ > 状态：F1/F1-O1/F2/F3 已验收；F4 已验收通过：离线836、Python3.12关键233、真实六例通过，Claude Code第1轮APPROVED。F5 已验收：最终离线1099、Python3.12关键235、最新真实两例通过，原生Claude Code第2轮APPROVED；F6验收通过，F7验收通过，F8 已验收通过（[代码导读](docs/features/F8/implementation-summary.md)），F9 已验收（最终2010通过含真实16，[修复及独审](docs/bugs/F9-B1.md)），F10 已验收（全量2039通过、首轮独审APPROVED，[总验收报告](docs/features/F10/acceptance-report.md)）。默认配置仍使用 Mock。
+ 
+--- baseline/docs/1.7-plan.md
++++ candidate/docs/1.7-plan.md
+@@ -1,6 +1,6 @@
+ # 1.7 递增交付计划
+ 
+-日期：2026-11-03。**交付顺序及两个Feature的划分已由用户确认，当前先落文档；各项完整设计、测试方案和实现尚未完成。** 1.6保持已收尾，历史基线见[收尾记录](1.6-closeout.md)。
++日期：2026-11-03。**交付顺序及两个Feature的划分已由用户确认；BUG-002完整修复与测试方案已确认、进入实施；后两项完整设计及测试仍待讨论。** 1.6保持已收尾，历史基线见[收尾记录](1.6-closeout.md)。
+ 
+ ## 1. 已确认的顺序
+ 
+@@ -12,7 +12,7 @@
+ 
+ | 顺序 | 独立事项 | 当前状态 | 交付给下一项的基础 |
+ | --- | --- | --- | --- |
+-| 1 | [BUG-002测试隔离](bugs/BUG-002-offline-config-isolation.md#2026-11-03当前修复方案与测试方案待确认) | 当前代码已静态核对，修复方案与测试方案待确认，未运行Red或修改测试。 | Mock/协议替身测试显式管理模型配置，独立于维护者本地Provider绑定；真实测试继续显式启用。 |
++| 1 | [BUG-002测试隔离](bugs/BUG-002-offline-config-isolation.md#2026-11-03当前修复方案与测试方案已确认) | 修复及9组测试已确认，已取得正确Red，TDD实施中。 | Mock/协议替身测试显式管理模型配置，独立于维护者本地Provider绑定；真实测试继续显式启用。 |
+ | 2 | 并发治理 | 作为独立Feature，主题与顺序已确认；完整需求、设计及测试待讨论。 | 调用名额的准入、持有、释放与超额结果形成可验收契约，后续路由复用同一治理组件。 |
+ | 3 | 模型管理与路由 | 作为独立Feature，主题与顺序已确认；完整需求、设计及测试待讨论。 | 最小端点管理、可解释的候选选择及与既有恢复/并发治理的整合。 |
+ 
+@@ -24,7 +24,7 @@
+ 
+ 以当前代码定位剩余直接读取维护者模型配置的路径，优先使用测试自建注册表、临时YAML及已存在的隔离数据库/进程夹具。配置解析仍执行真正的load_registry，默认加载路径由隔离副本验证，不以全局恒定成功替身跳过生产解析。
+ 
+-当前推荐在本项同时补一个最小公共API验收层：普通、结构化、流式、续传、取消共用步骤和行为断言，由Mock和真实夹具分别提供结果与专属留证。复用既有真实场景、不新增业务能力或整体重写历史测试；该具体改造范围连同Bug测试方案待确认。
++本项已确认同时补一个最小公共API验收层：普通、结构化、流式、续传、取消共用步骤和行为断言，由Mock和真实夹具分别提供结果与专属留证。复用既有真实场景、不新增业务能力或整体重写历史测试；该具体改造范围连同Bug测试方案已由用户整体确认。
+ 
+ 本项不改变生产配置加载、Provider协议、预算、HTTP/SSE契约、ENV行为和真实测试的显式启用方式，也不借此实现并发限制或Router。当前方案、逐项用例、回归与验收条件集中在[原Bug记录](bugs/BUG-002-offline-config-isolation.md)，保留旧定位和历史结果。
+ 
+@@ -62,4 +62,4 @@
+ - 当前不为多实例、分布式限流、复杂加权/智能路由、Prompt灰度或管理后台预建接口；需求出现时再讨论优先级。
+ - 每项依现有[工作流](../AGENTS.md)完成确认、实现、回归和最多三轮完整独审。顺序确认不替代测试方案确认，文档存在不代表能力已实现。
+ 
+-当前下一步：确认BUG-002当前修复及测试方案，再在隔离环境取得正确Red，按同一场景完成修复、复测与独审；完成之前不开始并发治理实现。
++当前执行BUG-002：正确Red已取得，完成最小修复、共用公共API验收、原场景Green、完整回归及独审；验收通过前不开始并发治理实现。
+--- baseline/docs/bugs/BUG-002-acceptance-report.md
++++ candidate/docs/bugs/BUG-002-acceptance-report.md
+@@ -0,0 +1,38 @@
++# BUG-002 最终回归记录
++
++状态：最终全量通过，待独立审查。
++
++修复测试对维护者模型配置的依赖，并让普通、结构化、流式、续传和取消共用API验收步骤。产品源码、开发配置和AGENTS保持不变；原Feature历史工件不改写。
++
++## 测试分类与结果
++
++| 分类 | 实际覆盖 |
++| --- | --- |
++| 配置与守卫 | 独立注册表/临时YAML、真实解析、默认目录、三类配置及符号链接子场景、IO前拒读、收集阶段观察器反例、回环允许/外网拒绝、缺Key与显式live边界 |
++| 共用公共API | 两逻辑模型×普通/结构化/流式/续传/取消，共10个Mock节点和10个真实节点，调用同一scenario函数；保留原CLI真实附加节点 |
++| 专项及历史 | 原纯逻辑/协议/故障断言保持；配置变体子进程、PG/取消/崩溃等原测试均执行 |
++| 真实容量 | 原F10四档60秒及选档600秒持续运行，保持真实模型、原文对照及SQL/账户核验 |
++
++最终完整命令见[执行来源](BUG-002-evidence-final.json)。**2086 passed，28个live节点，无失败/错误/跳过/筛除**；原2039节点全部保留，新增47。不累加开发批次，子进程故意产生的缺Key错误/默认skip/收集读取负例是被外层测试验收的预期结果，不代替真实接入验证。
++
++## 实测容量
++
++| 并发/派发窗口 | 请求 | 成功 | 错误分类 | 成功率 | 批次完成率 次/秒 |
++| --- | ---: | ---: | --- | ---: | ---: |
++| 1/60秒 | 66 | 66 | 无 | 100.0000% | 1.08 |
++| 5/60秒 | 313 | 313 | 无 | 100.0000% | 5.17 |
++| 10/60秒 | 630 | 630 | 无 | 100.0000% | 10.32 |
++| 20/60秒 | 1334 | 1334 | 无 | 100.0000% | 21.86 |
++| 20/600秒 | 12544 | 12544 | 无 | 100.0000% | 20.86 |
++
++共14887笔容量请求，逐请求检查已提交终态/Attempt/事件/账务，阶段后流任务/订阅/清理/取消归零。固定重复短任务、输出128 Token、总期限30秒，包含测试观测开销；最高已测档位不等同于系统极限或生产SLA。
++
++## 证据与边界
++
++- [完整JUnit](BUG-002-full-final.xml.gz)、[控制台](BUG-002-full-final.log)、[逐请求容量工件](BUG-002-capacity-final.json.gz)。
++- [开发原始回执](BUG-002-evidence-development.json)、[原问题与九组方案](BUG-002-offline-config-isolation.md)、[代码导读](BUG-002-implementation-summary.md)。
++- Mock记录是模拟文本/Usage和typed Provider调用/关闭证据；真实通过原适配器/TCP和上游原文核对，未知费用仍待核实。
++- 两条真实协议都访问DeepSeek。供应商正式账单、长期容量、多实例及逐请求原始数据对SQL归档快照未因本Bug新增证明。
++- 本轮此前一份全量在561通过时为修正收集阶段符号链接观察盲点主动中止，其回执单独保存；本结论仅使用重新完整运行的当前版本。
++
++独立审查尚未结束，不以测试通过单独宣布Bug验收通过。
+--- baseline/docs/bugs/BUG-002-implementation-plan.md
++++ candidate/docs/bugs/BUG-002-implementation-plan.md
+@@ -0,0 +1,14 @@
++# BUG-002 实施步骤
++
++修复与9组测试方案已于2026-11-03获用户明确确认，见[方案](BUG-002-offline-config-isolation.md)。不使用Git/分支/提交，不修改产品源码、AGENTS或维护者运行配置。
++
++| 步骤 | 负责人及文件 | 验证与依赖 |
++| --- | --- | --- |
++| 1. 安全基线、正确Red | root：隔离副本、源码/测试/安全配置与历史工件摘要 | 真实Provider定义、无Key的隔离副本中原默认Mock断言正确失败；已取得1 failed/0.15秒。 |
++| 2. 配置消费方隔离 | bug002_config_consumers：test_f3_config/test_core及三份协议消费方，必要测试helper/配置回归 | 自建注册表/临时YAML，保留真实解析；可独立纯逻辑测试，PG/进程统一交root。 |
++| 3. 公共API验收 | bug002_common_acceptance：f10_support、F10真实公共场景wrapper及新公共场景/Mock wrapper、观察反例 | 五类场景同一组步骤/行为断言，Mock/真实专属证据由夹具承担；F10容量始终真实，原断言不减。 |
++| 4. 守卫、矩阵与集成 | root：总conftest、test_bug002_isolation等必要反例，所有接线及文档 | 守卫自身Red/Green、Mock/真实绑定/拒读三个配置变体、缺Key与live启用边界；步骤2/3文件边界互不覆盖。 |
++| 5. 统一验证 | root | 原副本同场景Green、相关回归、先Mock再真实公共验收，稳定后最终全部--run-live（含真实容量），保留xunit1参数。数据库故障/容量/全量串行。 |
++| 6. 导读与独审 | root冻结基线/实际差分，fresh reviewer只读 | 源码/配置/AGENTS/历史工件摘要核对、证据覆盖表、完整三维独审最多三轮，非阻断后才验收。 |
++
++并行只覆盖独立文件编写与无数据库纯逻辑验证。公共夹具接口由root与负责人明确后接入，不并行执行PG、进程、真实API或容量实验；不使用并行评估重复审查同一对象。新需求或必须修改产品行为时回到需求节点。
+--- baseline/docs/bugs/BUG-002-implementation-summary.md
++++ candidate/docs/bugs/BUG-002-implementation-summary.md
+@@ -0,0 +1,43 @@
++# BUG-002 代码实现导读
++
++状态：最终全量2086通过，含28个真实节点，待独立审查。对应[已确认方案](BUG-002-offline-config-isolation.md)和[实施步骤](BUG-002-implementation-plan.md)。只修改测试/夹具，不改变产品源码或运行配置。
++
++## 1. 问题与本次行为
++
++原部分测试无参load_registry()读取维护者模型YAML，切成真实Provider会让固定Mock断言失败。现在测试自带ModelRegistry/临时YAML，默认路径契约仍通过实际模型模块的隔离副本验证。非显式live测试拒读维护者模型配置、真实Key和数据库密码。
++
++普通、结构化、流式、断连续传和取消共用同一组步骤及Gateway断言，Mock和真实夹具分别提供执行条件/专属留证，ENV均可为test。纯逻辑与受控故障专项不被复制成两套远端调用。
++
++## 2. 调用链与阅读顺序
++
++| 文件/入口 | 作用及应核对的问题 |
++| --- | --- |
++| [tests/conftest.py](../../tests/conftest.py) / isolate_real_provider_access | 所有非显式live节点守卫模型YAML/Key/密码及外部网络，路径两侧归一化以覆盖维护者文件本身是符号链接。公共验收自有PG/身份不被历史装配覆盖。 |
++| [tests/bug002_cases.py](../../tests/bug002_cases.py) / write_registry | 纯测试定义写临时YAML；real=True只是合法的虚假双协议定义，不读真实配置、不调用Provider。 |
++| [tests/unit/test_bug002_registry.py](../../tests/unit/test_bug002_registry.py) | 复制实际src/services/models.py到临时项目、独立导入；检查默认目录、默认文件名、忽略环境YAML和非法值拒绝，不mock生产解析。 |
++| [tests/unit/test_bug002_isolation.py](../../tests/unit/test_bug002_isolation.py) | 守卫自身正负例、三类配置及符号链接子场景、收集/显式live缺Key。子进程观察收集与执行期间的维护者文件读取，未复制真实凭据。 |
++| test_f3_config/test_core及三份协议消费方 | 用测试自建配置替换原维护者YAML依赖，消息/调用次数/错误/Usage断言保留；配置解析测试仍调用真正load_registry。 |
++| [tests/bug002_scenarios.py](../../tests/bug002_scenarios.py) | 共用API步骤：两模型×普通/结构化/流式成功六节点、续传两节点、取消两节点；不按backend绕过业务断言。 |
++| [tests/live/test_f10_acceptance.py](../../tests/live/test_f10_acceptance.py)、[Mock入口](../../tests/integration/test_bug002_common.py) | 原10个真实公共节点与新增10个Mock节点调用同一函数；原真实CLI附加节点和容量继续保留。 |
++| [tests/f10_support.py](../../tests/f10_support.py) | Environment默认real保留原行为，Mock使用临时PG/配置、typed脚本和每request_id调用/关闭记录；真实仍通过原适配器/TCP/原文对照。 |
++| [观察反例](../../tests/unit/test_bug002_common_observation.py) | 合成事实/Usage、来源/调用/关闭约束、剩余超时正负边界、跨Task双流清理归属反例。 |
++
++## 3. 三个边界
++
++公共API链：显式Mock/真实夹具 → 自有Gateway子进程与PG → 同一scenario函数 → 共同结果/事件/SQL/账务断言。Provider协议或合成数据的专属事实由Environment观察器核对，不在scenario内跳过。Mock不声称执行远端Chat/Responses协议，原始实报只由真实接入证明。
++
++配置链：测试自建定义 → 临时gateway.yaml → 真正load_registry；默认加载路径在自有源码副本验证。离线守卫不读取真正秘密来证明拒读，raw IO探针会在文件操作前失败；本地回环和测试临时假凭据仍允许。
++
++清理链：typed脚本每次调用捕获独立Context，观察回调绑定该上下文；finally在另一Task执行时仍归属原request_id。不临时修改共享Provider字段，关闭次数断言不放宽。
++
++## 4. 验证及失败定位
++
++- 原始隔离真实YAML导致默认Mock断言失败，已取得正确Red；同场景更新测试配置后Green。
++- 守卫从允许维护者YAML进入raw IO到明确拒绝，反例Red/Green已取得；符号链接缺口也用反例修正。
++- 首轮Mock集成把剩余预算误断言固定30，10失败；修正为0<剩余预算<=30并保留输出128后6通过/4失败，后者查明清理观察丢上下文。跨Task反例修正后Mock10通过。产品没有为测试改动。
++- 配置矩阵及缺Key/默认启用边界、收集阶段符号链接观察反例14通过，消费者单元89/协议112通过，脚本/观察反例18通过；最终结果与原始回执将在Bug记录单独归档，不累加上述批次作全量。
++- 当前收集2086节点，原F10全量2039节点均保留，新增47；真实节点保持28。真实公共验收11通过（含原CLI附加节点）；最终含容量全量2086通过/1770.19秒，当前待独立审查。
++
++失败时先按request_id找Mock typed记录或真实wire/最终正文，再核对已提交SQL/费用；配置问题看子进程runtime_reads及原始pytest回执。所有拒读、网络与资源归属结论按观察范围记录。真实供应商账单、长期/多实例生产证明不因本Bug扩大，F10历史证据不改写。
++
++自检追加收集阶段符号链接读取观察器反例，原观察器漏记读取，正确Red已取得；修正观察器的路径映射后14项通过。此前全量在561 passed时主动中止、未进入真实调用，旧回执保留，不作为最终全量。以修正后的最终代码重新完整执行。
+--- baseline/docs/bugs/BUG-002-offline-config-isolation.md
++++ candidate/docs/bugs/BUG-002-offline-config-isolation.md
+@@ -1,6 +1,6 @@
+ # BUG-002：离线测试依赖本地运行模型配置
+ 
+-> 当前状态（2026-11-03）：已被用户选为1.7第一项，当前修复与测试方案待确认，未运行Red或修改源码/测试。作为1.6非阻断遗留的历史结论不变，当前方案见文末。
++> 当前状态（2026-11-03）：已被用户选为1.7第一项，当前修复与9组测试方案已确认并完成TDD/最终全量2086通过，待独立审查。作为1.6非阻断遗留的历史结论不变，当前方案见文末。
+ 
+ > 原始状态（2026-11-01，保留历史）：待测试方案确认。用户同意独立记录并优先处理，授权将本地运行配置切回 Mock。该记录当时尚未修改测试或业务代码、未取得隔离场景的 Red/Green；不作为后续源码现状描述。
+ 
+@@ -51,9 +51,9 @@
+ 
+ 本阶段最终验收和边界见[1.6收尾记录](../1.6-closeout.md)，历史F3及F10回执保持不变。
+ 
+-## 2026-11-03当前修复方案与测试方案（待确认）
++## 2026-11-03当前修复方案与测试方案（已确认）
+ 
+-用户已确认先文档、再按本Bug → 并发治理 → 模型管理与路由推进；这不替代本项测试方案确认。上面的2026-11-01方案是历史记录，本节为基于当前代码的待确认方案。当前仅静态核对，不把源码推导写成运行复现。
++用户已确认先文档、再按本Bug → 并发治理 → 模型管理与路由推进；这不替代本项测试方案确认。上面的2026-11-01方案是历史记录，本节为基于当前代码的方案。用户最新明确回答“确认，按更新方案执行（推荐）”，完整修复及9组测试已获确认，包含最小公共API验收层；进入TDD，执行结果单独留证。
+ 
+ ### 1. 当前影响及修复边界
+ 
+@@ -70,9 +70,9 @@
+ 3. 为离线测试补充维护者模型配置的拒读约束，保留真实凭据/数据库密码拒读和外部网络禁止；允许测试自己的临时配置、假凭据、隔离数据库及回环协议服务器。
+ 4. 真实测试仍只在--run-live显式启用后使用既有真实注册表和本机凭据，默认收集/跳过不能读Key。本项不增加真实Provider能力或付费场景。
+ 
+-用户随后明确并确认共用验收原则：公共功能在Mock与真实Provider下复用用例，特殊故障由受控上游制造，纯逻辑不要求远端调用；ENV、Provider和测试范围独立。原则见[跨功能测试约定](../test-plan.md#已确认的共用验收原则2026-11-03)。这项单独确认不作为本节完整修复/测试方案已获确认的记录。
++用户随后明确并确认共用验收原则：公共功能在Mock与真实Provider下复用用例，特殊故障由受控上游制造，纯逻辑不要求远端调用；ENV、Provider和测试范围独立。原则见[跨功能测试约定](../test-plan.md#已确认的共用验收原则2026-11-03)。此前单独的原则确认当时未代替整体确认；当前整体批准见本节开头的最新确认记录。
+ 
+-**补充推荐方案（待确认）：**在修配置依赖的同时补最小公共API验收层，复用普通、结构化、流式、续传、取消的场景步骤及Gateway行为断言，Mock与真实接入分别提供夹具和专属观察。优先复用既有F10等真实场景，增加对应Mock执行，不为相同业务复制一套真实用例。历史纯逻辑、协议和故障测试保留，不整体改造成双Provider框架；不改变产品ENV行为。场景数据应让Mock满足共同业务要求，真实文字/Token/费用允许正常变化，仍须业务事实、终态、用量与账务一致。
++**补充方案（已确认）：**在修配置依赖的同时补最小公共API验收层，复用普通、结构化、流式、续传、取消的场景步骤及Gateway行为断言，Mock与真实接入分别提供夹具和专属观察。优先复用既有F10等真实场景，增加对应Mock执行，不为相同业务复制一套真实用例。历史纯逻辑、协议和故障测试保留，不整体改造成双Provider框架；不改变产品ENV行为。场景数据应让Mock满足共同业务要求，真实文字/Token/费用允许正常变化，仍须业务事实、终态、用量与账务一致。
+ 
+ ### 3. 当前测试方案
+ 
+@@ -111,4 +111,27 @@
+ 
+ 通过条件：正确Red与同场景Green、上表必测项及最终全量通过，新增反例证明守卫有效，原业务断言和隔离资源释放保持，独立Agent三维审查无P0—P2、最多三轮。原F10的2039通过是历史基线，不当作本Bug已运行证据。修复过程和结果仍追加在本Bug目录，形成导读/原始回执/实际审查提示词及处置，不改写原Feature历史。
+ 
+-当前结果：**待用户确认本节方案，尚未运行Red、Green、回归、真实调用或独审；未修复。** 本次未发现需要改共享模板或AGENTS.md的通用缺口。后续推进位置见[1.7计划](../1.7-plan.md)。
++当前结果：**方案已确认，实施中。正确原场景Red已在隔离真实YAML副本取得：默认Mock断言1 failed / 0.15秒；未读取真实凭据或发送远端请求。Green、回归及独审尚待执行，未宣称修复。** 本次未发现需要改共享模板或AGENTS.md的通用缺口。后续推进位置见[1.7计划](../1.7-plan.md)。
++
++实施任务与文件/资源分工见[BUG-002实施步骤](BUG-002-implementation-plan.md)。原始Red及后续回执在本Bug下单独归档，F10历史基线不变。
++
++
++### 开发中执行记录（非最终验收）
++
++- 原隔离真实模型YAML场景：旧默认Mock断言1失败；测试显式自建配置后同场景1通过。
++- 配置消费方：单元89、回环协议112通过，既有业务断言保留。
++- 守卫及配置矩阵：Mock/真实定义/拒读三类配置，另含符号链接子场景；缺Key和默认启用边界、收集阶段读取观察器反例，共14项通过。维护者文件本身是符号链接、收集阶段符号链接读取分别取得正确Red并修正。
++- 五类公共场景：Mock10通过、真实11通过（10公共+原CLI附加）。中途Mock观察器错误先造成10失败，固定超时修正后6通过4失败；随后用双流跨Task清理反例修正request_id关联，关闭断言未放宽。当前纯逻辑脚本/观察器18通过。
++- 原节点保留：当前收集2086，原2039全部在内，新增47；真实节点仍28。
++- 一轮全量在561 passed时因自检发现读取记录器符号链接盲点而主动中止，未进入真实调用；追加反例并修正后重新完整执行。旧中止回执保留，不冒充完整通过。
++
++原始开发回执见[BUG-002开发证据](BUG-002-evidence-development.json)，代码阅读见[导读](BUG-002-implementation-summary.md)。本阶段没有修改产品源码或维护者配置，最终全量及独立审查尚未完成，暂不称Bug验收通过。
++
++
++### 最终回归，待独立审查
++
++主执行者以Python3.12和严格警告模式执行完整--run-live，实际返回0：**2086 passed / 1770.19秒**，含28个live，0失败/错误/跳过/筛除。原2039节点全部保留，新增47。最终冻结版本运行期间源码/测试/安全配置摘要无变化；生产源码、迁移、运行配置、AGENTS和原Feature工件与实施前一致。
++
++真实容量四档66/313/630/1334笔全部成功，20并发600秒12544笔全部成功，总14887笔；已提交终态/事件/账务及任务/连接收口检查通过。共用API的Mock10节点和真实10节点（另有原CLI真实节点）均在本轮执行。符号链接观察盲点导致的旧561通过中止回执单列保留，不能与本次全量累加。
++
++见[最终回归记录](BUG-002-acceptance-report.md)、[执行来源](BUG-002-evidence-final.json)、[完整JUnit](BUG-002-full-final.xml.gz)、[Mock原始观察](BUG-002-mock-observations.json.gz)。嵌套子进程的默认skip、缺Key错误和收集读取负例是被外层用例验证的预期结果，不是遗漏必验live。当前等待全新上下文Agent三维独立审查，尚不称验收通过。
+--- baseline/docs/progress.md
++++ candidate/docs/progress.md
+@@ -1,6 +1,6 @@
+ # 递增功能与决策进度
+ 
+-> 当前状态（2026-11-03）：**1.6已收尾**，F1—F10及已实施优化验收通过。最终全量2039通过，含真实28例；BUG-002作为1.6非阻断遗留保留。[收尾记录](1.6-closeout.md)。1.7已确认交付顺序，当前先落文档，详见[递增计划](1.7-plan.md)。
++> 当前状态（2026-11-03）：**1.6已收尾**，F1—F10及已实施优化验收通过。最终全量2039通过，含真实28例；BUG-002作为1.6非阻断遗留保留。[收尾记录](1.6-closeout.md)。1.7已确认交付顺序，BUG-002已确认并进入实施，详见[递增计划](1.7-plan.md)。
+ 
+ > 2026-11-02阶段记录（保留历史）：F5 已验收；F5-O1 统一持久化设计与测试方案已分别确认，已验收通过：串行全量1228/关键312，原生Claude Code第2轮APPROVED，无P0–P2。下文各历史阶段的结果保留原时间与证据边界。
+ 
+@@ -8,9 +8,9 @@
+ 
+ ## 当前状态
+ 
+-1.7当前推进：**BUG-002测试隔离 → 并发治理 → 模型管理与路由**。主题划分及顺序已确认，逐项设计和测试仍分别确认；当前BUG-002待测试方案确认，尚未运行Red或实现。后两项尚未开始完整需求讨论，不并行提前实施。基线F1—F10的验收状态保持如下。
++1.7当前推进：**BUG-002测试隔离 → 并发治理 → 模型管理与路由**。主题划分及顺序已确认，逐项设计和测试仍分别确认；当前BUG-002完整方案已确认并实现，最终全量2086通过，待独立审查。后两项尚未开始完整需求讨论，不并行提前实施。基线F1—F10的验收状态保持如下。
+ 
+-用户另已确认[公共功能共用用例、Mock与真实分别执行、特殊故障受控复现](test-plan.md#已确认的共用验收原则2026-11-03)；ENV与Provider/测试范围独立。BUG-002据此补充最小公共API验收层的推荐范围，连同当前修复及测试方案待整体确认，不把原则确认记成已授权实施。
++用户另已确认[公共功能共用用例、Mock与真实分别执行、特殊故障受控复现](test-plan.md#已确认的共用验收原则2026-11-03)；ENV与Provider/测试范围独立。BUG-002据此补充最小公共API验收层的推荐范围，连同当前修复及9组测试已获用户最新整体确认；当前执行BUG-002，后续两项尚未实施。
+ 
+ 2026-11-02用户确认推进规则：保留README既有Feature内容和顺序；先给完整推荐方案和必要备选，设计/测试分别确认，仅对关键歧义继续讨论。独立且已确认的任务可并行，公共接线统一集成、按序交付；故障测试串行。方案/提交前各一次自检，新证据或实质变更才重评影响部分；独立审查三维与累计最多三轮规则保留；用户现已确认使用全新上下文Agent，Claude Code可选。今天1.6/1.7均为单实例单worker；Chat Completions/Responses保持上游协议选择，不新增对应对外入口。F5-O2已验收：完整1330/修正相关严格41及真实两条通过，累计第2轮全新Agent独审APPROVED，无P0–P3。
+ 
+@@ -38,7 +38,7 @@
+ 
+ ## 已确定的跨功能决策
+ 
+-BUG-002离线测试配置隔离：1.6收尾时保留为非阻断遗留，未宣称修复；现已选为1.7第一项，已重新静态核对当前代码，待确认修复及测试方案后走Bug流程。[原始问题、当前方案与交接](bugs/BUG-002-offline-config-isolation.md)。2026-11-01切回Mock及570通过/4 live默认跳过仅为当时记录，不能替代配置隔离验收；原“先于F3-O1处理”的历史计划没有闭环，不继续当作当前执行顺序。
++BUG-002离线测试配置隔离：1.6收尾时保留为非阻断遗留，未宣称修复；现已选为1.7第一项，已重新静态核对当前代码，修复及9组测试方案已确认，按Bug流程实施。[原始问题、当前方案与交接](bugs/BUG-002-offline-config-isolation.md)。2026-11-01切回Mock及570通过/4 live默认跳过仅为当时记录，不能替代配置隔离验收；原“先于F3-O1处理”的历史计划没有闭环，不继续当作当前执行顺序。
+ 
+ 1. Gateway 管单次模型调用；Agent/Harness 管任务与业务决策；Provider 隔离供应商协议。
+ 2. 首版仅本机或隔离开发网络，供多个内部 Agent 调用；单实例单 worker。对外开放与多实例协调留到 1.7 复议。
+--- baseline/docs/test-plan.md
++++ candidate/docs/test-plan.md
+@@ -1,6 +1,6 @@
+ # TDD 与验收方案
+ 
+-> 当前状态（2026-11-03）：1.6已收尾，最终F10全量2039通过（含28个live），见[总验收报告](features/F10/acceptance-report.md)。1.7交付顺序已确认；当前BUG-002修复及测试方案待确认，尚未实施。下方阶段性记录保留历史边界。
++> 当前状态（2026-11-03）：1.6已收尾，最终F10全量2039通过（含28个live），见[总验收报告](features/F10/acceptance-report.md)。1.7交付顺序已确认；当前BUG-002修复及9组测试方案已确认，进入TDD实施。下方阶段性记录保留历史边界。
+ 
+ > 状态：跨功能测试原则；F1/F1-O1/F2/F3均已通过测试及独立审查。F3离线570、真实四例与Claude Code第2轮通过；F4/F5已验收，F6–F8为后续测试方向。逐例方案、实际证据与结论放在各Feature的test-plan.md。
+ 
+@@ -23,7 +23,7 @@
+ 
+ 执行顺序为开发时先运行Mock公共功能和受控故障用例，再显式用真实Provider执行公共功能，最终完整回归汇总全部证据；两类结果分别留证，不互相代替。真实访问仍需--run-live显式启用。共用验收原则已确认，具体测试重构范围、用例映射与实现须在当前事项的测试方案中确认；原Feature工件不追溯改写。
+ 
+-当前建议在[BUG-002](bugs/BUG-002-offline-config-isolation.md)补齐配置隔离及上述五类公共功能的最小共用验收层；该具体方案待确认，不整体重写历史单元/协议/故障测试。
++当前已确认在[BUG-002](bugs/BUG-002-offline-config-isolation.md)补齐配置隔离及上述五类公共功能的最小共用验收层，按TDD实施，不整体重写历史单元/协议/故障测试。
+ 
+ ## 测试层次
+ 
+--- baseline/tests/bug002_cases.py
++++ candidate/tests/bug002_cases.py
+@@ -0,0 +1,24 @@
++"""Test-owned YAML inputs for configuration isolation; never read runtime config."""
++import yaml
++
++from f3_cases import registry
++
++
++def write_registry(config_dir, *, real=False):
++    models = registry()
++    data = {
++        'providers': {name: provider.model_dump(exclude_none=True) for name, provider in models.providers.items()},
++        'models': {name: model.model_dump(mode='json') for name, model in models.models.items()},
++        'recovery': models.recovery.model_dump(),
++    }
++    if real:
++        data['providers'] = {
++            'mock-main': {'adapter':'deepseek', 'api_protocol':'chat_completions',
++                          'base_url':'https://provider.invalid', 'credential_ref':'test-primary'},
++            'mock-backup': {'adapter':'openai_compatible', 'api_protocol':'responses',
++                            'base_url':'https://provider.invalid/v1', 'credential_ref':'test-backup'},
++        }
++    config_dir.mkdir(parents=True, exist_ok=True)
++    path = config_dir / 'gateway.yaml'
++    path.write_text(yaml.safe_dump(data), encoding='utf-8')
++    return path
+--- baseline/tests/bug002_scenarios.py
++++ candidate/tests/bug002_scenarios.py
+@@ -0,0 +1,131 @@
++"""Public Gateway acceptance steps shared by explicit Mock and real backends."""
++import asyncio
++from decimal import Decimal
++import json
++
++from f10_support import frames, payload
++
++
++def evidence(record_property, **values):
++    for name, value in values.items():
++        record_property(name, json.dumps(value, ensure_ascii=False) if isinstance(value, (dict,list)) else value)
++
++
++async def committed(environment, rid):
++    async with asyncio.timeout(12):
++        while True:
++            response = await environment.client.get('/v1/traces/'+rid)
++            assert response.status_code == 200
++            if response.json()['data']['status'] in {'completed','failed','canceled'}:
++                return response.json()['data']
++            await asyncio.sleep(.02)
++
++
++async def request_state(environment, rid):
++    def read():
++        with environment.pg.connect(environment.name) as sql:
++            row = sql.execute('SELECT id,status FROM tb_llm_request WHERE request_id=%s',(rid,)).fetchone()
++            attempts = sql.execute('SELECT count(*) FROM tb_llm_attempt WHERE request_pk=%s',(row[0],)).fetchone()[0]
++            bills = sql.execute('SELECT count(*) FROM tb_billing_attempt WHERE request_pk=%s',(row[0],)).fetchone()[0]
++            events = sql.execute('SELECT count(*) FROM tb_llm_stream_event WHERE request_pk=%s',(row[0],)).fetchone()[0]
++        return dict(status=row[1], attempts=attempts, bills=bills, events=events)
++    return await asyncio.to_thread(read)
++
++
++async def agent_success_and_cost(env, model, mode, record_property):
++    initial = await env.account_totals()
++    assert Decimal(initial['deposited']) == Decimal('10000')
++    result = await env.call(model,mode)
++    assert result['status'] == 'completed', result['error_code']
++    trace = await committed(env,result['request_id'])
++    assert trace['requested_model'] == model
++    assert trace['usage']['unknown_attempts'] == []
++    verified = await env.verify(result['request_id'])
++    assert verified['attempts'] == 1
++    env.assert_provider_contract(trace)
++    if mode == 'streaming':
++        assert result['first_text_ms'] is not None
++        deltas = [e[2]['delta'] for e in result['events'] if e[1]=='response.delta']
++        assert deltas and 'A123' in ''.join(deltas) and '充电器' in ''.join(deltas)
++    await env.assert_balances()
++    evidence(record_property,model=model,mode=mode,request_id=result['request_id'],
++             observation=verified,latency_ms=result['elapsed_ms'],first_text_ms=result['first_text_ms'])
++
++
++async def disconnect_resume_keeps_one_generation(env,model,record_property):
++    response = await env.client.post('/v1/llm/stream',json=payload(model,'streaming'))
++    assert response.status_code==202
++    rid = response.json()['data']['request_id']
++    initial = await request_state(env,rid)
++    assert initial == {'status':'pending','attempts':0,'bills':0,'events':0}
++    url = f'/v1/llm/stream/{rid}/events'
++    first = None
++    async with env.client.stream('GET',url) as response:
++        assert response.status_code==200
++        async for event in frames(response):
++            if event[1]=='response.delta':
++                first=event
++                break
++    assert first is not None
++    resumed=[]
++    async with env.client.stream('GET',url,params={'after_seq':first[0]}) as response:
++        assert response.status_code==200
++        async for event in frames(response):
++            if event[1]!='response.heartbeat': resumed.append(event)
++    assert resumed and resumed[-1][1]=='response.completed'
++    assert [event[0] for event in resumed]==list(range(first[0]+1,resumed[-1][0]+1))
++    text=first[2]['delta']+''.join(event[2]['delta'] for event in resumed if event[1]=='response.delta')
++    assert 'A123' in text and '充电器' in text
++    await committed(env,rid)
++    detail=(await env.client.get('/v1/billing/requests/'+rid)).json()['data']
++    assert len(detail['attempts'])==1
++    assert (await env.client.get(url,params={'after_seq':resumed[-1][0]})).status_code==204
++    replay=(await env.client.get(url,params={'after_seq':first[0]})).text
++    assert 'response.completed' in replay
++    assert (await env.client.get('/v1/billing/requests/'+rid)).json()['data']==detail
++    checked=await env.verify(rid)
++    assert checked['attempts']==1
++    await env.assert_balances()
++    evidence(record_property,model=model,request_id=rid,first_seq=first[0],last_seq=resumed[-1][0],observation=checked)
++
++
++async def cancel_until_terminal(env,rid):
++    async with asyncio.timeout(12):
++        while True:
++            response=await env.client.post(f'/v1/llm/stream/{rid}/cancel')
++            assert response.status_code in {200,202}
++            status=response.json()['data']['status']
++            if response.status_code==200:
++                assert status in {'completed','failed','canceled'}
++                return status
++            assert status=='canceling'
++            await asyncio.sleep(.02)
++
++
++async def cancel_pending_and_in_progress(env,model,record_property):
++    pending=(await env.client.post('/v1/llm/stream',json=payload(model,'streaming'))).json()['data']['request_id']
++    assert await cancel_until_terminal(env,pending)=='canceled'
++    assert (await request_state(env,pending))['attempts']==0
++    await env.verify(pending)
++    rid=(await env.client.post('/v1/llm/stream',json=payload(model,'streaming'))).json()['data']['request_id']
++    received=[]
++    async with env.client.stream('GET',f'/v1/llm/stream/{rid}/events') as response:
++        assert response.status_code==200
++        iterator=frames(response)
++        async with asyncio.timeout(35):
++            async for event in iterator:
++                if event[1]!='response.heartbeat': received.append(event)
++                if event[1]=='response.delta': break
++            assert received and received[-1][1]=='response.delta'
++            terminal=await cancel_until_terminal(env,rid)
++            async for event in iterator:
++                if event[1]!='response.heartbeat': received.append(event)
++    assert received[-1][1]=='response.'+terminal
++    before=(await env.client.get('/v1/billing/requests/'+rid)).json()['data']
++    assert await cancel_until_terminal(env,rid)==terminal
++    assert (await env.client.get('/v1/billing/requests/'+rid)).json()['data']==before
++    checked=await env.verify(rid)
++    await env.assert_balances()
++    evidence(record_property,model=model,request_id=rid,pending_id=pending,terminal=terminal,observation=checked)
++
++
+--- baseline/tests/conftest.py
++++ candidate/tests/conftest.py
+@@ -81,14 +81,15 @@
+     if request.node.get_closest_marker("live") and request.config.getoption("--run-live"):
+         return
+     config_dir = Path(__file__).resolve().parents[1] / 'config'
+-    secret_paths = {config_dir / 'credentials.yaml', config_dir / 'postgres.password'}
++    private_paths = {(config_dir / name).resolve()
++                     for name in ('gateway.yaml', 'credentials.yaml', 'postgres.password')}
+     original_open = Path.open
+     original_connect = socket.socket.connect
+     original_connect_ex = socket.socket.connect_ex
+ 
+     def open_file(path, *args, **kwargs):
+-        if path.resolve() in secret_paths:
+-            raise AssertionError("offline tests must not read actual credentials or database password")
++        if path.resolve() in private_paths:
++            raise AssertionError("offline tests must not read maintainer model configuration or credentials")
+         return original_open(path, *args, **kwargs)
+ 
+     def check_address(address):
+@@ -139,7 +140,7 @@
+ @pytest.fixture(autouse=True)
+ def explicit_database_for_historical_tests(request, monkeypatch):
+     """Keep existing fixtures independent from the maintainer's password/YAML."""
+-    if any(name in request.path.name for name in ('f5o1', 'f5o2', 'f6', 'f7', 'f8', 'f9', 'f10')):
++    if any(name in request.path.name for name in ('f5o1', 'f5o2', 'f6', 'f7', 'f8', 'f9', 'f10', 'bug002_common')):
+         yield
+         return
+     import main
+@@ -177,7 +178,7 @@
+ @pytest.fixture(autouse=True)
+ def authenticated_historical_gateway_clients(request, monkeypatch):
+     """Old HTTP scenarios now use a funded account; F9 tests set credentials explicitly."""
+-    if any(k in request.path.name for k in ('f9','f10')) or 'postgres' in request.path.parts:
++    if any(k in request.path.name for k in ('f9','f10','bug002_common')) or 'postgres' in request.path.parts:
+         return
+     import httpx
+     from alembic import command
+--- baseline/tests/f10_support.py
++++ candidate/tests/f10_support.py
+@@ -1,6 +1,7 @@
+ """Real-process acceptance harness; every writable resource belongs to this run."""
+ import asyncio
+ from datetime import datetime, timezone
++from contextvars import copy_context
+ from decimal import Decimal, localcontext
+ import json
+ import os
+@@ -19,6 +20,9 @@
+ from postgres_support import PostgresServer, write_config, migrate
+ from services.models import DEFAULT_CONFIG_DIR
+ from live.test_real_providers import real_registry
++from providers.mock import MockProvider
++from providers.base import ProviderResult, ProviderStreamEvent
++from contracts import Usage
+ 
+ 
+ PROJECT = Path(__file__).resolve().parents[1]
+@@ -114,6 +118,123 @@
+ """
+ 
+ 
++# A test script at the typed Provider boundary; this is not an upstream protocol.
++class AcceptanceMockProvider(MockProvider):
++    def __init__(self, observe=lambda value: None):
++        super().__init__()
++        self.observe = observe
++
++    def called(self, model, messages, options, operation, observe):
++        observe(dict(kind='call', operation=operation, model=model.model_id,
++                          provider=model.provider, messages=[m.model_dump() for m in messages],
++                          options=options, source='scripted_mock_typed_provider'))
++
++    async def complete(self, model, messages, *, max_output_tokens, timeout_seconds, response_schema=None):
++        context = copy_context()
++        observe = lambda value: context.run(self.observe, value)
++        options = dict(max_output_tokens=max_output_tokens, timeout_seconds=timeout_seconds,
++                       response_schema=response_schema)
++        self.calls.append((model, list(messages)))
++        self.call_options.append(options)
++        self.called(model, messages, options, 'complete', observe)
++        text = (json.dumps({'order_id':'A123','product':'充电器'}, ensure_ascii=False)
++                if response_schema is not None else '订单 A123 的商品是充电器。')
++        result = ProviderResult(text=text, usage=Usage(input_tokens=10, output_tokens=8, total_tokens=18))
++        observe(dict(kind='result', text=text, usage=result.usage.model_dump()))
++        return result
++
++    async def stream(self, model, messages, *, max_output_tokens, timeout_seconds):
++        # Cleanup may run in another Task; preserve this invocation's request association.
++        context = copy_context()
++        observe = lambda value: context.run(self.observe, value)
++        options = dict(max_output_tokens=max_output_tokens, timeout_seconds=timeout_seconds)
++        self.stream_calls.append((model, list(messages)))
++        self.stream_options.append(options)
++        self.called(model, messages, options, 'stream', observe)
++        try:
++            for part in ('订单 ', 'A123', ' 的商品是', '充电器', '。'):
++                await asyncio.sleep(.05)
++                self.stream_next_calls += 1
++                observe(dict(kind='delta', text=part))
++                yield ProviderStreamEvent(delta=part)
++            # A bounded cancellation window after the first downstream delta.
++            await asyncio.sleep(.2)
++            terminal = ProviderStreamEvent(status='completed', upstream_terminal_received=True,
++                                           usage=Usage(input_tokens=10, output_tokens=8, total_tokens=18))
++            observe(dict(kind='terminal', usage=terminal.usage.model_dump()))
++            yield terminal
++        finally:
++            self.stream_close_calls += 1
++            observe(dict(kind='stream_closed'))
++
++    async def aclose(self):
++        self.close_calls += 1
++        self.observe(dict(kind='provider_closed'))
++
++
++def validate_mock_observation(records, *, attempts, model, operation, status):
++    calls = [item for item in records if item['kind'] == 'call']
++    assert len(calls) == attempts, 'Mock invocation count differs from persisted attempts'
++    if not attempts:
++        assert records == [], 'pending cancellation must not enter Mock'
++        return dict(source='scripted_mock_typed_provider', calls=0, stream_closes=0)
++    assert attempts == 1
++    call = calls[0]
++    assert call.get('source') == 'scripted_mock_typed_provider'
++    assert call.get('provider') == ('mock-main' if model == 'general-primary' else 'mock-backup')
++    assert call.get('model') == 'deepseek-flash'
++    assert call.get('operation') == ('stream' if operation == 'streaming' else 'complete')
++    options = call['options']
++    assert options['max_output_tokens'] == 128
++    timeout = options['timeout_seconds']
++    assert type(timeout) in (int, float) and 0 < timeout <= 30
++    messages = ''.join(message['content'] for message in call['messages'])
++    assert 'A123' in messages and '充电器' in messages
++    closes = sum(item['kind'] == 'stream_closed' for item in records)
++    assert closes == (1 if operation == 'streaming' else 0), 'Mock stream not closed exactly once'
++    reports = [item for item in records if item['kind'] in {'result','terminal'}]
++    assert len(reports) == (1 if status == 'completed' else 0)
++    if reports:
++        assert reports[0]['usage'] == dict(input_tokens=10, output_tokens=8, total_tokens=18)
++    return dict(source='scripted_mock_typed_provider', calls=len(calls), stream_closes=closes)
++
++
++MOCK_BOOTSTRAP = """
++from contextlib import asynccontextmanager
++from contextvars import ContextVar
++from pathlib import Path
++import json
++from main import create_app as build
++from settings import Settings
++from f10_support import AcceptanceMockProvider
++ROOT=Path(__file__).parent
++current_request=ContextVar('mock_acceptance_request',default=None)
++def observe(value):
++    rid=current_request.get()
++    path=ROOT/('mock-'+rid+'.json' if rid else 'mock-lifecycle.json')
++    values=json.loads(path.read_text()) if path.exists() else []
++    values.append(value)
++    path.write_text(json.dumps(values,ensure_ascii=False))
++def create_app():
++    provider=AcceptanceMockProvider(observe)
++    app=build(settings=Settings(env='test',_env_file=None), provider=provider, config_dir=ROOT/'config')
++    begin=app.state.storage.begin_attempt
++    async def begin_observed(trace,attempt,**kwargs):
++        await begin(trace,attempt,**kwargs)
++        current_request.set(trace.request_id)
++    app.state.storage.begin_attempt=begin_observed
++    original=app.router.lifespan_context
++    @asynccontextmanager
++    async def lifespan(app):
++        try:
++            async with original(app): yield
++        finally:
++            await provider.aclose()
++    app.router.lifespan_context=lifespan
++    return app
++"""
++
++
+ def payload(model='general-primary', mode='text'):
+     value = {'model':model, 'prompt':{'name':'basic_text','version':'1.0.0'},
+              'messages':[{'role':'user','content':'订单 A123 的商品是充电器。请仅用一句简短中文复述这个事实。'}],
+@@ -155,7 +276,9 @@
+ 
+ 
+ class Environment:
+-    def __init__(self, pg, name, directory):
++    def __init__(self, pg, name, directory, *, backend='real'):
++        assert backend in {'real', 'mock'}
++        self.backend = backend
+         self.pg, self.name, self.directory = pg,name,directory
+         self.config = directory/'config'
+         self.process = self.client = self.listener = self.log = None
+@@ -180,7 +303,7 @@
+         self.process=subprocess.Popen(
+             [sys.executable,'-m','uvicorn','f10_bootstrap:create_app','--factory','--workers','1',
+              '--fd',str(self.listener.fileno()),'--log-level','warning','--timeout-graceful-shutdown','5'],
+-            cwd=self.directory,env={'PATH':os.defpath,'PYTHONPATH':os.pathsep.join([str(self.directory),str(PROJECT/'src')])},
++            cwd=self.directory,env={'PATH':os.defpath,'PYTHONPATH':os.pathsep.join([str(self.directory),str(PROJECT/'src'),str(PROJECT/'tests')])},
+             pass_fds=(self.listener.fileno(),),stdout=self.log,stderr=subprocess.STDOUT)
+         self.listener.close()
+         self.client=httpx.AsyncClient(base_url=f'http://127.0.0.1:{port}',headers=self.headers,
+@@ -213,7 +336,21 @@
+         await self.stop()
+         await self.start()
+ 
++    def assert_provider_contract(self, trace):
++        expected = 'chat_completions' if trace['requested_model'] == 'general-primary' else 'responses'
++        assert trace['attempts'][0]['api_protocol'] == expected
++        assert trace['attempts'][0]['adapter'] == ('mock' if self.backend == 'mock' else
++                    'deepseek' if trace['requested_model'] == 'general-primary' else 'openai_compatible')
++
++    def mock_observation(self, rid):
++        path = self.directory/('mock-'+rid+'.json')
++        return json.loads(path.read_text()) if path.exists() else []
++
+     async def upstream_answer(self,rid,model,mode):
++        if self.backend == 'mock':
++            saved = self.mock_observation(rid)
++            text = ''.join(item['text'] for item in saved if item['kind'] in {'result','delta'})
++            return text, saved
+         wire=mode=='streaming' and model=='general-primary'
+         path=self.directory/(('wire-' if wire else 'response-final-')+rid+'.json')
+         async with asyncio.timeout(3):
+@@ -361,7 +498,17 @@
+                 assert fee==bill['agent_charge']==bill['supplier_cost']
+             elif bill['state']=='pending':
+                 assert bill['agent_charge'] is None and bill['supplier_cost'] is None
+-        return {'request_id':rid,'status':row['status'],'error_code':row['error_code'],'attempts':len(attempts),'events':len(events),
++        observation = None
++        if self.backend == 'mock':
++            observation = validate_mock_observation(self.mock_observation(rid), attempts=len(attempts),
++                                                    model=row['requested_model'], operation=row['operation'], status=row['status'])
++            for attempt, bill in zip(attempts, ledger):
++                assert attempt['adapter'] == 'mock'
++                assert bill['agent_charge'] == bill['supplier_cost'] == Decimal(0)
++                if row['status'] == 'completed':
++                    assert attempt['input_tokens'] == 10 and attempt['output_tokens'] == 8
++        return {'provider_observation':observation,
++                'request_id':rid,'status':row['status'],'error_code':row['error_code'],'attempts':len(attempts),'events':len(events),
+                 'bill_states':[b['state'] for b in ledger],
+                 'server_timing':json.loads(row['timing_snapshot']) if row['timing_snapshot'] else None}
+ 
+@@ -423,3 +570,34 @@
+         await env.stop()
+         await asyncio.to_thread(pg.drop_database,name)
+         await asyncio.to_thread(pg.close)
++
++
++@pytest_asyncio.fixture
++async def mock_acceptance_environment(tmp_path):
++    from f4_cases import registry
++    pg=await asyncio.to_thread(lambda:PostgresServer().start())
++    name=pg.create_database()
++    env=Environment(pg,name,tmp_path,backend='mock')
++    try:
++        write_config(env.config,pg,name,registry())
++        (tmp_path/'f10_bootstrap.py').write_text(MOCK_BOOTSTRAP)
++        await asyncio.to_thread(migrate,env.config)
++        for agent in ('a','b'):
++            await env.cli('create-agent',agent,'BUG-002 '+agent)
++            token=await env.cli('issue',agent)
++            headers=CredentialHeaders(Authorization='Bearer '+token)
++            if agent=='a': env.headers=headers
++            else: env.other_headers=headers
++            await env.cli('deposit',agent,'10000','--operation-id','initial-'+agent)
++            await env.cli('deposit',agent,'10000','--operation-id','initial-'+agent)
++        await env.start()
++        yield env
++    finally:
++        await env.stop()
++        try:
++            if env.bootstrap_number:
++                lifecycle=json.loads((tmp_path/'mock-lifecycle.json').read_text())
++                assert sum(item['kind']=='provider_closed' for item in lifecycle)==env.bootstrap_number
++        finally:
++            await asyncio.to_thread(pg.drop_database,name)
++            await asyncio.to_thread(pg.close)
+--- baseline/tests/integration/test_bug002_common.py
++++ candidate/tests/integration/test_bug002_common.py
+@@ -0,0 +1,26 @@
++"""The same public acceptance steps on a test-owned scripted Mock process."""
++import pytest
++
++from f10_support import mock_acceptance_environment
++from bug002_scenarios import (
++    agent_success_and_cost, disconnect_resume_keeps_one_generation,
++    cancel_pending_and_in_progress,
++)
++
++MODELS = ['general-primary', 'general-backup']
++
++
++@pytest.mark.parametrize('model', MODELS)
++@pytest.mark.parametrize('mode', ['text','structured','streaming'])
++async def test_mock_agent_success_and_cost(mock_acceptance_environment, model, mode, record_property):
++    await agent_success_and_cost(mock_acceptance_environment, model, mode, record_property)
++
++
++@pytest.mark.parametrize('model', MODELS)
++async def test_mock_disconnect_resume_keeps_one_generation(mock_acceptance_environment, model, record_property):
++    await disconnect_resume_keeps_one_generation(mock_acceptance_environment, model, record_property)
++
++
++@pytest.mark.parametrize('model', MODELS)
++async def test_mock_cancel_pending_and_in_progress(mock_acceptance_environment, model, record_property):
++    await cancel_pending_and_in_progress(mock_acceptance_environment, model, record_property)
+--- baseline/tests/live/test_f10_acceptance.py
++++ candidate/tests/live/test_f10_acceptance.py
+@@ -1,145 +1,33 @@
+-"""An independent Agent client exercises the same real-process public contract."""
++"""Real wrappers retain the original F10 nodes and parameterization."""
+ import asyncio
+ from decimal import Decimal
+-import json
+ 
+ import pytest
+ 
+-from f10_support import f10_environment, frames, payload
+-
++from f10_support import f10_environment, payload
++from bug002_scenarios import (
++    agent_success_and_cost, disconnect_resume_keeps_one_generation,
++    cancel_pending_and_in_progress, cancel_until_terminal, evidence, request_state,
++)
+ 
+ pytestmark = pytest.mark.live
+ MODELS = ['general-primary', 'general-backup']
+ 
+ 
+-def evidence(record_property, **values):
+-    for name, value in values.items():
+-        record_property(name, json.dumps(value, ensure_ascii=False) if isinstance(value, (dict,list)) else value)
+-
+-
+-async def committed(environment, rid):
+-    async with asyncio.timeout(12):
+-        while True:
+-            response = await environment.client.get('/v1/traces/'+rid)
+-            assert response.status_code == 200
+-            if response.json()['data']['status'] in {'completed','failed','canceled'}:
+-                return response.json()['data']
+-            await asyncio.sleep(.02)
+-
+-
+-async def request_state(environment, rid):
+-    def read():
+-        with environment.pg.connect(environment.name) as sql:
+-            row = sql.execute('SELECT id,status FROM tb_llm_request WHERE request_id=%s',(rid,)).fetchone()
+-            attempts = sql.execute('SELECT count(*) FROM tb_llm_attempt WHERE request_pk=%s',(row[0],)).fetchone()[0]
+-            bills = sql.execute('SELECT count(*) FROM tb_billing_attempt WHERE request_pk=%s',(row[0],)).fetchone()[0]
+-            events = sql.execute('SELECT count(*) FROM tb_llm_stream_event WHERE request_pk=%s',(row[0],)).fetchone()[0]
+-        return dict(status=row[1], attempts=attempts, bills=bills, events=events)
+-    return await asyncio.to_thread(read)
+-
+-
+ @pytest.mark.parametrize('model', MODELS)
+ @pytest.mark.parametrize('mode', ['text','structured','streaming'])
+ async def test_real_agent_success_and_cost(f10_environment, model, mode, record_property):
+-    env = f10_environment
+-    initial = await env.account_totals()
+-    assert Decimal(initial['deposited']) == Decimal('10000')
+-    result = await env.call(model,mode)
+-    assert result['status'] == 'completed', result['error_code']
+-    trace = await committed(env,result['request_id'])
+-    assert trace['requested_model'] == model
+-    assert trace['usage']['unknown_attempts'] == []
+-    verified = await env.verify(result['request_id'])
+-    assert verified['attempts'] == 1
+-    assert trace['attempts'][0]['api_protocol'] == ('chat_completions' if model=='general-primary' else 'responses')
+-    if mode == 'streaming':
+-        assert result['first_text_ms'] is not None
+-        deltas = [e[2]['delta'] for e in result['events'] if e[1]=='response.delta']
+-        assert deltas and 'A123' in ''.join(deltas) and '充电器' in ''.join(deltas)
+-    await env.assert_balances()
+-    evidence(record_property,model=model,mode=mode,request_id=result['request_id'],
+-             observation=verified,latency_ms=result['elapsed_ms'],first_text_ms=result['first_text_ms'])
++    await agent_success_and_cost(f10_environment, model, mode, record_property)
+ 
+ 
+ @pytest.mark.parametrize('model', MODELS)
+ async def test_real_disconnect_resume_keeps_one_generation(f10_environment,model,record_property):
+-    env = f10_environment
+-    response = await env.client.post('/v1/llm/stream',json=payload(model,'streaming'))
+-    assert response.status_code==202
+-    rid = response.json()['data']['request_id']
+-    initial = await request_state(env,rid)
+-    assert initial == {'status':'pending','attempts':0,'bills':0,'events':0}
+-    url = f'/v1/llm/stream/{rid}/events'
+-    first = None
+-    async with env.client.stream('GET',url) as response:
+-        assert response.status_code==200
+-        async for event in frames(response):
+-            if event[1]=='response.delta':
+-                first=event
+-                break
+-    assert first is not None
+-    resumed=[]
+-    async with env.client.stream('GET',url,params={'after_seq':first[0]}) as response:
+-        assert response.status_code==200
+-        async for event in frames(response):
+-            if event[1]!='response.heartbeat': resumed.append(event)
+-    assert resumed and resumed[-1][1]=='response.completed'
+-    assert [event[0] for event in resumed]==list(range(first[0]+1,resumed[-1][0]+1))
+-    text=first[2]['delta']+''.join(event[2]['delta'] for event in resumed if event[1]=='response.delta')
+-    assert 'A123' in text and '充电器' in text
+-    await committed(env,rid)
+-    detail=(await env.client.get('/v1/billing/requests/'+rid)).json()['data']
+-    assert len(detail['attempts'])==1
+-    assert (await env.client.get(url,params={'after_seq':resumed[-1][0]})).status_code==204
+-    replay=(await env.client.get(url,params={'after_seq':first[0]})).text
+-    assert 'response.completed' in replay
+-    assert (await env.client.get('/v1/billing/requests/'+rid)).json()['data']==detail
+-    checked=await env.verify(rid)
+-    assert checked['attempts']==1
+-    await env.assert_balances()
+-    evidence(record_property,model=model,request_id=rid,first_seq=first[0],last_seq=resumed[-1][0],observation=checked)
+-
+-
+-async def cancel_until_terminal(env,rid):
+-    async with asyncio.timeout(12):
+-        while True:
+-            response=await env.client.post(f'/v1/llm/stream/{rid}/cancel')
+-            assert response.status_code in {200,202}
+-            status=response.json()['data']['status']
+-            if response.status_code==200:
+-                assert status in {'completed','failed','canceled'}
+-                return status
+-            assert status=='canceling'
+-            await asyncio.sleep(.02)
++    await disconnect_resume_keeps_one_generation(f10_environment,model,record_property)
+ 
+ 
+ @pytest.mark.parametrize('model',MODELS)
+ async def test_real_cancel_pending_and_in_progress(f10_environment,model,record_property):
+-    env=f10_environment
+-    pending=(await env.client.post('/v1/llm/stream',json=payload(model,'streaming'))).json()['data']['request_id']
+-    assert await cancel_until_terminal(env,pending)=='canceled'
+-    assert (await request_state(env,pending))['attempts']==0
+-    await env.verify(pending)
+-    rid=(await env.client.post('/v1/llm/stream',json=payload(model,'streaming'))).json()['data']['request_id']
+-    received=[]
+-    async with env.client.stream('GET',f'/v1/llm/stream/{rid}/events') as response:
+-        assert response.status_code==200
+-        iterator=frames(response)
+-        async with asyncio.timeout(35):
+-            async for event in iterator:
+-                if event[1]!='response.heartbeat': received.append(event)
+-                if event[1]=='response.delta': break
+-            assert received and received[-1][1]=='response.delta'
+-            terminal=await cancel_until_terminal(env,rid)
+-            async for event in iterator:
+-                if event[1]!='response.heartbeat': received.append(event)
+-    assert received[-1][1]=='response.'+terminal
+-    before=(await env.client.get('/v1/billing/requests/'+rid)).json()['data']
+-    assert await cancel_until_terminal(env,rid)==terminal
+-    assert (await env.client.get('/v1/billing/requests/'+rid)).json()['data']==before
+-    checked=await env.verify(rid)
+-    await env.assert_balances()
+-    evidence(record_property,model=model,request_id=rid,pending_id=pending,terminal=terminal,observation=checked)
++    await cancel_pending_and_in_progress(f10_environment,model,record_property)
+ 
+ 
+ async def test_real_cli_rotation_ownership_restart_and_budget(f10_environment,record_property):
+--- baseline/tests/protocol/test_f3_prompt_wire.py
++++ candidate/tests/protocol/test_f3_prompt_wire.py
+@@ -5,7 +5,7 @@
+ 
+ from contracts import Message
+ from providers.base import validate_result
+-from services.models import load_registry
++from f3_cases import registry
+ from test_providers import adapter_type, server, sent_messages, assert_sent_budget
+ 
+ 
+@@ -16,7 +16,7 @@
+ async def test_all_approved_prompt_messages_reach_real_transports_unchanged(adapter_type, server, case):
+     adapter = adapter_type(server.url, "FAKE_CREDENTIAL_MARKER")
+     try:
+-        result = await adapter.complete(load_registry().get("general-primary"),
++        result = await adapter.complete(registry().get("general-primary"),
+                                         [Message.model_validate(m) for m in case["messages"]],
+                                         max_output_tokens=64, timeout_seconds=2)
+         validate_result(result)
+--- baseline/tests/protocol/test_f8_wire_diagnostic_values.py
++++ candidate/tests/protocol/test_f8_wire_diagnostic_values.py
+@@ -5,7 +5,7 @@
+ from contracts import Message
+ from errors import ProviderCallError
+ from providers.deepseek import DeepSeekProvider
+-from services.models import load_registry
++from f3_cases import registry
+ from test_providers import adapter_type, server
+ 
+ 
+@@ -43,7 +43,7 @@
+     server.raw = (('data: ' + data + '\n\n' + ('data: [DONE]\n\n' if chat else '')) if stream else data).encode()
+     valid = damage in {'none', 'missing_usage'}
+     adapter = adapter_type(server.url, 'FAKE_TEST_ONLY')
+-    config = load_registry().get('general-primary')
++    config = registry().get('general-primary')
+     messages = [Message(role='user',content='hello')]
+     options = dict(max_output_tokens=32,timeout_seconds=2)
+     try:
+@@ -92,7 +92,7 @@
+            'usage':{'input_tokens':60,'output_tokens':25,'total_tokens':85}}}
+     server.raw = ('data: ' + json.dumps(raw) + '\n\n').encode()
+     try:
+-        result = [e async for e in adapter.stream(load_registry().get('general-primary'),
++        result = [e async for e in adapter.stream(registry().get('general-primary'),
+                         [Message(role='user',content='question')],max_output_tokens=32,timeout_seconds=2)]
+         assert len(server.calls) == len(result) == 1
+         assert result[0].error_code == 'provider_invalid_response'
+--- baseline/tests/protocol/test_providers.py
++++ candidate/tests/protocol/test_providers.py
+@@ -14,7 +14,7 @@
+ from providers.base import validate_result
+ from providers.deepseek import DeepSeekProvider
+ from providers.openai_compatible import OpenAICompatibleProvider
+-from services.models import load_registry
++from f3_cases import registry
+ 
+ 
+ SUCCESS={'id':'fake','object':'chat.completion','created':0,'model':'deepseek-flash','choices':[{'index':0,'message':{'role':'assistant','content':'TEST_REPLY'},'finish_reason':'stop'}],'usage':{'prompt_tokens':120,'completion_tokens':30,'total_tokens':150}}
+@@ -87,7 +87,7 @@
+ async def invoke(adapter_type,server,*,timeout=2):
+     adapter=adapter_type(server.url,'FAKE_CREDENTIAL_MARKER')
+     try:
+-        result=await adapter.complete(load_registry().get('general-primary'),[Message(role='system',content='Fixed'),Message(role='user',content='Question')],max_output_tokens=64,timeout_seconds=timeout)
++        result=await adapter.complete(registry().get('general-primary'),[Message(role='system',content='Fixed'),Message(role='user',content='Question')],max_output_tokens=64,timeout_seconds=timeout)
+         validate_result(result)
+         return result
+     finally: await adapter.aclose()
+@@ -168,7 +168,7 @@
+     adapter=adapter_type(server.url,'FAKE_CREDENTIAL_MARKER')
+     try:
+         for i in range(2):
+-            result=await adapter.complete(load_registry().get('general-primary'),[Message(role='user',content=str(i))],max_output_tokens=16,timeout_seconds=2)
++            result=await adapter.complete(registry().get('general-primary'),[Message(role='user',content=str(i))],max_output_tokens=16,timeout_seconds=2)
+             assert result.text=='TEST_REPLY'
+         assert len(server.calls)==2
+     finally:await adapter.aclose()
+@@ -191,7 +191,7 @@
+ 
+ async def test_concurrent_call_options_are_not_client_state(adapter_type,server):
+     adapter=adapter_type(server.url,'FAKE_CREDENTIAL_MARKER')
+-    model=load_registry().get('general-primary')
++    model=registry().get('general-primary')
+     try:
+         results=await asyncio.gather(*[
+             adapter.complete(model,[Message(role='user',content=label)],max_output_tokens=budget,timeout_seconds=2)
+--- baseline/tests/unit/test_bug002_common_observation.py
++++ candidate/tests/unit/test_bug002_common_observation.py
+@@ -0,0 +1,119 @@
++"""Pure tests of the acceptance script and its independent observations."""
++
++import pytest
++
++import f10_support
++from f4_cases import registry
++
++
++@pytest.mark.parametrize('structured', [False, True])
++async def test_acceptance_script_preserves_business_facts_and_reports_usage(structured):
++    implementation = f10_support.AcceptanceMockProvider
++    provider = implementation()
++    result = await provider.complete(registry().models['general-primary'], [],
++                                     max_output_tokens=128, timeout_seconds=30,
++                                     response_schema={'type': 'object'} if structured else None)
++    assert 'A123' in result.text and '充电器' in result.text
++    assert result.usage.input_tokens == 10 and result.usage.output_tokens == 8
++    if structured:
++        import json
++        assert json.loads(result.text) == {'order_id': 'A123', 'product': '充电器'}
++
++
++async def test_script_stream_close_is_observed_on_partial_consumption():
++    records = []
++    provider = f10_support.AcceptanceMockProvider(records.append)
++    stream = provider.stream(registry().models['general-primary'], [],
++                             max_output_tokens=128, timeout_seconds=30)
++    first = await anext(stream)
++    assert first.delta
++    await stream.aclose()
++    assert [record['kind'] for record in records] == ['call', 'delta', 'stream_closed']
++    assert provider.stream_close_calls == 1
++    await provider.aclose()
++    assert records[-1]['kind'] == 'provider_closed' and provider.close_calls == 1
++
++
++@pytest.mark.parametrize('records', [
++    [],
++    [{'kind':'call','source':'real'}],
++    [{'kind':'call','source':'scripted_mock_typed_provider'}, {'kind':'call'}],
++])
++def test_mock_observer_rejects_missing_or_false_call_evidence(records):
++    validate = f10_support.validate_mock_observation
++    with pytest.raises(AssertionError):
++        validate(records, attempts=1, model='general-primary', operation='streaming', status='canceled')
++
++
++@pytest.mark.parametrize('model', ['general-primary', 'general-backup'])
++async def test_stream_observation_accepts_real_script_and_rejects_missing_close(model):
++    from contracts import Message
++    records = []
++    provider = f10_support.AcceptanceMockProvider(records.append)
++    messages = [Message(**item) for item in f10_support.payload(model)['messages']]
++    events = [event async for event in provider.stream(registry().models[model], messages,
++                             max_output_tokens=128, timeout_seconds=30)]
++    assert ''.join(event.delta for event in events) == '订单 A123 的商品是充电器。'
++    assert events[-1].status == 'completed' and events[-1].upstream_terminal_received
++    assert events[-1].usage.total_tokens == 18
++    checked = f10_support.validate_mock_observation(records, attempts=1, model=model,
++                                                    operation='streaming', status='completed')
++    assert checked == dict(source='scripted_mock_typed_provider', calls=1, stream_closes=1)
++    with pytest.raises(AssertionError, match='not closed exactly once'):
++        f10_support.validate_mock_observation(records[:-1], attempts=1, model=model,
++                                              operation='streaming', status='completed')
++
++
++def test_pending_cancellation_observation_requires_zero_calls():
++    assert f10_support.validate_mock_observation([], attempts=0, model='general-primary',
++        operation='streaming', status='canceled')['calls'] == 0
++    with pytest.raises(AssertionError, match='pending cancellation'):
++        f10_support.validate_mock_observation([{'kind':'delta','text':'unexpected'}], attempts=0,
++            model='general-primary', operation='streaming', status='canceled')
++
++
++@pytest.mark.parametrize('timeout', [29.9, 30, 0, -1, 30.1, '29.9', None, True])
++async def test_mock_observer_checks_remaining_timeout_budget(timeout):
++    from contracts import Message
++    records = []
++    provider = f10_support.AcceptanceMockProvider(records.append)
++    messages = [Message(**item) for item in f10_support.payload()['messages']]
++    await provider.complete(registry().models['general-primary'], messages,
++                            max_output_tokens=128, timeout_seconds=timeout)
++    kwargs = dict(attempts=1, model='general-primary', operation='completion', status='completed')
++    if type(timeout) in (int, float) and 0 < timeout <= 30:
++        f10_support.validate_mock_observation(records, **kwargs)
++    else:
++        with pytest.raises(AssertionError):
++            f10_support.validate_mock_observation(records, **kwargs)
++
++
++async def test_stream_close_remains_associated_with_call_context_across_tasks():
++    import asyncio
++    from contextvars import ContextVar
++    request_id = ContextVar('observer_test_request_id', default=None)
++    records = {}
++
++    def observe(value):
++        records.setdefault(request_id.get(), []).append(value['kind'])
++
++    provider = f10_support.AcceptanceMockProvider(observe)
++    streams = []
++    for rid in ('request-a', 'request-b'):
++        token = request_id.set(rid)
++        try:
++            stream = provider.stream(registry().models['general-primary'], [],
++                                     max_output_tokens=128, timeout_seconds=29.9)
++            assert (await anext(stream)).delta
++            streams.append(stream)
++        finally:
++            request_id.reset(token)
++    # This cleanup task deliberately has no executing request ContextVar.
++    async def cleanup():
++        assert request_id.get() is None
++        await asyncio.gather(*(stream.aclose() for stream in streams))
++    await asyncio.create_task(cleanup())
++    assert records == {
++        'request-a': ['call', 'delta', 'stream_closed'],
++        'request-b': ['call', 'delta', 'stream_closed'],
++    }
+--- baseline/tests/unit/test_bug002_isolation.py
++++ candidate/tests/unit/test_bug002_isolation.py
+@@ -0,0 +1,173 @@
++"""Offline boundaries must fail before touching a maintainer's private files."""
++import io
++import json
++import os
++from pathlib import Path
++import shutil
++import socket
++import subprocess
++import sys
++
++import pytest
++
++
++@pytest.mark.parametrize('name', ['gateway.yaml', 'credentials.yaml', 'postgres.password'])
++def test_offline_guard_blocks_maintainer_files_before_raw_io(monkeypatch, name):
++    path = Path(__file__).resolve().parents[2] / 'config' / name
++    opened = []
++
++    def raw_io(*args, **kwargs):
++        opened.append(args[0])
++        raise RuntimeError('unexpected raw IO reached')
++
++    with monkeypatch.context() as patch:
++        patch.setattr(io, 'open', raw_io)
++        with pytest.raises(AssertionError, match='offline tests must not read'):
++            with path.open():
++                pass
++    assert opened == []
++
++
++def test_offline_guard_allows_test_owned_yaml_and_fake_credentials(tmp_path):
++    for name in ['gateway.yaml', 'credentials.yaml', 'postgres.password']:
++        path = tmp_path / name
++        path.write_text('test-owned fake data')
++        assert path.read_text() == 'test-owned fake data'
++
++
++@pytest.mark.parametrize('method', ['connect', 'connect_ex'])
++def test_offline_guard_rejects_non_loopback_before_underlying_socket(method):
++    # A closed descriptor cannot send a packet even if the guard regresses.
++    sock = socket.socket()
++    sock.close()
++    with pytest.raises(AssertionError, match='offline tests must not connect'):
++        getattr(sock, method)(('203.0.113.1', 443))
++
++
++def test_offline_guard_allows_owned_loopback_connection():
++    with socket.socket() as server:
++        server.bind(('127.0.0.1', 0))
++        server.listen()
++        with socket.socket() as client:
++            client.connect(server.getsockname())
++            connection, _ = server.accept()
++            connection.close()
++
++
++@pytest.fixture
++def isolated_test_project(tmp_path):
++    root = Path(__file__).resolve().parents[2]
++    project = tmp_path / 'project'
++    for name in ['src', 'tests']:
++        shutil.copytree(root / name, project / name,
++                        ignore=shutil.ignore_patterns('__pycache__', '.pytest_cache'))
++    (project / 'assets').symlink_to(root / 'assets', target_is_directory=True)
++    shutil.copyfile(root / 'pyproject.toml', project / 'pyproject.toml')
++    approved = project / 'docs/features/F1/design.md'
++    approved.parent.mkdir(parents=True)
++    shutil.copyfile(root / 'docs/features/F1/design.md', approved)
++    # Observe accesses during collection as well as test execution. No secret
++    # file is copied; an accidental access fails before the raw open operation.
++    with (project / 'tests/conftest.py').open('a') as stream:
++        stream.write('''
++import atexit as _audit_exit
++import io as _audit_io
++from pathlib import Path as _AuditPath
++_audit_root = _AuditPath(__file__).resolve().parents[1]
++_audit_reads = []
++_audit_open = _audit_io.open
++_audit_private = {(_audit_root/'config'/name).resolve(): name for name in
++                  ('gateway.yaml', 'credentials.yaml', 'postgres.password')}
++def _observed_runtime_open(file, *args, **kwargs):
++    if isinstance(file, (str, _AuditPath)):
++        path = _AuditPath(file).resolve()
++        if path in _audit_private:
++            _audit_reads.append(_audit_private[path])
++            if _audit_private[path] != 'gateway.yaml' or (_audit_root/'deny-runtime-yaml').exists():
++                raise AssertionError('isolated probe attempted maintainer file IO')
++    return _audit_open(file, *args, **kwargs)
++_audit_io.open = _observed_runtime_open
++def _save_audit():
++    with _audit_open(_audit_root/'runtime-reads.json', 'w') as file:
++        file.write(__import__('json').dumps(_audit_reads))
++_audit_exit.register(_save_audit)
++''')
++    return project
++
++
++def run_isolated_pytest(project, targets, record_property, *, live=False):
++    args = [sys.executable, '-W', 'error', '-m', 'pytest', *targets,
++            '-o', 'junit_family=xunit1', '--junitxml=' + str(project / 'receipt.xml'), '-q']
++    if live:
++        args.append('--run-live')
++    result = subprocess.run(args, cwd=project, env={'PATH': os.defpath},
++                            capture_output=True, text=True, timeout=90)
++    output = result.stdout + result.stderr
++    reads = json.loads((project / 'runtime-reads.json').read_text())
++    record_property('isolated_configuration_receipt', json.dumps({
++        'command': args, 'exit_code': result.returncode, 'output': output,
++        'runtime_reads': reads, 'junit': (project / 'receipt.xml').read_text(),
++    }))
++    assert reads == [], 'test collection or execution read maintainer configuration'
++    return result.returncode, output
++
++
++@pytest.mark.parametrize('variant', ['mock', 'real-definition', 'denied', 'symlinked'])
++def test_mock_and_protocol_cases_ignore_maintainer_model_binding(
++        isolated_test_project, record_property, variant):
++    from bug002_cases import write_registry
++    project = isolated_test_project
++    write_registry(project / 'config', real=variant == 'real-definition')
++    if variant == 'symlinked':
++        linked = project / 'runtime-model.yaml'
++        (project / 'config/gateway.yaml').rename(linked)
++        (project / 'config/gateway.yaml').symlink_to(linked)
++    if variant == 'denied':
++        (project / 'deny-runtime-yaml').touch()
++    targets = ['tests/unit/test_f3_config.py', 'tests/unit/test_core.py',
++               'tests/unit/test_bug002_registry.py',
++               'tests/unit/test_bug002_isolation.py::test_offline_guard_blocks_maintainer_files_before_raw_io[gateway.yaml]',
++               'tests/protocol/test_f3_prompt_wire.py', 'tests/protocol/test_providers.py',
++               'tests/protocol/test_f8_wire_diagnostic_values.py']
++    code, output = run_isolated_pytest(project, targets, record_property)
++    assert code == 0, output
++
++
++@pytest.mark.parametrize('live', [False, True], ids=['default-skips', 'explicit-missing-key-fails'])
++def test_live_requires_explicit_selection_and_missing_key_fails(
++        isolated_test_project, record_property, live):
++    project = isolated_test_project
++    probe = project / 'tests/live/test_bug002_probe.py'
++    probe.write_text('''
++from pathlib import Path
++import pytest
++from live.test_real_providers import live_server
++pytestmark = pytest.mark.live
++async def test_live_probe(live_server):
++    Path('unexpected-provider-body').touch()
++    raise AssertionError('missing credentials must stop before the test body')
++''')
++    code, output = run_isolated_pytest(project, [str(probe)], record_property, live=live)
++    assert not (project / 'unexpected-provider-body').exists()
++    if live:
++        assert code == 1 and '真实接入前置条件未满足' in output, output
++    else:
++        assert code == 0 and '1 skipped' in output, output
++
++
++def test_collection_audit_detects_symlink_read_before_fixtures(isolated_test_project, record_property):
++    from bug002_cases import write_registry
++    project = isolated_test_project
++    path = write_registry(project / 'config')
++    target = project / 'runtime-model.yaml'
++    path.rename(target)
++    path.symlink_to(target)
++    probe = project / 'tests/test_collection_probe.py'
++    probe.write_text('''
++from pathlib import Path
++Path('config/gateway.yaml').read_text()
++def test_probe():
++    pass
++''')
++    with pytest.raises(AssertionError, match='test collection or execution read maintainer configuration'):
++        run_isolated_pytest(project, [str(probe)], record_property)
+--- baseline/tests/unit/test_bug002_registry.py
++++ candidate/tests/unit/test_bug002_registry.py
+@@ -0,0 +1,53 @@
++"""Preserve real loader/default-path coverage without maintainer YAML inputs."""
++import importlib.util
++from pathlib import Path
++import shutil
++import sys
++
++import pytest
++import yaml
++
++from bug002_cases import write_registry
++from services import models
++
++
++@pytest.mark.parametrize('real', [False, True], ids=['mock', 'real-definition'])
++def test_default_loader_uses_its_module_directory_and_gateway_filename(tmp_path, monkeypatch, real):
++    source = tmp_path / 'project' / 'src' / 'services' / 'models.py'
++    source.parent.mkdir(parents=True)
++    shutil.copyfile(models.__file__, source)
++    config_dir = tmp_path / 'project' / 'config'
++    write_registry(config_dir, real=real)
++    for env in ['test', 'production']:
++        (config_dir / f'gateway.{env}.yaml').write_text('INVALID: [')
++    outside = tmp_path / 'outside'
++    outside.mkdir()
++    monkeypatch.chdir(outside)
++    spec = importlib.util.spec_from_file_location('_bug002_models', source)
++    isolated = importlib.util.module_from_spec(spec)
++    monkeypatch.setitem(sys.modules, spec.name, isolated)
++    spec.loader.exec_module(isolated)
++    assert isolated.DEFAULT_CONFIG_DIR == config_dir
++    assert models.DEFAULT_CONFIG_DIR == Path(models.__file__).resolve().parents[2] / 'config'
++    loaded = isolated.load_registry()
++    assert set(loaded.models) == {'general-primary', 'general-backup'}
++    assert loaded.get('general-primary').default_output_tokens == 1024
++    assert {p.adapter for p in loaded.providers.values()} == ({'deepseek', 'openai_compatible'} if real else {'mock'})
++    (config_dir / 'gateway.yaml').unlink()
++    with pytest.raises(ValueError, match='gateway.yaml'):
++        isolated.load_registry()
++
++
++@pytest.mark.parametrize('damage', ['unknown_provider', 'strict_type', 'budget'])
++def test_yaml_model_validation_remains_real(tmp_path, damage):
++    path = write_registry(tmp_path)
++    data = yaml.safe_load(path.read_text())
++    field, value = {
++        'unknown_provider': ('provider', 'absent'),
++        'strict_type': ('max_output_tokens', '4096'),
++        'budget': ('default_output_tokens', 4097),
++    }[damage]
++    data['models']['general-primary'][field] = value
++    path.write_text(yaml.safe_dump(data))
++    with pytest.raises(models.ConfigurationError):
++        models.load_registry(tmp_path)
+--- baseline/tests/unit/test_core.py
++++ candidate/tests/unit/test_core.py
+@@ -4,7 +4,7 @@
+ import pytest
+ from pydantic import ValidationError
+ 
+-from f3_cases import MOCK_USAGE
++from f3_cases import MOCK_USAGE, registry as mock_registry
+ from contracts import LLMRequest
+ 
+ 
+@@ -40,10 +40,9 @@
+     provider = MockProvider(text="chosen answer")
+     store = TraceStore()
+     trace = store.start_request("unit-request")
+-    from services.models import load_registry
+     from services.prompts import PromptRegistry, DEFAULT_TEMPLATES
+     from services.token_budget import TokenBudget
+-    registry = load_registry()
++    registry = mock_registry()
+     result = await GatewayService({name: provider for name in registry.providers}, store,
+                                   PromptRegistry(DEFAULT_TEMPLATES), registry, TokenBudget.from_models(registry.models.values())).complete(LLMRequest.model_validate(payload), trace)
+     assert result.text == "chosen answer"
+--- baseline/tests/unit/test_f3_config.py
++++ candidate/tests/unit/test_f3_config.py
+@@ -3,6 +3,7 @@
+ import pytest
+ from pydantic import ValidationError
+ 
++from bug002_cases import write_registry
+ from errors import GatewayError
+ from services.models import ModelConfig, ProviderConfig, ModelRegistry, load_registry, DEFAULT_CONFIG_DIR
+ from services.credentials import load_credentials
+@@ -25,8 +26,9 @@
+     assert not hasattr(Settings(env='test', _env_file=None), 'provider')
+ 
+ 
+-def test_default_registry_is_explicit_mock_without_credentials():
+-    registry=load_registry()
++def test_default_registry_is_explicit_mock_without_credentials(tmp_path):
++    write_registry(tmp_path)
++    registry=load_registry(tmp_path)
+     assert isinstance(registry, ModelRegistry)
+     assert set(registry.models)=={'general-primary','general-backup'}
+     assert all(registry.providers[m.provider].adapter=='mock' for m in registry.models.values())
+@@ -89,9 +91,7 @@
+ 
+ def test_yaml_missing_and_environment_files_not_selected(tmp_path):
+     with pytest.raises(ValueError):load_registry(tmp_path)
+-    source=(DEFAULT_CONFIG_DIR/'gateway.yaml').read_text() if (DEFAULT_CONFIG_DIR/'gateway.yaml').exists() else ''
+-    assert source
+-    (tmp_path/'gateway.yaml').write_text(source)
++    write_registry(tmp_path)
+     (tmp_path/'gateway.test.yaml').write_text('INVALID: [')
+     (tmp_path/'gateway.production.yaml').write_text('INVALID: [')
+     assert isinstance(load_registry(tmp_path),ModelRegistry)

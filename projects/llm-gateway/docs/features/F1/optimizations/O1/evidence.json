@@ -1,0 +1,44 @@
+{
+  "note": "保存已真实执行的最终分层测试原始回执。sync 为审查后重新核验的回执；历史 Red 未单独归档，不伪造原文。",
+  "tests": [
+    {
+      "command": "uv run python -m pytest tests/unit -q",
+      "exit_code": 0,
+      "output": "................................................                         [100%]\n48 passed in 0.44s\n"
+    },
+    {
+      "command": "uv run python -m pytest tests/integration -q",
+      "exit_code": 0,
+      "output": "................................................................         [100%]\n64 passed in 0.18s\n"
+    },
+    {
+      "command": "uv run python -m pytest tests/smoke -q",
+      "exit_code": 0,
+      "output": "...                                                                      [100%]\n3 passed in 0.82s\n"
+    },
+    {
+      "command": "uv run python -m pytest -q",
+      "exit_code": 0,
+      "output": "........................................................................ [ 62%]\n...........................................                              [100%]\n115 passed in 1.28s\n"
+    }
+  ],
+  "sync_post_review": {
+    "command": "uv sync --locked",
+    "exit_code": 0,
+    "output": "Resolved 31 packages in 3ms\nChecked 28 packages in 0.46ms\n"
+  },
+  "review": {
+    "tool": "Claude Code CLI",
+    "round": 1,
+    "exit_code": 0,
+    "is_error": false,
+    "stop_reason": "end_turn",
+    "verdict": "APPROVED",
+    "p0": 0,
+    "p1": 0,
+    "p2": 0,
+    "p3": 2,
+    "source_test_files_read": 23,
+    "manifest_sha256": "ac933ecd2bf7c0de4e6a702aaaddbac4f4b068b9beef0901da6b39ad31c1d816"
+  }
+}

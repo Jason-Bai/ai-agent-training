@@ -1,0 +1,27 @@
+{
+  "complete_review_round": 1,
+  "agent": "/root/f10_independent_review",
+  "fresh_context": true,
+  "fork_turns": "none",
+  "verdict": "APPROVED",
+  "original_findings": {
+    "P0": 0,
+    "P1": 0,
+    "P2": 0,
+    "P3": 2
+  },
+  "open_blocking_findings": 0,
+  "P3_disposition": "report column renamed to success; repeated input no longer implies cache hits",
+  "source_files_checked": 187,
+  "documents_checked_before_text_fixes": 20,
+  "source_test_config_changed_during_review": [],
+  "task_read_only_not_tool_enforced": true,
+  "additional_evidence": [
+    "evidence-raw-account-audit.json",
+    "evidence-raw-per-request.json.gz"
+  ],
+  "all_test_execution_receipt": "evidence-final-all.xml.gz",
+  "all_tests": 2039,
+  "P3_closed_by_original_reviewer": true,
+  "document_only_confirmation": "review-text-check-result-r1.md"
+}

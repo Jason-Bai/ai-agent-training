@@ -1,0 +1,1120 @@
+--- baseline/README.md
++++ current/README.md
+@@ -1,6 +1,6 @@
+ # LLM Gateway（1.6 学习项目）
+ 
+-> 状态：F1/F1-O1/F2/F3 已验收；F4 已验收通过：离线836、Python3.12关键233、真实六例通过，Claude Code第1轮APPROVED。F5 已验收：最终离线1099、Python3.12关键235、最新真实两例通过，原生Claude Code第2轮APPROVED；F6验收通过，F7验收通过，F8 已验收通过（[代码导读](docs/features/F8/implementation-summary.md)），F9 已验收（最终2010通过含真实16，[修复及独审](docs/bugs/F9-B1.md)），F10 为后续规划。默认配置仍使用 Mock。
++> 状态：F1/F1-O1/F2/F3 已验收；F4 已验收通过：离线836、Python3.12关键233、真实六例通过，Claude Code第1轮APPROVED。F5 已验收：最终离线1099、Python3.12关键235、最新真实两例通过，原生Claude Code第2轮APPROVED；F6验收通过，F7验收通过，F8 已验收通过（[代码导读](docs/features/F8/implementation-summary.md)），F9 已验收（最终2010通过含真实16，[修复及独审](docs/bugs/F9-B1.md)），F10 待独立审查（全量2039通过，[总验收报告](docs/features/F10/acceptance-report.md)）。默认配置仍使用 Mock。
+ 
+ [F1-O1 独立优化](docs/features/F1/optimizations/O1/design.md)已实现 Middleware 抽取、目录命名、环境配置与应用工厂启动；115 个测试与 Claude Code 独立审查均通过，验收通过。[本项测试与证据](docs/features/F1/optimizations/O1/test-plan.md)独立维护；原 F1 记录保留历史快照。
+ 
+@@ -222,7 +222,7 @@
+ | F7 重试与 fallback | 已验收：有限预算、错误分类、能力匹配及提交边界；见[F7](docs/features/F7/design.md) |
+ | F8 Trace 完整性与诊断查询 | 基础持久化前移到 F5-O1；在 PostgreSQL 上补齐探测、取消、重试等路径和诊断查询，为用量核算提供可追溯依据 |
+ | [F9 用量与计费](docs/features/F9/design.md)（验收通过） | 价格配置与版本、实际用量分类、费用计算、账单持久化与对账；区分本地预估与实际 Usage，未知用量不得按零结算。Agent 手动拨款、按尝试预留与结算、消耗总览及请求明细 |
+-| [F10 总验收](docs/features/F10/design.md)（设计已确认，待测试方案确认） | 调用方使用闭环、故障及账务一致性、并发与持续运行基线、历史全量和真实接入 |
++| [F10 总验收](docs/features/F10/design.md)（全量2039通过，待独立审查） | 调用方使用闭环、故障及账务一致性、并发与持续运行基线、历史全量和真实接入 |
+ 
+ 后续按“F5-O1 持久化基础 → F5-O2 两阶段调用与续传 → F6 主动取消 → F7 重试与 fallback → F8 Trace 完整性 → F9 用量与计费 → F10 总验收”推进。计费依赖每次实际 Provider 尝试的记录，需覆盖失败、取消及重试可能产生的用量；供应商成本与向调用方收费分别定义。计费核算以 Provider 返回的实际 Usage 为依据，并与供应商账单对账；缓存等分类按对应价格计算，本地 Token 计数只用于预检与预估。后续设计与测试仍须按工作流分别确认，不把已确认需求写成已实现能力。
+ 
+--- baseline/docs/progress.md
++++ current/docs/progress.md
+@@ -26,7 +26,7 @@
+ | F8 Trace 完整性与诊断查询 | 验收通过 | [代码导读](features/F8/implementation-summary.md) · [全量 1904 通过，含真实 16](features/F8/test-plan.md) · [第三轮独审 APPROVED，保留 1 个 P3](features/F8/review-r3.md) |
+ | F8-O1 默认 Mock 模拟用量 | 验收通过 | [设计](features/F8/optimizations/O1/design.md)及[测试方案](features/F8/optimizations/O1/test-plan.md) |
+ | F9 用量与计费 | 验收通过 | 最终2010通过含真实16；用户重审后的[F9-B1修复及独审](bugs/F9-B1.md)关闭剩余阻断项。 |
+-| F10 总验收 | 待测试方案确认 | [设计已确认](features/F10/design.md)，正常流程及容量使用真实Provider；[测试方案](features/F10/test-plan.md)待确认。 |
++| F10 总验收 | 待独立审查 | [测试与证据](features/F10/test-plan.md)：全量2039通过，含真实28例；[报告](features/F10/acceptance-report.md)记录16935笔容量请求及20并发600秒结果。 |
+ 
+ F1 与 F1-O1 已验收；F2 的需求、设计和完整资产已确认，本项测试方案确认后已开始实施并完成本地验证，本地 223 个测试及 Claude Code 第 1 轮独立审查通过，F2 已验收。每个功能先确认设计和对应测试方案，再按 TDD 最小实现；功能边界独立、能力递增。Feature 在 `docs/features/<编号>/` 保存设计和测试方案，Bug 在 `docs/bugs/` 建记录，均由本文件追踪；不以 Git 分支或提交作为前提。验收通过后报告结论，之后发现问题走 Bug 工作流。
+ 
+--- baseline/tests/conftest.py
++++ current/tests/conftest.py
+@@ -139,7 +139,7 @@
+ @pytest.fixture(autouse=True)
+ def explicit_database_for_historical_tests(request, monkeypatch):
+     """Keep existing fixtures independent from the maintainer's password/YAML."""
+-    if any(name in request.path.name for name in ('f5o1', 'f5o2', 'f6', 'f7', 'f8', 'f9')):
++    if any(name in request.path.name for name in ('f5o1', 'f5o2', 'f6', 'f7', 'f8', 'f9', 'f10')):
+         yield
+         return
+     import main
+@@ -177,7 +177,7 @@
+ @pytest.fixture(autouse=True)
+ def authenticated_historical_gateway_clients(request, monkeypatch):
+     """Old HTTP scenarios now use a funded account; F9 tests set credentials explicitly."""
+-    if 'f9' in request.path.name or 'postgres' in request.path.parts:
++    if any(k in request.path.name for k in ('f9','f10')) or 'postgres' in request.path.parts:
+         return
+     import httpx
+     from alembic import command
+--- baseline/tests/f10_metrics.py
++++ current/tests/f10_metrics.py
+@@ -0,0 +1,80 @@
++"""Capacity calculations and acceptance checks, independent of live transport."""
++from collections import Counter, defaultdict
++import math
++
++
++# These classify resource/upstream availability during exploratory phases.
++# Protocol, content and accounting failures always block acceptance.
++CAPACITY_ERRORS = {
++    'provider_rate_limited', 'provider_timeout', 'provider_unavailable',
++    'provider_connection_error', 'request_timeout', 'storage_unavailable',
++}
++
++
++def distribution(values):
++    samples = [value for value in values if value is not None]
++    if any(type(value) not in (int, float) or not math.isfinite(value) or value < 0 for value in samples):
++        raise ValueError('invalid measured duration')
++    samples.sort()
++    result = {'samples': len(samples)}
++    for name, fraction in [('p50', .50), ('p95', .95), ('p99', .99)]:
++        result[name] = samples[math.ceil(len(samples) * fraction) - 1] if samples else None
++    result['maximum'] = samples[-1] if samples else None
++    return result
++
++
++def summarize(records, *, dispatch_seconds, elapsed_seconds):
++    if dispatch_seconds <= 0 or elapsed_seconds < dispatch_seconds:
++        raise ValueError('invalid phase interval')
++    groups = defaultdict(list)
++    for record in records:
++        groups[record['model'] + '/' + record['mode']].append(record)
++    successful = sum(record['status'] == 'completed' for record in records)
++    return {
++        'quality_evaluated': sum(type(row.get('quality_ok')) is bool for row in records),
++        'quality_anomalies': [row['request_id'] for row in records if row.get('quality_ok') is False],
++        'started': len(records), 'successes': successful,
++        'success_rate': successful / len(records) if records else None,
++        'dispatch_seconds': dispatch_seconds, 'elapsed_including_drain_seconds': elapsed_seconds,
++        'dispatch_rate_per_second': len(records) / dispatch_seconds,
++        'drained_rate_per_second': len(records) / elapsed_seconds,
++        'failures': dict(Counter(record['error_code'] for record in records if record['status'] != 'completed')),
++        'groups': {key: dict(count=len(rows), tail_percentiles_limited=len(rows) < 100, failures=dict(Counter(
++            row['error_code'] for row in rows if row['status'] != 'completed')),
++            **{metric: distribution(row[metric] for row in rows)
++               for metric in ('elapsed_ms', 'first_text_ms', 'create_ms')}) for key, rows in sorted(groups.items())},
++    }
++
++
++def validate_records(records, observed):
++    identifiers = [record['request_id'] for record in records]
++    assert len(set(identifiers)) == len(identifiers), 'duplicate business request ID'
++    assert set(identifiers) == set(observed), 'missing observed request'
++    for record in records:
++        rid = record['request_id']
++        assert observed[rid]['status'] == record['status'], 'response/database terminal mismatch'
++        assert record['status'] == 'completed' or (
++            record['status'] == 'failed' and record['error_code'] in CAPACITY_ERRORS
++        ), f"unexpected capacity outcome {record['status']} / {record['error_code']}"
++
++
++UPSTREAM_AVAILABILITY = {'provider_unavailable','provider_rate_limited',
++                         'provider_timeout','provider_connection_error'}
++
++
++def sustained_supported(report):
++    if not any(row['status']=='completed' for row in report['records']):
++        return False
++    for row in report['records']:
++        if row['status']=='completed':
++            continue
++        observed=report['verified'].get(row['request_id'],{})
++        if (row['status']!='failed' or row['error_code'] not in UPSTREAM_AVAILABILITY
++                or observed.get('error_code')!=row['error_code']
++                or (observed.get('server_timing') or {}).get('error_stage')!='provider'):
++            return False
++    return True
++
++
++def validate_sustained(report):
++    assert sustained_supported(report), 'unverified upstream failure or Gateway failure'
+--- baseline/tests/f10_support.py
++++ current/tests/f10_support.py
+@@ -0,0 +1,425 @@
++"""Real-process acceptance harness; every writable resource belongs to this run."""
++import asyncio
++from datetime import datetime, timezone
++from decimal import Decimal, localcontext
++import json
++import os
++import platform
++from importlib.metadata import version
++from pathlib import Path
++import socket
++import subprocess
++import sys
++from time import monotonic
++
++import httpx
++import pytest_asyncio
++from psycopg.rows import dict_row
++
++from postgres_support import PostgresServer, write_config, migrate
++from services.models import DEFAULT_CONFIG_DIR
++from live.test_real_providers import real_registry
++
++
++PROJECT = Path(__file__).resolve().parents[1]
++BOOTSTRAP = """
++from contextlib import asynccontextmanager
++import asyncio, json
++from contextvars import ContextVar
++from utils.json_codec import dumps
++from datetime import datetime, timezone
++from pathlib import Path
++from main import create_app as build
++from settings import Settings
++ROOT=Path(__file__).parent
++OBSERVATION_ERRORS=[]
++def record_json(path,value):
++    try:
++        path.write_text(dumps(value))
++    except (OSError,TypeError,ValueError) as exc:
++        OBSERVATION_ERRORS.append(type(exc).__name__)
++def create_app():
++    app=build(settings=Settings(env='test',_env_file=None), config_dir=ROOT/'config')
++    # Associate final upstream Responses snapshots with the executing request.
++    # This is test observation only; the original parser/result is retained.
++    from providers import streaming, openai_compatible, deepseek
++    original_frames=streaming.frames
++    async def observed_frames(lines):
++        observed=[]
++        rid=current_request.get()
++        try:
++            async for event,data in original_frames(lines):
++                try: observed.append(dict(event=event,data=json.loads(data)))
++                except ValueError: observed.append(dict(event=event,data=data))
++                yield event,data
++        finally:
++            if rid is not None:
++                record_json(ROOT/('wire-'+rid+'.json'),observed)
++    streaming.frames=observed_frames
++    original_status=deepseek.error_for_status
++    def observed_status(status,headers=None):
++        error=original_status(status,headers)
++        rid=current_request.get()
++        if rid is not None:
++            record_json(ROOT/('http-failure-'+rid+'.json'),dict(status=status,code=error.code))
++        return error
++    deepseek.error_for_status=observed_status
++    openai_compatible.error_for_status=observed_status
++    original_parse=streaming.parse_responses_response
++    current_request=ContextVar('f10_request',default=None)
++    begin=app.state.storage.begin_attempt
++    async def begin_observed(trace,attempt,**kwargs):
++        await begin(trace,attempt,**kwargs)
++        current_request.set(trace.request_id)
++    app.state.storage.begin_attempt=begin_observed
++    def parse_observed(raw):
++        result=original_parse(raw)
++        rid=current_request.get()
++        if rid is not None and result.upstream_status=='completed':
++            record_json(ROOT/('response-final-'+rid+'.json'),
++                        dict(text=result.text,raw=raw,usage=raw.get('usage')))
++        return result
++    streaming.parse_responses_response=parse_observed
++    openai_compatible.parse_responses_response=parse_observed
++    original_chat=deepseek.parse_response
++    def chat_observed(raw):
++        result=original_chat(raw)
++        rid=current_request.get()
++        if rid is not None:
++            record_json(ROOT/('response-final-'+rid+'.json'),
++                        dict(text=result.text,raw=raw,usage=raw.get('usage')))
++        return result
++    deepseek.parse_response=chat_observed
++    original=app.router.lifespan_context
++    @asynccontextmanager
++    async def lifespan(app):
++        async with original(app):
++            async def snapshot():
++                while True:
++                    manager=app.state.streaming_manager
++                    values=dict(observation_errors=len(OBSERVATION_ERRORS),snapshot_at=datetime.now(timezone.utc).isoformat(), active_generations=len(manager.tasks), subscriptions=len(manager.subscriptions),
++                                cleanup_tasks=len(manager.cleanup_tasks), cancellations=len(manager.cancellations),
++                                trace_requests=len(app.state.traces.requests), trace_attempts=len(app.state.traces.attempts))
++                    staging=ROOT/'observed.tmp'
++                    staging.write_text(json.dumps(values))
++                    staging.replace(ROOT/'observed.json')
++                    await asyncio.sleep(1)
++            task=asyncio.create_task(snapshot())
++            try: yield
++            finally:
++                task.cancel()
++                await asyncio.gather(task,return_exceptions=True)
++    app.router.lifespan_context=lifespan
++    return app
++"""
++
++
++def payload(model='general-primary', mode='text'):
++    value = {'model':model, 'prompt':{'name':'basic_text','version':'1.0.0'},
++             'messages':[{'role':'user','content':'订单 A123 的商品是充电器。请仅用一句简短中文复述这个事实。'}],
++             'max_output_tokens':128, 'timeout_seconds':30}
++    if mode == 'structured':
++        value['prompt'] = {'name':'context_answer','version':'1.2.0',
++                           'variables':{'context':'订单 A123 的商品是充电器。'}}
++        value['messages'][0]['content'] = '提取订单号和商品，返回JSON。'
++        value['response_schema'] = {'type':'object','properties':{
++            'order_id':{'type':'string'},'product':{'type':'string'}},
++            'required':['order_id','product'],'additionalProperties':False}
++    return value
++
++
++async def frames(response):
++    frame = []
++    async for line in response.aiter_lines():
++        if line:
++            frame.append(line)
++        elif frame:
++            fields = dict(line.split(': ',1) for line in frame if ': ' in line)
++            if 'event' in fields:
++                yield (int(fields['id']) if 'id' in fields else None, fields['event'],json.loads(fields['data']))
++            frame = []
++    assert not frame, 'incomplete downstream SSE frame'
++
++
++def verified_quality(answer, upstream, *, require_facts):
++    assert answer==upstream, 'Gateway/upstream text mismatch'
++    correct='A123' in answer and '充电器' in answer
++    if require_facts:
++        assert correct, 'business fact mismatch'
++    return correct
++
++
++class CredentialHeaders(dict):
++    def __repr__(self):
++        return "{'Authorization': '<redacted test credential>'}"
++
++
++class Environment:
++    def __init__(self, pg, name, directory):
++        self.pg, self.name, self.directory = pg,name,directory
++        self.config = directory/'config'
++        self.process = self.client = self.listener = self.log = None
++        self.headers = self.other_headers = None
++        self.bootstrap_number = 0
++
++    async def cli(self, *args):
++        result = await asyncio.to_thread(subprocess.run,
++            [sys.executable,'-m','admin','--config-dir',str(self.config),*map(str,args)],
++            cwd=PROJECT,env={'PATH':os.defpath,'PYTHONPATH':str(PROJECT/'src')},
++            capture_output=True,text=True,timeout=30)
++        assert result.returncode == 0, f'admin {args[0]} failed with exit {result.returncode}'
++        return result.stdout.strip()
++
++    async def start(self):
++        self.listener=socket.socket()
++        self.listener.bind(('127.0.0.1',0))
++        self.listener.listen()
++        port=self.listener.getsockname()[1]
++        self.bootstrap_number+=1
++        self.log=(self.directory/f'gateway-{self.bootstrap_number}.log').open('w+')
++        self.process=subprocess.Popen(
++            [sys.executable,'-m','uvicorn','f10_bootstrap:create_app','--factory','--workers','1',
++             '--fd',str(self.listener.fileno()),'--log-level','warning','--timeout-graceful-shutdown','5'],
++            cwd=self.directory,env={'PATH':os.defpath,'PYTHONPATH':os.pathsep.join([str(self.directory),str(PROJECT/'src')])},
++            pass_fds=(self.listener.fileno(),),stdout=self.log,stderr=subprocess.STDOUT)
++        self.listener.close()
++        self.client=httpx.AsyncClient(base_url=f'http://127.0.0.1:{port}',headers=self.headers,
++                                      timeout=45,trust_env=False,limits=httpx.Limits(max_connections=100))
++        async with asyncio.timeout(20):
++            while True:
++                assert self.process.poll() is None, 'isolated Gateway exited during startup'
++                try:
++                    if (await self.client.get('/healthz')).status_code==200:
++                        return
++                except httpx.TransportError:
++                    pass
++                await asyncio.sleep(.05)
++
++    async def stop(self):
++        if self.client is not None:
++            await self.client.aclose()
++        if self.process is not None and self.process.poll() is None:
++            self.process.terminate()
++            try:
++                await asyncio.to_thread(self.process.wait,timeout=12)
++            except subprocess.TimeoutExpired:
++                self.process.kill()
++                await asyncio.to_thread(self.process.wait,timeout=5)
++                raise AssertionError('owned Gateway failed to shut down')
++        if self.log is not None:
++            self.log.close()
++
++    async def restart(self):
++        await self.stop()
++        await self.start()
++
++    async def upstream_answer(self,rid,model,mode):
++        wire=mode=='streaming' and model=='general-primary'
++        path=self.directory/(('wire-' if wire else 'response-final-')+rid+'.json')
++        async with asyncio.timeout(3):
++            while not path.exists():
++                await asyncio.sleep(.01)
++        saved=json.loads(path.read_text())
++        if wire:
++            parts=[]
++            for event in saved:
++                raw=event['data']
++                if isinstance(raw,dict):
++                    for choice in raw.get('choices',[]):
++                        part=choice.get('delta',{}).get('content')
++                        if isinstance(part,str):
++                            parts.append(part)
++            return ''.join(parts),saved
++        raw=saved['raw']
++        if model=='general-primary':
++            text=raw['choices'][0]['message']['content']
++        else:
++            text=''.join(part['text'] for item in raw['output'] if item.get('type')=='message'
++                         for part in item.get('content',[]) if part.get('type')=='output_text')
++        return text,raw
++
++    async def call(self, model, mode, *, headers=None, quality_gate=True):
++        started=monotonic()
++        data=payload(model,mode)
++        events=[]
++        first_text=None
++        create_ms=None
++        answer=None
++        if mode=='streaming':
++            response=await self.client.post('/v1/llm/stream',json=data,headers=headers)
++            create_ms=(monotonic()-started)*1000
++            rid=response.headers['x-request-id']
++            if response.status_code!=202:
++                return dict(request_id=rid,status='failed',error_code=response.json()['code'],
++                            elapsed_ms=(monotonic()-started)*1000,first_text_ms=None,create_ms=create_ms,events=[])
++            subscribed=monotonic()
++            async with self.client.stream('GET',f'/v1/llm/stream/{rid}/events',headers=headers) as stream:
++                if stream.status_code!=200:
++                    await stream.aread()
++                    return dict(request_id=rid,status='failed',error_code=stream.json()['code'],
++                                elapsed_ms=(monotonic()-started)*1000,first_text_ms=None,create_ms=create_ms,events=[])
++                async for event in frames(stream):
++                    if event[1]=='response.delta' and first_text is None:
++                        first_text=(monotonic()-subscribed)*1000
++                    if event[1]!='response.heartbeat':
++                        events.append(event)
++            assert events and events[-1][1] in {'response.completed','response.failed','response.canceled'}
++            terminal=events[-1][1].split('.')[1]
++            code=events[-1][2].get('code')
++            if terminal=='completed':
++                answer=''.join(e[2]['delta'] for e in events if e[1]=='response.delta')
++        else:
++            response=await self.client.post('/v1/llm',json=data,headers=headers)
++            rid=response.headers['x-request-id']
++            terminal='completed' if response.status_code==200 else 'failed'
++            code=response.json()['code'] if terminal=='failed' else None
++            if terminal=='completed':
++                answer=response.json()['data']['text']
++                assert answer.strip()
++                if mode=='structured':
++                    assert response.json()['data']['parsed']=={'order_id':'A123','product':'充电器'}
++        # End user-visible timing before disk observations and financial checks.
++        elapsed_ms=(monotonic()-started)*1000
++        quality=None
++        anomaly=None
++        if answer is not None:
++            upstream,raw=await self.upstream_answer(rid,model,mode)
++            assert answer==upstream, 'Gateway/upstream text mismatch '+rid
++            quality=verified_quality(answer,upstream,require_facts=False)
++            if not quality:
++                anomaly=dict(request_id=rid,model=model,mode=mode,answer=answer,upstream=raw)
++                (self.directory/('quality-'+rid+'.json')).write_text(json.dumps(anomaly,ensure_ascii=False))
++                if quality_gate:
++                    verified_quality(answer,upstream,require_facts=True)
++        return dict(request_id=rid,status=terminal,error_code=code,elapsed_ms=elapsed_ms,
++                    first_text_ms=first_text,create_ms=create_ms,events=events,quality_ok=quality,
++                    quality_anomaly=anomaly)
++
++    async def account_totals(self,headers=None):
++        response=await self.client.get('/v1/billing/summary',headers=headers)
++        assert response.status_code==200
++        return response.json()['data']
++
++    async def assert_balances(self):
++        for owner,headers in (('a',self.headers),('b',self.other_headers)):
++            totals=await self.account_totals(headers)
++            def independent_totals():
++                with self.pg.connect(self.name,row_factory=dict_row) as sql:
++                    return sql.execute(
++                        """SELECT
++                          (SELECT coalesce(sum(amount),0) FROM tb_billing_operation
++                           WHERE agent_id=%s AND kind='deposit') AS deposited,
++                          coalesce(sum(agent_charge),0) AS charged,
++                          coalesce(sum(reserved_amount) FILTER (WHERE state IN ('reserved','pending')),0) AS reserved,
++                          coalesce(sum(reserved_amount) FILTER (WHERE state='pending'),0) AS pending
++                        FROM tb_billing_attempt WHERE agent_id=%s""", (owner,owner)).fetchone()
++            saved=await asyncio.to_thread(independent_totals)
++            assert all(Decimal(totals[key])==value for key,value in saved.items())
++            with localcontext() as context:
++                context.prec=80
++                assert Decimal(totals['deposited'])-Decimal(totals['charged'])-Decimal(totals['reserved'])==Decimal(totals['available'])
++                assert Decimal(totals['pending'])<=Decimal(totals['reserved'])
++
++    async def verify(self,rid, *, expected_agent=None):
++        def read():
++            with self.pg.connect(self.name,row_factory=dict_row) as sql:
++                r=sql.execute('SELECT * FROM tb_llm_request WHERE request_id=%s',(rid,)).fetchone()
++                attempts=sql.execute('SELECT * FROM tb_llm_attempt WHERE request_pk=%s ORDER BY attempt_no',(r['id'],)).fetchall()
++                events=sql.execute('SELECT seq,event_type,payload FROM tb_llm_stream_event WHERE request_pk=%s ORDER BY seq',(r['id'],)).fetchall()
++                ledger=sql.execute('SELECT * FROM tb_billing_attempt WHERE request_pk=%s ORDER BY attempt_no',(r['id'],)).fetchall()
++                return r,attempts,events,ledger
++        async with asyncio.timeout(8):
++            while True:
++                row,attempts,events,ledger=await asyncio.to_thread(read)
++                if row is not None and row['status'] in {'completed','failed','canceled'}:
++                    break
++                await asyncio.sleep(.1)
++        if expected_agent is not None:
++            assert row['agent_id']==expected_agent, 'response and request owner mismatch'
++        assert row['status'] in {'completed','failed','canceled'}
++        assert len(attempts)==len(ledger)
++        assert [r['attempt_no'] for r in attempts]==[r['attempt_no'] for r in ledger]
++        if row['operation']=='streaming':
++            assert events, 'terminal stream must have a terminal business event'
++        if events:
++            assert [r['seq'] for r in events]==list(range(1,len(events)+1))
++            assert events[-1]['event_type']=='response.'+row['status']
++            assert sum(e['event_type'] in {'response.completed','response.failed','response.canceled'} for e in events)==1
++        for attempt,bill in zip(attempts,ledger):
++            assert bill['agent_id']==row['agent_id'], 'request and billing owner mismatch'
++            assert bill['state']!='reserved'
++            if bill['state']=='settled' and bill['quote'] is not None:
++                q=bill['quote']; cache=bill['cached_input_tokens']
++                assert bill['billing_observed_at'] is not None
++                if cache is None:
++                    assert q['hit']==q['miss'] or attempt['input_tokens']==0
++                    cache=0
++                with localcontext() as context:
++                    context.prec=80
++                    fee=(cache*Decimal(q['hit'])+(attempt['input_tokens']-cache)*Decimal(q['miss'])+
++                         attempt['output_tokens']*Decimal(q['output']))/1_000_000
++                assert fee==bill['agent_charge']==bill['supplier_cost']
++            elif bill['state']=='pending':
++                assert bill['agent_charge'] is None and bill['supplier_cost'] is None
++        return {'request_id':rid,'status':row['status'],'error_code':row['error_code'],'attempts':len(attempts),'events':len(events),
++                'bill_states':[b['state'] for b in ledger],
++                'server_timing':json.loads(row['timing_snapshot']) if row['timing_snapshot'] else None}
++
++    def metadata(self):
++        memory = None
++        if platform.system() == 'Darwin':
++            memory = int(subprocess.run(['sysctl','-n','hw.memsize'], capture_output=True,
++                                        text=True,check=True).stdout)
++        return dict(system=platform.system(),release=platform.release(),machine=platform.machine(),
++                    logical_cpus=os.cpu_count(),physical_memory_bytes=memory,python=sys.version,
++                    dependencies={name:version(name) for name in ('fastapi','starlette','sqlalchemy','psycopg','uvicorn')},
++                    upstream_wire_observation=True,workers=1,output_limit=128,request_timeout_seconds=30,
++                    recovery=real_registry().recovery.model_dump(),
++                    models={k:v.model_dump(mode='json') for k,v in real_registry().models.items()},
++                    provider_host='api.deepseek.com',actual_configured_model='deepseek-flash',
++                    database_image='postgres:18.6-bookworm')
++
++    async def sample(self):
++        def read():
++            usage=subprocess.run(['ps','-p',str(self.process.pid),'-o','rss=,%cpu='],
++                                 capture_output=True,text=True,check=True).stdout.split()
++            observed=self.directory/'observed.json'
++            state=json.loads(observed.read_text()) if observed.exists() else {}
++            with self.pg.connect(self.name,row_factory=dict_row) as sql:
++                values=sql.execute("""SELECT pg_database_size(current_database()) AS db_bytes,
++                    (SELECT count(*) FROM tb_llm_request) AS requests,
++                    (SELECT count(*) FROM tb_llm_stream_event) AS events,
++                    (SELECT count(*) FROM tb_billing_attempt) AS billing_attempts,
++                    (SELECT count(*) FROM pg_stat_activity WHERE datname=current_database()) AS connections,
++                    (SELECT count(*) FROM pg_stat_activity WHERE datname=current_database() AND state='active') AS active_connections""").fetchone()
++            return dict(state,**values,rss_kb=int(usage[0]),cpu_percent=float(usage[1]),
++                        sampled_at=datetime.now(timezone.utc).isoformat())
++        return await asyncio.to_thread(read)
++
++
++@pytest_asyncio.fixture
++async def f10_environment(request,tmp_path):
++    assert request.config.getoption('--run-live'), 'F10 requires --run-live'
++    pg=await asyncio.to_thread(lambda:PostgresServer().start())
++    name=pg.create_database()
++    env=Environment(pg,name,tmp_path)
++    try:
++        write_config(env.config,pg,name,real_registry())
++        (env.config/'credentials.yaml').symlink_to(DEFAULT_CONFIG_DIR/'credentials.yaml')
++        (env.config/'prices.yaml').symlink_to(DEFAULT_CONFIG_DIR/'prices.yaml')
++        (tmp_path/'f10_bootstrap.py').write_text(BOOTSTRAP)
++        await asyncio.to_thread(migrate,env.config)
++        for agent in ('a','b'):
++            await env.cli('create-agent',agent,'F10 '+agent)
++            token=await env.cli('issue',agent)
++            headers=CredentialHeaders(Authorization='Bearer '+token)
++            if agent=='a': env.headers=headers
++            else: env.other_headers=headers
++            await env.cli('deposit',agent,'10000','--operation-id','initial-'+agent)
++            await env.cli('deposit',agent,'10000','--operation-id','initial-'+agent)
++        await env.start()
++        yield env
++    finally:
++        await env.stop()
++        await asyncio.to_thread(pg.drop_database,name)
++        await asyncio.to_thread(pg.close)
+--- baseline/tests/live/test_f10_acceptance.py
++++ current/tests/live/test_f10_acceptance.py
+@@ -0,0 +1,196 @@
++"""An independent Agent client exercises the same real-process public contract."""
++import asyncio
++from decimal import Decimal
++import json
++
++import pytest
++
++from f10_support import f10_environment, frames, payload
++
++
++pytestmark = pytest.mark.live
++MODELS = ['general-primary', 'general-backup']
++
++
++def evidence(record_property, **values):
++    for name, value in values.items():
++        record_property(name, json.dumps(value, ensure_ascii=False) if isinstance(value, (dict,list)) else value)
++
++
++async def committed(environment, rid):
++    async with asyncio.timeout(12):
++        while True:
++            response = await environment.client.get('/v1/traces/'+rid)
++            assert response.status_code == 200
++            if response.json()['data']['status'] in {'completed','failed','canceled'}:
++                return response.json()['data']
++            await asyncio.sleep(.02)
++
++
++async def request_state(environment, rid):
++    def read():
++        with environment.pg.connect(environment.name) as sql:
++            row = sql.execute('SELECT id,status FROM tb_llm_request WHERE request_id=%s',(rid,)).fetchone()
++            attempts = sql.execute('SELECT count(*) FROM tb_llm_attempt WHERE request_pk=%s',(row[0],)).fetchone()[0]
++            bills = sql.execute('SELECT count(*) FROM tb_billing_attempt WHERE request_pk=%s',(row[0],)).fetchone()[0]
++            events = sql.execute('SELECT count(*) FROM tb_llm_stream_event WHERE request_pk=%s',(row[0],)).fetchone()[0]
++        return dict(status=row[1], attempts=attempts, bills=bills, events=events)
++    return await asyncio.to_thread(read)
++
++
++@pytest.mark.parametrize('model', MODELS)
++@pytest.mark.parametrize('mode', ['text','structured','streaming'])
++async def test_real_agent_success_and_cost(f10_environment, model, mode, record_property):
++    env = f10_environment
++    initial = await env.account_totals()
++    assert Decimal(initial['deposited']) == Decimal('10000')
++    result = await env.call(model,mode)
++    assert result['status'] == 'completed', result['error_code']
++    trace = await committed(env,result['request_id'])
++    assert trace['requested_model'] == model
++    assert trace['usage']['unknown_attempts'] == []
++    verified = await env.verify(result['request_id'])
++    assert verified['attempts'] == 1
++    assert trace['attempts'][0]['api_protocol'] == ('chat_completions' if model=='general-primary' else 'responses')
++    if mode == 'streaming':
++        assert result['first_text_ms'] is not None
++        deltas = [e[2]['delta'] for e in result['events'] if e[1]=='response.delta']
++        assert deltas and 'A123' in ''.join(deltas) and '充电器' in ''.join(deltas)
++    await env.assert_balances()
++    evidence(record_property,model=model,mode=mode,request_id=result['request_id'],
++             observation=verified,latency_ms=result['elapsed_ms'],first_text_ms=result['first_text_ms'])
++
++
++@pytest.mark.parametrize('model', MODELS)
++async def test_real_disconnect_resume_keeps_one_generation(f10_environment,model,record_property):
++    env = f10_environment
++    response = await env.client.post('/v1/llm/stream',json=payload(model,'streaming'))
++    assert response.status_code==202
++    rid = response.json()['data']['request_id']
++    initial = await request_state(env,rid)
++    assert initial == {'status':'pending','attempts':0,'bills':0,'events':0}
++    url = f'/v1/llm/stream/{rid}/events'
++    first = None
++    async with env.client.stream('GET',url) as response:
++        assert response.status_code==200
++        async for event in frames(response):
++            if event[1]=='response.delta':
++                first=event
++                break
++    assert first is not None
++    resumed=[]
++    async with env.client.stream('GET',url,params={'after_seq':first[0]}) as response:
++        assert response.status_code==200
++        async for event in frames(response):
++            if event[1]!='response.heartbeat': resumed.append(event)
++    assert resumed and resumed[-1][1]=='response.completed'
++    assert [event[0] for event in resumed]==list(range(first[0]+1,resumed[-1][0]+1))
++    text=first[2]['delta']+''.join(event[2]['delta'] for event in resumed if event[1]=='response.delta')
++    assert 'A123' in text and '充电器' in text
++    await committed(env,rid)
++    detail=(await env.client.get('/v1/billing/requests/'+rid)).json()['data']
++    assert len(detail['attempts'])==1
++    assert (await env.client.get(url,params={'after_seq':resumed[-1][0]})).status_code==204
++    replay=(await env.client.get(url,params={'after_seq':first[0]})).text
++    assert 'response.completed' in replay
++    assert (await env.client.get('/v1/billing/requests/'+rid)).json()['data']==detail
++    checked=await env.verify(rid)
++    assert checked['attempts']==1
++    await env.assert_balances()
++    evidence(record_property,model=model,request_id=rid,first_seq=first[0],last_seq=resumed[-1][0],observation=checked)
++
++
++async def cancel_until_terminal(env,rid):
++    async with asyncio.timeout(12):
++        while True:
++            response=await env.client.post(f'/v1/llm/stream/{rid}/cancel')
++            assert response.status_code in {200,202}
++            status=response.json()['data']['status']
++            if response.status_code==200:
++                assert status in {'completed','failed','canceled'}
++                return status
++            assert status=='canceling'
++            await asyncio.sleep(.02)
++
++
++@pytest.mark.parametrize('model',MODELS)
++async def test_real_cancel_pending_and_in_progress(f10_environment,model,record_property):
++    env=f10_environment
++    pending=(await env.client.post('/v1/llm/stream',json=payload(model,'streaming'))).json()['data']['request_id']
++    assert await cancel_until_terminal(env,pending)=='canceled'
++    assert (await request_state(env,pending))['attempts']==0
++    await env.verify(pending)
++    rid=(await env.client.post('/v1/llm/stream',json=payload(model,'streaming'))).json()['data']['request_id']
++    received=[]
++    async with env.client.stream('GET',f'/v1/llm/stream/{rid}/events') as response:
++        assert response.status_code==200
++        iterator=frames(response)
++        async with asyncio.timeout(35):
++            async for event in iterator:
++                if event[1]!='response.heartbeat': received.append(event)
++                if event[1]=='response.delta': break
++            assert received and received[-1][1]=='response.delta'
++            terminal=await cancel_until_terminal(env,rid)
++            async for event in iterator:
++                if event[1]!='response.heartbeat': received.append(event)
++    assert received[-1][1]=='response.'+terminal
++    before=(await env.client.get('/v1/billing/requests/'+rid)).json()['data']
++    assert await cancel_until_terminal(env,rid)==terminal
++    assert (await env.client.get('/v1/billing/requests/'+rid)).json()['data']==before
++    checked=await env.verify(rid)
++    await env.assert_balances()
++    evidence(record_property,model=model,request_id=rid,pending_id=pending,terminal=terminal,observation=checked)
++
++
++async def test_real_cli_rotation_ownership_restart_and_budget(f10_environment,record_property):
++    env=f10_environment
++    def counts():
++        with env.pg.connect(env.name) as sql:
++            return tuple(sql.execute('SELECT count(*) FROM '+table).fetchone()[0]
++                         for table in ('tb_llm_request','tb_llm_attempt','tb_billing_attempt'))
++    initial_counts=await asyncio.to_thread(counts)
++    for authorization in (None,'Bearer invalid-test-token'):
++        request=env.client.build_request('POST','/v1/llm',json=payload())
++        request.headers.pop('Authorization',None)
++        if authorization is not None: request.headers['Authorization']=authorization
++        rejected=await env.client.send(request)
++        assert rejected.status_code==401 and rejected.json()['data'] is None
++    assert await asyncio.to_thread(counts)==initial_counts
++    created=await env.client.post('/v1/llm/stream',json=payload())
++    rid=created.json()['data']['request_id']
++    original=await request_state(env,rid)
++    for method,path in [('get',f'/v1/traces/{rid}'),('get',f'/v1/billing/requests/{rid}'),
++                        ('get',f'/v1/llm/stream/{rid}/events'),('post',f'/v1/llm/stream/{rid}/cancel'),
++                        ('get',f'/v1/llm/stream/{rid}/events%0A'),('post',f'/v1/llm/stream/{rid}/cancel%0A')]:
++        assert (await getattr(env.client,method)(path,headers=env.other_headers)).status_code==404
++    assert await request_state(env,rid)==original
++    old=env.headers['Authorization']
++    public=old.split(' ',1)[1].split('.',1)[0]
++    new=await env.cli('rotate','a',public)
++    assert (await env.client.get('/v1/traces/'+rid,headers={'Authorization':old})).status_code==401
++    env.headers={'Authorization':'Bearer '+new}
++    env.client.headers.update(env.headers)
++    assert (await env.client.get('/v1/traces/'+rid)).status_code==200
++    await env.restart()
++    assert (await request_state(env,rid))==original
++    assert (await env.client.get('/v1/traces/'+rid)).status_code==200
++    await cancel_until_terminal(env,rid)
++    await env.verify(rid)
++    await env.cli('create-agent','poor','zero budget')
++    poor=await env.cli('issue','poor')
++    headers={'Authorization':'Bearer '+poor}
++    rejected=[]
++    for path in ['/v1/llm','/v1/models/general-primary/health']:
++        response=await env.client.post(path,json=payload() if path=='/v1/llm' else None,headers=headers)
++        assert response.status_code==402 and response.json()['code']=='insufficient_budget'
++        rejected.append(response.headers['x-request-id'])
++    pending=(await env.client.post('/v1/llm/stream',json=payload(),headers=headers)).json()['data']['request_id']
++    response=await env.client.get(f'/v1/llm/stream/{pending}/events',headers=headers)
++    assert 'insufficient_budget' in response.text
++    rejected.append(pending)
++    for rejected_id in rejected:
++        assert (await request_state(env,rejected_id))['attempts']==0
++    totals=await env.account_totals(headers)
++    assert Decimal(totals['charged'])==Decimal(totals['reserved'])==0
++    await env.assert_balances()
++    evidence(record_property,request_id=rid,zero_budget_requests=rejected,rotation_verified=True,restart_verified=True)
+--- baseline/tests/live/test_f10_capacity.py
++++ current/tests/live/test_f10_capacity.py
+@@ -0,0 +1,120 @@
++"""Explicit real-supplier concurrency experiment and ten-minute sustained run."""
++import asyncio
++from datetime import datetime, timezone
++import json
++from time import monotonic
++
++import pytest
++
++from f10_metrics import summarize, validate_records, validate_sustained, sustained_supported
++from f10_support import f10_environment
++
++
++pytestmark = pytest.mark.live
++KINDS = [('general-primary', 'text'), ('general-primary', 'streaming'),
++         ('general-backup', 'text'), ('general-backup', 'streaming')]
++ACTIVE = ('active_generations', 'subscriptions', 'cleanup_tasks', 'cancellations')
++
++
++async def drained_sample(env):
++    after = datetime.now(timezone.utc)
++    async with asyncio.timeout(8):
++        while True:
++            sample = await env.sample()
++            captured = sample.get('snapshot_at')
++            fresh = captured is not None and datetime.fromisoformat(captured) >= after
++            assert sample.get('observation_errors',0)==0, 'test observation failed'
++            if fresh and all(key in sample and sample[key] == 0 for key in ACTIVE):
++                assert sample['connections'] <= 6, 'database pool failed to return to configured ceiling'
++                return sample
++            await asyncio.sleep(.25)
++
++
++async def phase(env, concurrency, duration, report):
++    records, samples, verified = [], [], {}
++    report.update(concurrency=concurrency, started_at=datetime.now(timezone.utc).isoformat(),
++                  records=records, resource_samples=samples, verified=verified)
++    before = await drained_sample(env)
++    report['before'] = before
++    started = monotonic()
++    stop = asyncio.Event()
++    sequence = 0
++
++    async def slot(index):
++        nonlocal sequence
++        headers = env.headers if index % 2 == 0 else env.other_headers
++        while monotonic() - started < duration:
++            number = sequence
++            sequence += 1
++            model, mode = KINDS[number % len(KINDS)]
++            dispatch_at = monotonic() - started
++            result = await env.call(model, mode, headers=headers,quality_gate=False)
++            result.update(model=model, mode=mode, agent='a' if index % 2 == 0 else 'b',
++                          slot=index, dispatch_after_seconds=dispatch_at)
++            records.append(result)
++
++    async def monitor():
++        while not stop.is_set():
++            samples.append(await env.sample())
++            try:
++                await asyncio.wait_for(stop.wait(), 5)
++            except TimeoutError:
++                pass
++
++    monitor_task = asyncio.create_task(monitor())
++    workers = [asyncio.create_task(slot(index)) for index in range(concurrency)]
++    try:
++        await asyncio.gather(*workers)
++    finally:
++        for worker in workers:
++            if not worker.done():
++                worker.cancel()
++        await asyncio.gather(*workers, return_exceptions=True)
++        stop.set()
++        await monitor_task
++    elapsed = monotonic() - started
++    records.sort(key=lambda row: row['dispatch_after_seconds'])
++    report.update(summarize(records, dispatch_seconds=duration, elapsed_seconds=elapsed))
++    report['completed_at'] = datetime.now(timezone.utc).isoformat()
++    # Cost and lifecycle correctness are checked independently of whether this
++    # exploratory load tier was stable. Overload cannot excuse inconsistent rows.
++    for record in records:
++        verified[record['request_id']] = await env.verify(record['request_id'], expected_agent=record['agent'])
++    validate_records(records, verified)
++    await env.assert_balances()
++    after = await drained_sample(env)
++    assert records, 'no business calls entered the load window'
++    assert set(report['groups']) == {model + '/' + mode for model, mode in KINDS}, 'missing protocol/mode samples'
++    report.update(after=after,
++                  accounts={'a': await env.account_totals(env.headers), 'b': await env.account_totals(env.other_headers)})
++    return report
++
++
++async def test_real_capacity_and_ten_minute_sustained(f10_environment, record_property):
++    env = f10_environment
++    report = {'scope': 'single Gateway worker; true DeepSeek Chat and Responses',
++              'environment': env.metadata(), 'phase_seconds': 60, 'sustained_seconds': 600, 'phases': [], 'sustained': None}
++    try:
++        for concurrency in (1, 5, 10, 20):
++            result = {}
++            report['phases'].append(result)
++            await phase(env, concurrency, 60, result)
++            (env.directory/'f10-capacity-progress.json').write_text(json.dumps(report, ensure_ascii=False))
++            # A one-slot business baseline is required, even if higher tiers
++            # reach a measured provider or local resource boundary.
++            if concurrency == 1:
++                validate_sustained(result)
++        stable = [item['concurrency'] for item in report['phases'] if sustained_supported(item)]
++        assert stable, 'no stable tier available for sustained run'
++        report['selected_concurrency'] = max(stable)
++        report['sustained'] = {}
++        await phase(env, max(stable), 600, report['sustained'])
++        validate_sustained(report['sustained'])
++        report['outcome'] = 'passed'
++    finally:
++        report.setdefault('outcome', 'failed')
++        # Contains request IDs, generated test text and metadata, never headers
++        # or credentials. JUnit retains the report even after test DB cleanup.
++        rendered = json.dumps(report, ensure_ascii=False)
++        (env.directory / 'f10-capacity.json').write_text(rendered)
++        record_property('f10_capacity_report', rendered)
+--- baseline/tests/postgres/test_f10_verification.py
++++ current/tests/postgres/test_f10_verification.py
+@@ -0,0 +1,38 @@
++"""The acceptance observer must reject deliberately inconsistent persisted results."""
++from datetime import datetime,timezone
++from uuid import uuid4
++
++import pytest
++
++from integration.test_f5o2_http import server,case
++from f10_support import Environment
++
++
++@pytest.mark.parametrize('damage',['none','wrong_fee','missing_bill','no_stream_terminal','foreign_owner'])
++async def test_observer_distinguishes_bad_records(server,case,damage):
++    name,config=case
++    rid=uuid4()
++    with server.connect(name) as sql:
++        sql.execute("INSERT INTO tb_agent VALUES ('a','A'),('b','B')")
++        pk=sql.execute("""INSERT INTO tb_llm_request
++            (agent_id,request_id,operation,status,created_at,last_event_seq)
++            VALUES ('a',%s,'streaming','completed',now(),1) RETURNING id""",(rid,)).fetchone()[0]
++        sql.execute("""INSERT INTO tb_llm_attempt(request_pk,attempt_no,model,provider,adapter,api_protocol,
++            configured_model,status,started_at,input_tokens,output_tokens,total_tokens)
++            VALUES (%s,1,'general-primary','wire','deepseek','chat_completions','deepseek-flash','completed',now(),10,1,11)""",(pk,))
++        if damage!='no_stream_terminal':
++            sql.execute("""INSERT INTO tb_llm_stream_event VALUES (%s,1,'response.completed',%s,now())""",
++                        (pk,'{"request_id":"'+str(rid)+'","usage":null}'))
++        if damage!='missing_bill':
++            sql.execute("""INSERT INTO tb_billing_attempt(request_pk,attempt_no,agent_id,state,reserved_amount,
++                agent_charge,supplier_cost,quote,cached_input_tokens,billing_observed_at)
++                VALUES (%s,1,%s,'settled',0.001,%s,%s,%s,0,now())""",
++                (pk,'b' if damage=='foreign_owner' else 'a','.1' if damage=='wrong_fee' else '.000028',
++                 '.1' if damage=='wrong_fee' else '.000028',
++                 '{"hit":"0.4","miss":"2","output":"8"}'))
++    env=Environment(server,name,config.parent)
++    if damage=='none':
++        assert (await env.verify(str(rid)))['status']=='completed'
++    else:
++        with pytest.raises(AssertionError):
++            await env.verify(str(rid))
+--- baseline/tests/smoke/test_f10_fault_chain.py
++++ current/tests/smoke/test_f10_fault_chain.py
+@@ -0,0 +1,67 @@
++"""CLI disposition closes an observable failed-primary/successful-backup request."""
++from decimal import Decimal
++import json
++
++import httpx
++import pytest
++import yaml
++
++from api.identity import create_agent,issue_credential
++from f3_cases import MODEL_VALUES
++from f10_support import Environment
++from integration.test_f5o2_http import case,server
++from main import create_app
++from persistence.billing import deposit
++from protocol.test_providers import server as primary_wire,server as backup_wire
++from services.models import ModelConfig,ModelRegistry,ProviderConfig,RecoveryPolicy
++from settings import Settings
++
++
++@pytest.mark.parametrize('action,amount,available',[('settle','.008','.986'),('zero',None,'.994'),('platform',None,'.994')])
++async def test_cli_closes_unknown_primary_after_backup_success(server,case,primary_wire,backup_wire,action,amount,available):
++    name,config=case
++    primary_wire.status=503
++    backup_wire.raw=json.dumps({'object':'response','model':'deepseek-flash','status':'completed','error':None,
++        'incomplete_details':None,'output':[{'type':'message','role':'assistant','status':'completed',
++        'content':[{'type':'output_text','text':'A123'}]}],'usage':{'input_tokens':200,'output_tokens':40,'total_tokens':240,
++        'input_tokens_details':{'cached_tokens':0}}}).encode()
++    definitions={
++        'primary':ProviderConfig(adapter='deepseek',api_protocol='chat_completions',base_url=primary_wire.url,credential_ref='wire'),
++        'backup':ProviderConfig(adapter='openai_compatible',api_protocol='responses',base_url=backup_wire.url,credential_ref='wire')}
++    models={'general-primary':ModelConfig(**(MODEL_VALUES|{'provider':'primary','fallback_models':('general-backup',)})),
++            'general-backup':ModelConfig(**(MODEL_VALUES|{'provider':'backup'}))}
++    (config/'prices.yaml').write_text(yaml.safe_dump({'bindings':{'primary':'fixture','backup':'fixture'},'versions':[{
++        'supplier':'fixture','model':'deepseek-flash','version':'v1','effective_from':'2020-01-01T00:00:00Z',
++        'peak':{'hit':'20','miss':'20','output':'50'},'off_peak':{'hit':'20','miss':'20','output':'50'}}]}))
++    (config/'credentials.yaml').write_text('credentials: {wire: {api_key: local-only}}')
++    # Fixed input estimate makes the test's reserve independently hand-computable.
++    from f3_cases import CountingFixture
++    app=create_app(settings=Settings(env='test',_env_file=None),config_dir=config,
++        model_registry=ModelRegistry(models,definitions,RecoveryPolicy(max_attempts=2,max_attempts_per_model=1)),
++        token_budget=CountingFixture(250).as_budget())
++    async with app.router.lifespan_context(app):
++        async with app.state.storage.database.transaction() as session:
++            await create_agent(session,'a','A')
++            token=await issue_credential(session,'a')
++            await deposit(session,'a','initial','1')
++        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app),base_url='http://test',
++                                     headers={'Authorization':'Bearer '+token}) as client:
++            reply=await client.post('/v1/llm',json={'model':'general-primary',
++                'prompt':{'name':'basic_text','version':'1.0.0'},
++                'messages':[{'role':'user','content':'A123'}],'max_output_tokens':100})
++            assert reply.status_code==200
++            rid=reply.headers['x-request-id']
++            assert len(primary_wire.calls)==len(backup_wire.calls)==1
++            before=(await client.get('/v1/billing/summary')).json()['data']
++            assert Decimal(before['available'])==Decimal('.984')
++            env=Environment(server,name,config.parent)
++            args=['resolve',rid,'1',action,'--operation-id','verified-op','--reason','controlled statement']
++            if amount is not None:
++                args.extend(['--amount',amount])
++            for _ in range(2):
++                await env.cli(*args)
++                after=(await client.get('/v1/billing/summary')).json()['data']
++                assert Decimal(after['available'])==Decimal(available) and Decimal(after['pending'])==0
++            rows=(await client.get('/v1/billing/requests/'+rid)).json()['data']['attempts']
++            assert rows[0]['state']=={'settle':'settled','zero':'released','platform':'platform'}[action]
++            assert rows[0]['supplier_cost'] is None if action=='platform' else Decimal(rows[0]['supplier_cost'])==Decimal(amount or '0')
+--- baseline/tests/unit/test_f10_metrics.py
++++ current/tests/unit/test_f10_metrics.py
+@@ -0,0 +1,73 @@
++import pytest
++
++
++def test_percentiles_use_nearest_rank_and_keep_null_out_of_samples():
++    import f10_metrics
++    assert callable(getattr(f10_metrics, "distribution", None)), "missing capacity distribution contract"
++    distribution = f10_metrics.distribution
++    assert distribution([]) == {'samples': 0, 'p50': None, 'p95': None, 'p99': None, 'maximum': None}
++    values = list(range(100, 0, -1))
++    assert distribution(values) == {'samples': 100, 'p50': 50, 'p95': 95, 'p99': 99, 'maximum': 100}
++    assert distribution([None, 5])['samples'] == 1
++    for invalid in ([True], [-1], [float('nan')]):
++        with pytest.raises(ValueError):
++            distribution(invalid)
++
++
++def test_summary_has_separate_window_and_drained_rates_and_groups():
++    import f10_metrics
++    assert callable(getattr(f10_metrics, "summarize", None)), "missing capacity summarize contract"
++    summarize = f10_metrics.summarize
++    records = [
++        {'request_id': 'a', 'model': 'general-primary', 'mode': 'streaming', 'status': 'completed',
++         'error_code': None, 'elapsed_ms': 100, 'first_text_ms': 10, 'create_ms': 2},
++        {'request_id': 'b', 'model': 'general-backup', 'mode': 'text', 'status': 'failed',
++         'error_code': 'provider_timeout', 'elapsed_ms': 200, 'first_text_ms': None, 'create_ms': None},
++    ]
++    report = summarize(records, dispatch_seconds=10, elapsed_seconds=20)
++    assert report['started'] == 2 and report['successes'] == 1 and report['failures'] == {'provider_timeout': 1}
++    assert report['dispatch_rate_per_second'] == .2
++    assert report['drained_rate_per_second'] == .1
++    assert report['groups']['general-primary/streaming']['first_text_ms']['p95'] == 10
++    assert report['groups']['general-backup/text']['first_text_ms']['samples'] == 0
++    assert report['success_rate'] == .5
++
++
++def test_record_checker_rejects_duplicate_request_and_response_db_mismatch():
++    import f10_metrics
++    assert callable(getattr(f10_metrics, "validate_records", None)), "missing capacity validate_records contract"
++    validate_records = f10_metrics.validate_records
++    good = {'request_id': 'a', 'status': 'completed', 'error_code': None}
++    validate_records([good], {'a': {'status': 'completed'}})
++    with pytest.raises(AssertionError, match='duplicate'):
++        validate_records([good, good], {'a': {'status': 'completed'}})
++    with pytest.raises(AssertionError, match='terminal'):
++        validate_records([good], {'a': {'status': 'failed'}})
++    with pytest.raises(AssertionError, match='unexpected'):
++        validate_records([dict(good, status='failed', error_code='internal_error')], {'a': {'status': 'failed'}})
++
++
++def test_model_quality_is_counted_separately_from_successful_gateway_delivery():
++    from f10_metrics import summarize
++    rows=[dict(request_id='a',model='general-primary',mode='text',status='completed',error_code=None,
++               elapsed_ms=100,first_text_ms=None,create_ms=None,quality_ok=False),
++          dict(request_id='b',model='general-primary',mode='text',status='failed',error_code='provider_timeout',
++               elapsed_ms=100,first_text_ms=None,create_ms=None,quality_ok=None)]
++    report=summarize(rows,dispatch_seconds=1,elapsed_seconds=2)
++    assert report['quality_evaluated']==1 and report['quality_anomalies']==['a']
++    assert report['successes']==1 and report['failures']=={'provider_timeout':1}
++
++
++def test_sustained_accepts_proven_upstream_failure_but_rejects_local_or_inconsistent_failures():
++    from f10_metrics import validate_sustained
++    good={'request_id':'ok','status':'completed','error_code':None}
++    failed={'request_id':'u','status':'failed','error_code':'provider_unavailable'}
++    observed={'u':{'status':'failed','error_code':'provider_unavailable',
++                   'server_timing':{'error_stage':'provider'}}}
++    validate_sustained({'records':[good,failed],'verified':observed})
++    with pytest.raises(AssertionError):
++        validate_sustained({'records':[good,dict(failed,error_code='storage_unavailable')],'verified':observed})
++    with pytest.raises(AssertionError):
++        validate_sustained({'records':[good,failed],'verified':{'u':dict(observed['u'],error_code='internal_error')}})
++    with pytest.raises(AssertionError):
++        validate_sustained({'records':[good,failed],'verified':{'u':dict(observed['u'],server_timing={'error_stage':'finish'})}})
+--- baseline/tests/unit/test_f10_observation.py
++++ current/tests/unit/test_f10_observation.py
+@@ -0,0 +1,47 @@
++from decimal import Decimal
++import json
++
++from f10_support import BOOTSTRAP
++
++
++def observer(tmp_path):
++    namespace={'__file__':str(tmp_path/'bootstrap.py')}
++    exec(compile(BOOTSTRAP,'f10_bootstrap.py','exec'),namespace)
++    return namespace
++
++
++def test_provider_raw_precision_is_serializable_without_changing_input(tmp_path):
++    ns=observer(tmp_path)
++    raw={'temperature':Decimal('1.0000000000000001'),'usage':{'output_tokens':1},'output':'订'}
++    path=tmp_path/'observed.json'
++    ns['record_json'](path,raw)
++    loaded=json.loads(path.read_text(),parse_float=Decimal)
++    assert loaded==raw and type(raw['temperature']) is Decimal
++    assert not ns['OBSERVATION_ERRORS']
++
++
++def test_observation_io_failure_is_reported_without_failing_provider(tmp_path,monkeypatch):
++    ns=observer(tmp_path)
++    def unavailable(*args,**kwargs):
++        raise OSError('controlled observation failure')
++    monkeypatch.setattr(type(tmp_path),'write_text',unavailable)
++    ns['record_json'](tmp_path/'observed.json',{})
++    assert ns['OBSERVATION_ERRORS']==['OSError']
++
++
++def test_test_credential_headers_are_redacted_in_failure_arguments():
++    from f10_support import CredentialHeaders
++    headers=CredentialHeaders(Authorization='Bearer transient-test-key')
++    assert headers['Authorization']=='Bearer transient-test-key'
++    assert 'transient-test-key' not in repr(headers)
++
++
++def test_capacity_quality_separates_upstream_answer_from_gateway_corruption():
++    from f10_support import verified_quality
++    assert verified_quality('订单 A123 商品是充电器','订单 A123 商品是充电器',require_facts=True)
++    assert verified_quality('订','订',require_facts=False) is False
++    import pytest
++    with pytest.raises(AssertionError,match='fact'):
++        verified_quality('订','订',require_facts=True)
++    with pytest.raises(AssertionError,match='upstream'):
++        verified_quality('订','订单 A123 商品是充电器',require_facts=False)

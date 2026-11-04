@@ -1,0 +1,33 @@
+..F                                                                      [100%]
+=================================== FAILURES ===================================
+____ test_queued_disconnect_keeps_unknown_actual_model_and_original_status _____
+
+stream_server = namespace(data=b'data: {"type": "response.created", "response": {"object": "response", "status": "queued", "model": ""...rt': 'none'}, 'store': False}}], split=False, delay_headers=0, delay_body=0, reset=False, url='http://127.0.0.1:54936')
+
+    async def test_queued_disconnect_keeps_unknown_actual_model_and_original_status(stream_server):
+        stream_server.data=frame({'type':'response.created','response':{'object':'response','status':'queued','model':''}})
+        provider=BailianProvider(stream_server.url,'FAKE-F13-KEY')
+        try:
+>           events=[e async for e in provider.stream(SimpleNamespace(model_id='qwen3.8-flash'),
+
+tests/protocol/test_f13_bailian.py:48: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/providers/openai_compatible.py:81: in stream
+    yield failure('provider_invalid_response', **observed)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+code = 'provider_invalid_response', metadata = {'upstream_status': 'queued'}
+
+    def failure(code, **metadata):
+>       return ProviderStreamEvent(status='failed', error_code=code, **metadata)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       pydantic_core._pydantic_core.ValidationError: 1 validation error for ProviderStreamEvent
+E       upstream_status
+E         Input should be 'in_progress', 'completed', 'failed' or 'incomplete' [type=literal_error, input_value='queued', input_type=str]
+E           For further information visit https://errors.pydantic.dev/2.14/v/literal_error
+
+src/providers/streaming.py:10: ValidationError
+=========================== short test summary info ============================
+FAILED tests/protocol/test_f13_bailian.py::test_queued_disconnect_keeps_unknown_actual_model_and_original_status
+1 failed, 2 passed in 0.15s

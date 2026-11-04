@@ -1,0 +1,37 @@
+--- reviewed/tests/integration/test_f5_gateway.py
++++ accepted/tests/integration/test_f5_gateway.py
+@@ -267,6 +267,34 @@
+     assert primary_provider(app).stream_calls == []
+ 
+ 
++@pytest.mark.parametrize('status', ['completed', 'failed'])
++def test_last_delta_and_terminal_in_one_provider_event(status):
++    from contracts import Usage
++    from providers.base import ProviderStreamEvent
++    from providers.mock import MockProvider
++    fields = ({'upstream_terminal_received': True,
++               'usage': Usage(input_tokens=10, output_tokens=5, total_tokens=15)}
++              if status == 'completed' else {'error_code': 'output_truncated'})
++    provider = MockProvider(stream_events=[
++        ProviderStreamEvent(status=status, delta='最后一段正文', **fields),
++        ProviderStreamEvent(delta='终态后禁止消费'),
++    ])
++    app = make_app(primary=provider)
++    with TestClient(app) as client:
++        response = client.post('/v1/llm/stream', json=request_body())
++    events = parse_events(response.text)
++    assert [name for name, _ in events] == ['response.delta', 'response.' + status]
++    assert events[0][1]['delta'] == '最后一段正文'
++    trace = app.state.traces.requests[response.headers['x-request-id']]
++    assert trace.status == app.state.traces.attempts[0].status == status
++    assert trace.ttft_ms is not None
++    assert provider.stream_next_calls == provider.stream_close_calls == 1
++    if status == 'completed':
++        assert events[-1][1]['usage'] == {'input_tokens': 10, 'output_tokens': 5, 'total_tokens': 15}
++    else:
++        assert events[-1][1]['code'] == trace.error_code == 'output_truncated'
++
++
+ @pytest.mark.parametrize('extra', [{'response_schema': {}}, {'response_schema': None},
+                                   {'stream': True}, {'stream': False}, {'api_protocol': 'responses'}])
+ def test_f5_unsupported_fields_rejected_before_provider(extra):

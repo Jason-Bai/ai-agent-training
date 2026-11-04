@@ -1,0 +1,30 @@
+Run: F9 ledger schema Red
+persisted = (<persistence.database.Database object at 0x10a648830>, <persistence.store.Store object at 0x10b3a5af0>, 'case_1abdb279868f4b038c3b89d8dd7f5100')
+
+    async def test_migration_preserves_historical_ownerless_requests(persisted):
+        db, _, _ = persisted
+        async with db.transaction() as session:
+>           assert await session.scalar(text("select to_regclass('tb_billing_attempt')::text")) == 'tb_billing_attempt'
+E           AssertionError: assert None == 'tb_billing_attempt'
+
+tests/postgres/test_f9_ledger.py:13: AssertionError
+=========================== short test summary info ============================
+FAILED tests/postgres/test_f9_ledger.py::test_migration_preserves_historical_ownerless_requests
+1 failed in 3.54s
+Run: supplier-only resolution Red
+        if action not in ('settle', 'zero', 'platform') or not reason.strip():
+>           raise GatewayError('invalid_disposition', '需要有效的处置方式和依据', 422)
+E           errors.GatewayError: 需要有效的处置方式和依据
+
+src/persistence/billing.py:128: GatewayError
+=========================== short test summary info ============================
+FAILED tests/postgres/test_f9_ledger.py::test_supplier_evidence_after_platform_release_does_not_charge_agent
+1 failed, 9 deselected in 3.32s
+Run: ledger and migrations Green
+............                                                             [100%]
+12 passed in 10.61s
+..                                                                       [100%]
+2 passed, 27 deselected in 6.43s
+Run: extended ledger, F6/F7 PostgreSQL regressions, native index/constraint count
+..........................................                               [100%]
+42 passed in 17.00s

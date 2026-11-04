@@ -1,0 +1,14 @@
+{
+  "command": [
+    ".venv/bin/python",
+    "-W",
+    "error",
+    "-m",
+    "pytest",
+    "tests/integration/test_f13_metering.py",
+    "-ra",
+    "-q"
+  ],
+  "exit_code": 0,
+  "at": "2026-11-03T15:04:06.480675+00:00"
+}

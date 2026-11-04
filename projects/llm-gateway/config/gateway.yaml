@@ -1,0 +1,204 @@
+database:
+  host: 127.0.0.1
+  port: 15432
+  name: llm_gateway
+  username: llm_gateway
+  password_file: postgres.password
+providers:
+  mock-main:
+    adapter: mock
+    api_protocol: chat_completions
+  mock-backup:
+    adapter: mock
+    api_protocol: responses
+  bailian-main:
+    adapter: bailian
+    api_protocol: responses
+    base_url: https://dashscope.aliyuncs.com/compatible-mode/v1
+    credential_ref: bailian-main-key
+concurrency:
+  max_requests: 20
+  max_requests_per_agent: 5
+endpoints:
+  primary-chat:
+    provider: mock-main
+    model_id: deepseek-flash
+    thinking_mode: disabled
+    token_counter: deepseek_v41
+    supports_streaming: true
+    structured_output_mode: json_object
+    context_window_tokens: 1048576
+    provider_max_output_tokens: 393216
+    max_output_tokens: 4096
+    safety_margin_tokens: 1024
+    max_timeout_seconds: 120
+    enabled: true
+  backup-responses:
+    provider: mock-backup
+    model_id: deepseek-flash
+    thinking_mode: disabled
+    token_counter: deepseek_v41
+    supports_streaming: true
+    structured_output_mode: json_schema
+    context_window_tokens: 1048576
+    provider_max_output_tokens: 393216
+    max_output_tokens: 4096
+    safety_margin_tokens: 1024
+    max_timeout_seconds: 120
+    enabled: true
+  bailian-light:
+    provider: bailian-main
+    model_id: qwen3.8-flash
+    thinking_mode: disabled
+    enabled: true
+    token_counter: qwen_text_estimate_v1
+    supports_streaming: true
+    structured_output_mode: json_schema
+    min_output_tokens: 16
+    context_window_tokens: 200000
+    provider_max_output_tokens: 131072
+    max_output_tokens: 4096
+    safety_margin_tokens: 1024
+    max_timeout_seconds: 120
+  bailian-general:
+    provider: bailian-main
+    model_id: qwen3.7-plus
+    thinking_mode: disabled
+    enabled: true
+    token_counter: qwen_text_estimate_v1
+    supports_streaming: true
+    structured_output_mode: json_schema
+    min_output_tokens: 16
+    context_window_tokens: 200000
+    provider_max_output_tokens: 131072
+    max_output_tokens: 4096
+    safety_margin_tokens: 1024
+    max_timeout_seconds: 120
+  bailian-analysis:
+    provider: bailian-main
+    model_id: qwen3.8-max
+    thinking_mode: disabled
+    enabled: true
+    token_counter: qwen_text_estimate_v1
+    supports_streaming: true
+    structured_output_mode: json_schema
+    min_output_tokens: 16
+    context_window_tokens: 200000
+    provider_max_output_tokens: 131072
+    max_output_tokens: 4096
+    safety_margin_tokens: 1024
+    max_timeout_seconds: 120
+model_groups:
+  general-primary:
+    default_output_tokens: 1024
+    max_output_tokens: 4096
+    default_timeout_seconds: 30
+    max_timeout_seconds: 120
+    candidates:
+    - primary-chat
+  general-backup:
+    default_output_tokens: 1024
+    max_output_tokens: 4096
+    default_timeout_seconds: 30
+    max_timeout_seconds: 120
+    candidates:
+    - backup-responses
+  light:
+    candidates:
+    - bailian-light
+    default_output_tokens: 1024
+    max_output_tokens: 4096
+    default_timeout_seconds: 30
+    max_timeout_seconds: 120
+    routing_description: 提取已知字段、标签、简单改写；长文本或JSON格式本身不升级复杂度。
+  general:
+    candidates:
+    - bailian-general
+    default_output_tokens: 1024
+    max_output_tokens: 4096
+    default_timeout_seconds: 30
+    max_timeout_seconds: 120
+    routing_description: 依据明确资料回答问题、摘要整理、生成待人工确认的常规草稿。
+  analysis:
+    candidates:
+    - bailian-analysis
+    default_output_tokens: 1024
+    max_output_tokens: 4096
+    default_timeout_seconds: 30
+    max_timeout_seconds: 120
+    routing_description: 比较冲突证据、多条件推导、解释假设或比较不同处理路径。
+auto_routes:
+  auto-general:
+    classifier_group: light
+    candidate_groups:
+    - light
+    - general
+    - analysis
+    default_group: general
+    classifier_prompt:
+      name: task_router
+      version: 1.0.0
+    classifier_timeout_seconds: 5
+    classifier_max_output_tokens: 128
+    default_output_tokens: 1024
+    max_output_tokens: 4096
+    default_timeout_seconds: 30
+    max_timeout_seconds: 120
+
+pricing:
+  bindings:
+    deepseek-main: deepseek
+    openai-main: deepseek
+    bailian-main: bailian-beijing
+  versions:
+  - supplier: deepseek
+    model: deepseek-flash
+    version: flash-cny-20261103
+    effective_from: '2026-11-03T00:00:00+08:00'
+    peak:
+      hit: '0.04'
+      miss: '2'
+      output: '8'
+    off_peak:
+      hit: '0.02'
+      miss: '1'
+      output: '4'
+    calendar_until: '2027-01-01'
+    holidays: []
+  - supplier: bailian-beijing
+    model: qwen3.8-flash
+    version: aliyun-beijing-20261103-public-promo
+    effective_from: '2026-11-03T00:00:00+08:00'
+    peak: &id001
+      hit: '0.1'
+      miss: '0.8'
+      output: '2.7'
+    off_peak: *id001
+  - supplier: bailian-beijing
+    model: qwen3.7-plus
+    version: aliyun-beijing-20261103-public-promo
+    effective_from: '2026-11-03T00:00:00+08:00'
+    peak: &id002
+      hit: '0.32'
+      miss: '1.6'
+      output: '6.4'
+    off_peak: *id002
+    input_tiers:
+    - max_input_tokens: 256000
+      peak: *id002
+      off_peak: *id002
+    - max_input_tokens: 1000000
+      peak: &id003
+        hit: '0.96'
+        miss: '4.8'
+        output: '19.2'
+      off_peak: *id003
+  - supplier: bailian-beijing
+    model: qwen3.8-max
+    version: aliyun-beijing-20261103-public-promo
+    effective_from: '2026-11-03T00:00:00+08:00'
+    peak: &id004
+      hit: '1.5'
+      miss: '12'
+      output: '36'
+    off_peak: *id004

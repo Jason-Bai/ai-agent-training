@@ -1,0 +1,80 @@
+{
+  "matrix": [
+    [
+      "general-primary",
+      "text"
+    ],
+    [
+      "general-primary",
+      "structured"
+    ],
+    [
+      "general-primary",
+      "streaming"
+    ],
+    [
+      "general-backup",
+      "text"
+    ],
+    [
+      "general-backup",
+      "structured"
+    ],
+    [
+      "general-backup",
+      "streaming"
+    ],
+    [
+      "light",
+      "text"
+    ],
+    [
+      "light",
+      "structured"
+    ],
+    [
+      "light",
+      "streaming"
+    ],
+    [
+      "general",
+      "text"
+    ],
+    [
+      "general",
+      "structured"
+    ],
+    [
+      "general",
+      "streaming"
+    ],
+    [
+      "analysis",
+      "text"
+    ],
+    [
+      "analysis",
+      "structured"
+    ],
+    [
+      "analysis",
+      "streaming"
+    ],
+    [
+      "auto-general",
+      "text"
+    ],
+    [
+      "auto-general",
+      "structured"
+    ],
+    [
+      "auto-general",
+      "streaming"
+    ]
+  ],
+  "entry_count": 6,
+  "mode_count": 3,
+  "node": "tests/live/test_f10_capacity.py::test_real_capacity_and_ten_minute_sustained",
+  "executed_live_or_pg": false
+}

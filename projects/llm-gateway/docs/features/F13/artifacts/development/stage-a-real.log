@@ -1,0 +1,2964 @@
+FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF                                     [100%]
+=================================== FAILURES ===================================
+_________ test_three_real_bailian_models_public_operations[text-light] _________
+
+f13_real_environment = RealEnvironment(client=<starlette.testclient.TestClient object at 0x10d7fcb30>, application=<fastapi.applications.Fast...lv86fj56zjgm8txl21tvpq00000gn/T/llmgw-f13-work-eifzl4on/pytest-stage-a-real/test_three_real_bailian_models0/f13-real'))
+group = 'light', mode = 'text'
+record_property = <function record_property.<locals>.append_property at 0x10d8ee520>
+
+    @pytest.mark.parametrize('group',list(MODELS))
+    @pytest.mark.parametrize('mode',['text','schema','streaming','health'])
+    def test_three_real_bailian_models_public_operations(f13_real_environment,group,mode,record_property):
+        env=f13_real_environment;client=env.client
+        if mode=='health':reply=client.post('/v1/models/'+group+'/health')
+        else:
+            body=payload(group,structured=mode=='schema')
+            if mode=='streaming':
+                body.pop('response_schema',None)
+                reply=client.post('/v1/llm/stream',json=body)
+                assert reply.status_code==202,reply.text
+                rid=reply.headers['x-request-id'];pending=env.trace(rid)
+                assert pending['status']=='pending' and pending['attempts']==[]
+                reply=client.get('/v1/llm/stream/'+rid+'/events')
+            else:reply=client.post('/v1/llm',json=body)
+        if mode!='streaming':rid=reply.headers['x-request-id']
+        trace=env.trace(rid)
+        record_property('f13_request_id',rid);record_property('f13_trace',json.dumps(trace,ensure_ascii=False))
+        assert reply.status_code==200,reply.text
+        if mode=='streaming':
+            events=sse_events(reply.text)
+            assert [seq for _,seq,_ in events]==list(range(1,len(events)+1))
+            assert events[-1][0]=='response.completed'
+            assert sum(event in {'response.completed','response.failed','response.canceled'} for event,_,_ in events)==1
+            text=''.join(value['delta'] for event,_,value in events if event=='response.delta')
+            assert 'A123' in text and '充电器' in text
+            assert client.get('/v1/llm/stream/'+rid+'/events',params={'after_seq':events[-1][1]}).status_code==204
+        elif mode=='schema':assert reply.json()['data']['parsed']=={'order_id':'A123','product':'充电器'}
+        elif mode=='text':assert 'A123' in reply.json()['data']['text'] and '充电器' in reply.json()['data']['text']
+        else:assert reply.json()['data']['latency_ms']>=0
+        assert trace['status']=='completed' and trace['input_token_kind']=='estimated'
+        assert trace['counter_version'].startswith('qwen_text_estimate_v1:')
+        assert trace['requested_model']==group
+        assert trace['attempts'] and all(a['adapter']=='bailian' and a['api_protocol']=='responses'
+            and a['configured_model']==MODELS[group] and a['actual_model']==MODELS[group]
+            and a['input_token_kind']=='estimated' for a in trace['attempts'])
+>       billing=env.verify(rid,trace)
+                ^^^^^^^^^^^^^^^^^^^^^
+
+tests/live/test_f13_models.py:70: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/f13_real_support.py:109: in verify
+    quoted=json.loads(charge[2]);assert quoted['version']==PRICE_VERSION
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+s = {'hit': '0.1', 'miss': '0.8', 'model': 'qwen3.8-flash', 'output': '2.7', ...}
+cls = None, object_hook = None, parse_float = None, parse_int = None
+parse_constant = None, object_pairs_hook = None, kw = {}
+
+    def loads(s, *, cls=None, object_hook=None, parse_float=None,
+            parse_int=None, parse_constant=None, object_pairs_hook=None, **kw):
+        """Deserialize ``s`` (a ``str``, ``bytes`` or ``bytearray`` instance
+        containing a JSON document) to a Python object.
+    
+        ``object_hook`` is an optional function that will be called with the
+        result of any object literal decode (a ``dict``). The return value of
+        ``object_hook`` will be used instead of the ``dict``. This feature
+        can be used to implement custom decoders (e.g. JSON-RPC class hinting).
+    
+        ``object_pairs_hook`` is an optional function that will be called with the
+        result of any object literal decoded with an ordered list of pairs.  The
+        return value of ``object_pairs_hook`` will be used instead of the ``dict``.
+        This feature can be used to implement custom decoders.  If ``object_hook``
+        is also defined, the ``object_pairs_hook`` takes priority.
+    
+        ``parse_float``, if specified, will be called with the string
+        of every JSON float to be decoded. By default this is equivalent to
+        float(num_str). This can be used to use another datatype or parser
+        for JSON floats (e.g. decimal.Decimal).
+    
+        ``parse_int``, if specified, will be called with the string
+        of every JSON int to be decoded. By default this is equivalent to
+        int(num_str). This can be used to use another datatype or parser
+        for JSON integers (e.g. float).
+    
+        ``parse_constant``, if specified, will be called with one of the
+        following strings: -Infinity, Infinity, NaN.
+        This can be used to raise an exception if invalid JSON numbers
+        are encountered.
+    
+        To use a custom ``JSONDecoder`` subclass, specify it with the ``cls``
+        kwarg; otherwise ``JSONDecoder`` is used.
+        """
+        if isinstance(s, str):
+            if s.startswith('\ufeff'):
+                raise JSONDecodeError("Unexpected UTF-8 BOM (decode using utf-8-sig)",
+                                      s, 0)
+        else:
+            if not isinstance(s, (bytes, bytearray)):
+>               raise TypeError(f'the JSON object must be str, bytes or bytearray, '
+                                f'not {s.__class__.__name__}')
+E               TypeError: the JSON object must be str, bytes or bytearray, not dict
+
+/Users/baiyu/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/json/__init__.py:339: TypeError
+________ test_three_real_bailian_models_public_operations[text-general] ________
+
+f13_real_environment = RealEnvironment(client=<starlette.testclient.TestClient object at 0x10daab200>, application=<fastapi.applications.Fast...lv86fj56zjgm8txl21tvpq00000gn/T/llmgw-f13-work-eifzl4on/pytest-stage-a-real/test_three_real_bailian_models1/f13-real'))
+group = 'general', mode = 'text'
+record_property = <function record_property.<locals>.append_property at 0x10da5a0c0>
+
+    @pytest.mark.parametrize('group',list(MODELS))
+    @pytest.mark.parametrize('mode',['text','schema','streaming','health'])
+    def test_three_real_bailian_models_public_operations(f13_real_environment,group,mode,record_property):
+        env=f13_real_environment;client=env.client
+        if mode=='health':reply=client.post('/v1/models/'+group+'/health')
+        else:
+            body=payload(group,structured=mode=='schema')
+            if mode=='streaming':
+                body.pop('response_schema',None)
+                reply=client.post('/v1/llm/stream',json=body)
+                assert reply.status_code==202,reply.text
+                rid=reply.headers['x-request-id'];pending=env.trace(rid)
+                assert pending['status']=='pending' and pending['attempts']==[]
+                reply=client.get('/v1/llm/stream/'+rid+'/events')
+            else:reply=client.post('/v1/llm',json=body)
+        if mode!='streaming':rid=reply.headers['x-request-id']
+        trace=env.trace(rid)
+        record_property('f13_request_id',rid);record_property('f13_trace',json.dumps(trace,ensure_ascii=False))
+        assert reply.status_code==200,reply.text
+        if mode=='streaming':
+            events=sse_events(reply.text)
+            assert [seq for _,seq,_ in events]==list(range(1,len(events)+1))
+            assert events[-1][0]=='response.completed'
+            assert sum(event in {'response.completed','response.failed','response.canceled'} for event,_,_ in events)==1
+            text=''.join(value['delta'] for event,_,value in events if event=='response.delta')
+            assert 'A123' in text and '充电器' in text
+            assert client.get('/v1/llm/stream/'+rid+'/events',params={'after_seq':events[-1][1]}).status_code==204
+        elif mode=='schema':assert reply.json()['data']['parsed']=={'order_id':'A123','product':'充电器'}
+        elif mode=='text':assert 'A123' in reply.json()['data']['text'] and '充电器' in reply.json()['data']['text']
+        else:assert reply.json()['data']['latency_ms']>=0
+        assert trace['status']=='completed' and trace['input_token_kind']=='estimated'
+        assert trace['counter_version'].startswith('qwen_text_estimate_v1:')
+        assert trace['requested_model']==group
+        assert trace['attempts'] and all(a['adapter']=='bailian' and a['api_protocol']=='responses'
+            and a['configured_model']==MODELS[group] and a['actual_model']==MODELS[group]
+            and a['input_token_kind']=='estimated' for a in trace['attempts'])
+>       billing=env.verify(rid,trace)
+                ^^^^^^^^^^^^^^^^^^^^^
+
+tests/live/test_f13_models.py:70: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/f13_real_support.py:109: in verify
+    quoted=json.loads(charge[2]);assert quoted['version']==PRICE_VERSION
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+s = {'hit': '0.32', 'miss': '1.6', 'model': 'qwen3.7-plus', 'output': '6.4', ...}
+cls = None, object_hook = None, parse_float = None, parse_int = None
+parse_constant = None, object_pairs_hook = None, kw = {}
+
+    def loads(s, *, cls=None, object_hook=None, parse_float=None,
+            parse_int=None, parse_constant=None, object_pairs_hook=None, **kw):
+        """Deserialize ``s`` (a ``str``, ``bytes`` or ``bytearray`` instance
+        containing a JSON document) to a Python object.
+    
+        ``object_hook`` is an optional function that will be called with the
+        result of any object literal decode (a ``dict``). The return value of
+        ``object_hook`` will be used instead of the ``dict``. This feature
+        can be used to implement custom decoders (e.g. JSON-RPC class hinting).
+    
+        ``object_pairs_hook`` is an optional function that will be called with the
+        result of any object literal decoded with an ordered list of pairs.  The
+        return value of ``object_pairs_hook`` will be used instead of the ``dict``.
+        This feature can be used to implement custom decoders.  If ``object_hook``
+        is also defined, the ``object_pairs_hook`` takes priority.
+    
+        ``parse_float``, if specified, will be called with the string
+        of every JSON float to be decoded. By default this is equivalent to
+        float(num_str). This can be used to use another datatype or parser
+        for JSON floats (e.g. decimal.Decimal).
+    
+        ``parse_int``, if specified, will be called with the string
+        of every JSON int to be decoded. By default this is equivalent to
+        int(num_str). This can be used to use another datatype or parser
+        for JSON integers (e.g. float).
+    
+        ``parse_constant``, if specified, will be called with one of the
+        following strings: -Infinity, Infinity, NaN.
+        This can be used to raise an exception if invalid JSON numbers
+        are encountered.
+    
+        To use a custom ``JSONDecoder`` subclass, specify it with the ``cls``
+        kwarg; otherwise ``JSONDecoder`` is used.
+        """
+        if isinstance(s, str):
+            if s.startswith('\ufeff'):
+                raise JSONDecodeError("Unexpected UTF-8 BOM (decode using utf-8-sig)",
+                                      s, 0)
+        else:
+            if not isinstance(s, (bytes, bytearray)):
+>               raise TypeError(f'the JSON object must be str, bytes or bytearray, '
+                                f'not {s.__class__.__name__}')
+E               TypeError: the JSON object must be str, bytes or bytearray, not dict
+
+/Users/baiyu/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/json/__init__.py:339: TypeError
+_______ test_three_real_bailian_models_public_operations[text-analysis] ________
+
+f13_real_environment = RealEnvironment(client=<starlette.testclient.TestClient object at 0x10db95e80>, application=<fastapi.applications.Fast...lv86fj56zjgm8txl21tvpq00000gn/T/llmgw-f13-work-eifzl4on/pytest-stage-a-real/test_three_real_bailian_models2/f13-real'))
+group = 'analysis', mode = 'text'
+record_property = <function record_property.<locals>.append_property at 0x10db823e0>
+
+    @pytest.mark.parametrize('group',list(MODELS))
+    @pytest.mark.parametrize('mode',['text','schema','streaming','health'])
+    def test_three_real_bailian_models_public_operations(f13_real_environment,group,mode,record_property):
+        env=f13_real_environment;client=env.client
+        if mode=='health':reply=client.post('/v1/models/'+group+'/health')
+        else:
+            body=payload(group,structured=mode=='schema')
+            if mode=='streaming':
+                body.pop('response_schema',None)
+                reply=client.post('/v1/llm/stream',json=body)
+                assert reply.status_code==202,reply.text
+                rid=reply.headers['x-request-id'];pending=env.trace(rid)
+                assert pending['status']=='pending' and pending['attempts']==[]
+                reply=client.get('/v1/llm/stream/'+rid+'/events')
+            else:reply=client.post('/v1/llm',json=body)
+        if mode!='streaming':rid=reply.headers['x-request-id']
+        trace=env.trace(rid)
+        record_property('f13_request_id',rid);record_property('f13_trace',json.dumps(trace,ensure_ascii=False))
+        assert reply.status_code==200,reply.text
+        if mode=='streaming':
+            events=sse_events(reply.text)
+            assert [seq for _,seq,_ in events]==list(range(1,len(events)+1))
+            assert events[-1][0]=='response.completed'
+            assert sum(event in {'response.completed','response.failed','response.canceled'} for event,_,_ in events)==1
+            text=''.join(value['delta'] for event,_,value in events if event=='response.delta')
+            assert 'A123' in text and '充电器' in text
+            assert client.get('/v1/llm/stream/'+rid+'/events',params={'after_seq':events[-1][1]}).status_code==204
+        elif mode=='schema':assert reply.json()['data']['parsed']=={'order_id':'A123','product':'充电器'}
+        elif mode=='text':assert 'A123' in reply.json()['data']['text'] and '充电器' in reply.json()['data']['text']
+        else:assert reply.json()['data']['latency_ms']>=0
+        assert trace['status']=='completed' and trace['input_token_kind']=='estimated'
+        assert trace['counter_version'].startswith('qwen_text_estimate_v1:')
+        assert trace['requested_model']==group
+        assert trace['attempts'] and all(a['adapter']=='bailian' and a['api_protocol']=='responses'
+            and a['configured_model']==MODELS[group] and a['actual_model']==MODELS[group]
+            and a['input_token_kind']=='estimated' for a in trace['attempts'])
+>       billing=env.verify(rid,trace)
+                ^^^^^^^^^^^^^^^^^^^^^
+
+tests/live/test_f13_models.py:70: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/f13_real_support.py:109: in verify
+    quoted=json.loads(charge[2]);assert quoted['version']==PRICE_VERSION
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+s = {'hit': '1.5', 'miss': '12', 'model': 'qwen3.8-max', 'output': '36', ...}
+cls = None, object_hook = None, parse_float = None, parse_int = None
+parse_constant = None, object_pairs_hook = None, kw = {}
+
+    def loads(s, *, cls=None, object_hook=None, parse_float=None,
+            parse_int=None, parse_constant=None, object_pairs_hook=None, **kw):
+        """Deserialize ``s`` (a ``str``, ``bytes`` or ``bytearray`` instance
+        containing a JSON document) to a Python object.
+    
+        ``object_hook`` is an optional function that will be called with the
+        result of any object literal decode (a ``dict``). The return value of
+        ``object_hook`` will be used instead of the ``dict``. This feature
+        can be used to implement custom decoders (e.g. JSON-RPC class hinting).
+    
+        ``object_pairs_hook`` is an optional function that will be called with the
+        result of any object literal decoded with an ordered list of pairs.  The
+        return value of ``object_pairs_hook`` will be used instead of the ``dict``.
+        This feature can be used to implement custom decoders.  If ``object_hook``
+        is also defined, the ``object_pairs_hook`` takes priority.
+    
+        ``parse_float``, if specified, will be called with the string
+        of every JSON float to be decoded. By default this is equivalent to
+        float(num_str). This can be used to use another datatype or parser
+        for JSON floats (e.g. decimal.Decimal).
+    
+        ``parse_int``, if specified, will be called with the string
+        of every JSON int to be decoded. By default this is equivalent to
+        int(num_str). This can be used to use another datatype or parser
+        for JSON integers (e.g. float).
+    
+        ``parse_constant``, if specified, will be called with one of the
+        following strings: -Infinity, Infinity, NaN.
+        This can be used to raise an exception if invalid JSON numbers
+        are encountered.
+    
+        To use a custom ``JSONDecoder`` subclass, specify it with the ``cls``
+        kwarg; otherwise ``JSONDecoder`` is used.
+        """
+        if isinstance(s, str):
+            if s.startswith('\ufeff'):
+                raise JSONDecodeError("Unexpected UTF-8 BOM (decode using utf-8-sig)",
+                                      s, 0)
+        else:
+            if not isinstance(s, (bytes, bytearray)):
+>               raise TypeError(f'the JSON object must be str, bytes or bytearray, '
+                                f'not {s.__class__.__name__}')
+E               TypeError: the JSON object must be str, bytes or bytearray, not dict
+
+/Users/baiyu/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/json/__init__.py:339: TypeError
+________ test_three_real_bailian_models_public_operations[schema-light] ________
+
+f13_real_environment = RealEnvironment(client=<starlette.testclient.TestClient object at 0x10dc55700>, application=<fastapi.applications.Fast...lv86fj56zjgm8txl21tvpq00000gn/T/llmgw-f13-work-eifzl4on/pytest-stage-a-real/test_three_real_bailian_models3/f13-real'))
+group = 'light', mode = 'schema'
+record_property = <function record_property.<locals>.append_property at 0x10dcd2700>
+
+    @pytest.mark.parametrize('group',list(MODELS))
+    @pytest.mark.parametrize('mode',['text','schema','streaming','health'])
+    def test_three_real_bailian_models_public_operations(f13_real_environment,group,mode,record_property):
+        env=f13_real_environment;client=env.client
+        if mode=='health':reply=client.post('/v1/models/'+group+'/health')
+        else:
+            body=payload(group,structured=mode=='schema')
+            if mode=='streaming':
+                body.pop('response_schema',None)
+                reply=client.post('/v1/llm/stream',json=body)
+                assert reply.status_code==202,reply.text
+                rid=reply.headers['x-request-id'];pending=env.trace(rid)
+                assert pending['status']=='pending' and pending['attempts']==[]
+                reply=client.get('/v1/llm/stream/'+rid+'/events')
+            else:reply=client.post('/v1/llm',json=body)
+        if mode!='streaming':rid=reply.headers['x-request-id']
+        trace=env.trace(rid)
+        record_property('f13_request_id',rid);record_property('f13_trace',json.dumps(trace,ensure_ascii=False))
+        assert reply.status_code==200,reply.text
+        if mode=='streaming':
+            events=sse_events(reply.text)
+            assert [seq for _,seq,_ in events]==list(range(1,len(events)+1))
+            assert events[-1][0]=='response.completed'
+            assert sum(event in {'response.completed','response.failed','response.canceled'} for event,_,_ in events)==1
+            text=''.join(value['delta'] for event,_,value in events if event=='response.delta')
+            assert 'A123' in text and '充电器' in text
+            assert client.get('/v1/llm/stream/'+rid+'/events',params={'after_seq':events[-1][1]}).status_code==204
+        elif mode=='schema':assert reply.json()['data']['parsed']=={'order_id':'A123','product':'充电器'}
+        elif mode=='text':assert 'A123' in reply.json()['data']['text'] and '充电器' in reply.json()['data']['text']
+        else:assert reply.json()['data']['latency_ms']>=0
+        assert trace['status']=='completed' and trace['input_token_kind']=='estimated'
+        assert trace['counter_version'].startswith('qwen_text_estimate_v1:')
+        assert trace['requested_model']==group
+        assert trace['attempts'] and all(a['adapter']=='bailian' and a['api_protocol']=='responses'
+            and a['configured_model']==MODELS[group] and a['actual_model']==MODELS[group]
+            and a['input_token_kind']=='estimated' for a in trace['attempts'])
+>       billing=env.verify(rid,trace)
+                ^^^^^^^^^^^^^^^^^^^^^
+
+tests/live/test_f13_models.py:70: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/f13_real_support.py:109: in verify
+    quoted=json.loads(charge[2]);assert quoted['version']==PRICE_VERSION
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+s = {'hit': '0.1', 'miss': '0.8', 'model': 'qwen3.8-flash', 'output': '2.7', ...}
+cls = None, object_hook = None, parse_float = None, parse_int = None
+parse_constant = None, object_pairs_hook = None, kw = {}
+
+    def loads(s, *, cls=None, object_hook=None, parse_float=None,
+            parse_int=None, parse_constant=None, object_pairs_hook=None, **kw):
+        """Deserialize ``s`` (a ``str``, ``bytes`` or ``bytearray`` instance
+        containing a JSON document) to a Python object.
+    
+        ``object_hook`` is an optional function that will be called with the
+        result of any object literal decode (a ``dict``). The return value of
+        ``object_hook`` will be used instead of the ``dict``. This feature
+        can be used to implement custom decoders (e.g. JSON-RPC class hinting).
+    
+        ``object_pairs_hook`` is an optional function that will be called with the
+        result of any object literal decoded with an ordered list of pairs.  The
+        return value of ``object_pairs_hook`` will be used instead of the ``dict``.
+        This feature can be used to implement custom decoders.  If ``object_hook``
+        is also defined, the ``object_pairs_hook`` takes priority.
+    
+        ``parse_float``, if specified, will be called with the string
+        of every JSON float to be decoded. By default this is equivalent to
+        float(num_str). This can be used to use another datatype or parser
+        for JSON floats (e.g. decimal.Decimal).
+    
+        ``parse_int``, if specified, will be called with the string
+        of every JSON int to be decoded. By default this is equivalent to
+        int(num_str). This can be used to use another datatype or parser
+        for JSON integers (e.g. float).
+    
+        ``parse_constant``, if specified, will be called with one of the
+        following strings: -Infinity, Infinity, NaN.
+        This can be used to raise an exception if invalid JSON numbers
+        are encountered.
+    
+        To use a custom ``JSONDecoder`` subclass, specify it with the ``cls``
+        kwarg; otherwise ``JSONDecoder`` is used.
+        """
+        if isinstance(s, str):
+            if s.startswith('\ufeff'):
+                raise JSONDecodeError("Unexpected UTF-8 BOM (decode using utf-8-sig)",
+                                      s, 0)
+        else:
+            if not isinstance(s, (bytes, bytearray)):
+>               raise TypeError(f'the JSON object must be str, bytes or bytearray, '
+                                f'not {s.__class__.__name__}')
+E               TypeError: the JSON object must be str, bytes or bytearray, not dict
+
+/Users/baiyu/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/json/__init__.py:339: TypeError
+_______ test_three_real_bailian_models_public_operations[schema-general] _______
+
+f13_real_environment = RealEnvironment(client=<starlette.testclient.TestClient object at 0x10dd7cbc0>, application=<fastapi.applications.Fast...lv86fj56zjgm8txl21tvpq00000gn/T/llmgw-f13-work-eifzl4on/pytest-stage-a-real/test_three_real_bailian_models4/f13-real'))
+group = 'general', mode = 'schema'
+record_property = <function record_property.<locals>.append_property at 0x10dd891c0>
+
+    @pytest.mark.parametrize('group',list(MODELS))
+    @pytest.mark.parametrize('mode',['text','schema','streaming','health'])
+    def test_three_real_bailian_models_public_operations(f13_real_environment,group,mode,record_property):
+        env=f13_real_environment;client=env.client
+        if mode=='health':reply=client.post('/v1/models/'+group+'/health')
+        else:
+            body=payload(group,structured=mode=='schema')
+            if mode=='streaming':
+                body.pop('response_schema',None)
+                reply=client.post('/v1/llm/stream',json=body)
+                assert reply.status_code==202,reply.text
+                rid=reply.headers['x-request-id'];pending=env.trace(rid)
+                assert pending['status']=='pending' and pending['attempts']==[]
+                reply=client.get('/v1/llm/stream/'+rid+'/events')
+            else:reply=client.post('/v1/llm',json=body)
+        if mode!='streaming':rid=reply.headers['x-request-id']
+        trace=env.trace(rid)
+        record_property('f13_request_id',rid);record_property('f13_trace',json.dumps(trace,ensure_ascii=False))
+        assert reply.status_code==200,reply.text
+        if mode=='streaming':
+            events=sse_events(reply.text)
+            assert [seq for _,seq,_ in events]==list(range(1,len(events)+1))
+            assert events[-1][0]=='response.completed'
+            assert sum(event in {'response.completed','response.failed','response.canceled'} for event,_,_ in events)==1
+            text=''.join(value['delta'] for event,_,value in events if event=='response.delta')
+            assert 'A123' in text and '充电器' in text
+            assert client.get('/v1/llm/stream/'+rid+'/events',params={'after_seq':events[-1][1]}).status_code==204
+        elif mode=='schema':assert reply.json()['data']['parsed']=={'order_id':'A123','product':'充电器'}
+        elif mode=='text':assert 'A123' in reply.json()['data']['text'] and '充电器' in reply.json()['data']['text']
+        else:assert reply.json()['data']['latency_ms']>=0
+        assert trace['status']=='completed' and trace['input_token_kind']=='estimated'
+        assert trace['counter_version'].startswith('qwen_text_estimate_v1:')
+        assert trace['requested_model']==group
+        assert trace['attempts'] and all(a['adapter']=='bailian' and a['api_protocol']=='responses'
+            and a['configured_model']==MODELS[group] and a['actual_model']==MODELS[group]
+            and a['input_token_kind']=='estimated' for a in trace['attempts'])
+>       billing=env.verify(rid,trace)
+                ^^^^^^^^^^^^^^^^^^^^^
+
+tests/live/test_f13_models.py:70: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/f13_real_support.py:109: in verify
+    quoted=json.loads(charge[2]);assert quoted['version']==PRICE_VERSION
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+s = {'hit': '0.32', 'miss': '1.6', 'model': 'qwen3.7-plus', 'output': '6.4', ...}
+cls = None, object_hook = None, parse_float = None, parse_int = None
+parse_constant = None, object_pairs_hook = None, kw = {}
+
+    def loads(s, *, cls=None, object_hook=None, parse_float=None,
+            parse_int=None, parse_constant=None, object_pairs_hook=None, **kw):
+        """Deserialize ``s`` (a ``str``, ``bytes`` or ``bytearray`` instance
+        containing a JSON document) to a Python object.
+    
+        ``object_hook`` is an optional function that will be called with the
+        result of any object literal decode (a ``dict``). The return value of
+        ``object_hook`` will be used instead of the ``dict``. This feature
+        can be used to implement custom decoders (e.g. JSON-RPC class hinting).
+    
+        ``object_pairs_hook`` is an optional function that will be called with the
+        result of any object literal decoded with an ordered list of pairs.  The
+        return value of ``object_pairs_hook`` will be used instead of the ``dict``.
+        This feature can be used to implement custom decoders.  If ``object_hook``
+        is also defined, the ``object_pairs_hook`` takes priority.
+    
+        ``parse_float``, if specified, will be called with the string
+        of every JSON float to be decoded. By default this is equivalent to
+        float(num_str). This can be used to use another datatype or parser
+        for JSON floats (e.g. decimal.Decimal).
+    
+        ``parse_int``, if specified, will be called with the string
+        of every JSON int to be decoded. By default this is equivalent to
+        int(num_str). This can be used to use another datatype or parser
+        for JSON integers (e.g. float).
+    
+        ``parse_constant``, if specified, will be called with one of the
+        following strings: -Infinity, Infinity, NaN.
+        This can be used to raise an exception if invalid JSON numbers
+        are encountered.
+    
+        To use a custom ``JSONDecoder`` subclass, specify it with the ``cls``
+        kwarg; otherwise ``JSONDecoder`` is used.
+        """
+        if isinstance(s, str):
+            if s.startswith('\ufeff'):
+                raise JSONDecodeError("Unexpected UTF-8 BOM (decode using utf-8-sig)",
+                                      s, 0)
+        else:
+            if not isinstance(s, (bytes, bytearray)):
+>               raise TypeError(f'the JSON object must be str, bytes or bytearray, '
+                                f'not {s.__class__.__name__}')
+E               TypeError: the JSON object must be str, bytes or bytearray, not dict
+
+/Users/baiyu/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/json/__init__.py:339: TypeError
+______ test_three_real_bailian_models_public_operations[schema-analysis] _______
+
+f13_real_environment = RealEnvironment(client=<starlette.testclient.TestClient object at 0x10dd3a630>, application=<fastapi.applications.Fast...lv86fj56zjgm8txl21tvpq00000gn/T/llmgw-f13-work-eifzl4on/pytest-stage-a-real/test_three_real_bailian_models5/f13-real'))
+group = 'analysis', mode = 'schema'
+record_property = <function record_property.<locals>.append_property at 0x10dd26f20>
+
+    @pytest.mark.parametrize('group',list(MODELS))
+    @pytest.mark.parametrize('mode',['text','schema','streaming','health'])
+    def test_three_real_bailian_models_public_operations(f13_real_environment,group,mode,record_property):
+        env=f13_real_environment;client=env.client
+        if mode=='health':reply=client.post('/v1/models/'+group+'/health')
+        else:
+            body=payload(group,structured=mode=='schema')
+            if mode=='streaming':
+                body.pop('response_schema',None)
+                reply=client.post('/v1/llm/stream',json=body)
+                assert reply.status_code==202,reply.text
+                rid=reply.headers['x-request-id'];pending=env.trace(rid)
+                assert pending['status']=='pending' and pending['attempts']==[]
+                reply=client.get('/v1/llm/stream/'+rid+'/events')
+            else:reply=client.post('/v1/llm',json=body)
+        if mode!='streaming':rid=reply.headers['x-request-id']
+        trace=env.trace(rid)
+        record_property('f13_request_id',rid);record_property('f13_trace',json.dumps(trace,ensure_ascii=False))
+        assert reply.status_code==200,reply.text
+        if mode=='streaming':
+            events=sse_events(reply.text)
+            assert [seq for _,seq,_ in events]==list(range(1,len(events)+1))
+            assert events[-1][0]=='response.completed'
+            assert sum(event in {'response.completed','response.failed','response.canceled'} for event,_,_ in events)==1
+            text=''.join(value['delta'] for event,_,value in events if event=='response.delta')
+            assert 'A123' in text and '充电器' in text
+            assert client.get('/v1/llm/stream/'+rid+'/events',params={'after_seq':events[-1][1]}).status_code==204
+        elif mode=='schema':assert reply.json()['data']['parsed']=={'order_id':'A123','product':'充电器'}
+        elif mode=='text':assert 'A123' in reply.json()['data']['text'] and '充电器' in reply.json()['data']['text']
+        else:assert reply.json()['data']['latency_ms']>=0
+        assert trace['status']=='completed' and trace['input_token_kind']=='estimated'
+        assert trace['counter_version'].startswith('qwen_text_estimate_v1:')
+        assert trace['requested_model']==group
+        assert trace['attempts'] and all(a['adapter']=='bailian' and a['api_protocol']=='responses'
+            and a['configured_model']==MODELS[group] and a['actual_model']==MODELS[group]
+            and a['input_token_kind']=='estimated' for a in trace['attempts'])
+>       billing=env.verify(rid,trace)
+                ^^^^^^^^^^^^^^^^^^^^^
+
+tests/live/test_f13_models.py:70: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/f13_real_support.py:109: in verify
+    quoted=json.loads(charge[2]);assert quoted['version']==PRICE_VERSION
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+s = {'hit': '1.5', 'miss': '12', 'model': 'qwen3.8-max', 'output': '36', ...}
+cls = None, object_hook = None, parse_float = None, parse_int = None
+parse_constant = None, object_pairs_hook = None, kw = {}
+
+    def loads(s, *, cls=None, object_hook=None, parse_float=None,
+            parse_int=None, parse_constant=None, object_pairs_hook=None, **kw):
+        """Deserialize ``s`` (a ``str``, ``bytes`` or ``bytearray`` instance
+        containing a JSON document) to a Python object.
+    
+        ``object_hook`` is an optional function that will be called with the
+        result of any object literal decode (a ``dict``). The return value of
+        ``object_hook`` will be used instead of the ``dict``. This feature
+        can be used to implement custom decoders (e.g. JSON-RPC class hinting).
+    
+        ``object_pairs_hook`` is an optional function that will be called with the
+        result of any object literal decoded with an ordered list of pairs.  The
+        return value of ``object_pairs_hook`` will be used instead of the ``dict``.
+        This feature can be used to implement custom decoders.  If ``object_hook``
+        is also defined, the ``object_pairs_hook`` takes priority.
+    
+        ``parse_float``, if specified, will be called with the string
+        of every JSON float to be decoded. By default this is equivalent to
+        float(num_str). This can be used to use another datatype or parser
+        for JSON floats (e.g. decimal.Decimal).
+    
+        ``parse_int``, if specified, will be called with the string
+        of every JSON int to be decoded. By default this is equivalent to
+        int(num_str). This can be used to use another datatype or parser
+        for JSON integers (e.g. float).
+    
+        ``parse_constant``, if specified, will be called with one of the
+        following strings: -Infinity, Infinity, NaN.
+        This can be used to raise an exception if invalid JSON numbers
+        are encountered.
+    
+        To use a custom ``JSONDecoder`` subclass, specify it with the ``cls``
+        kwarg; otherwise ``JSONDecoder`` is used.
+        """
+        if isinstance(s, str):
+            if s.startswith('\ufeff'):
+                raise JSONDecodeError("Unexpected UTF-8 BOM (decode using utf-8-sig)",
+                                      s, 0)
+        else:
+            if not isinstance(s, (bytes, bytearray)):
+>               raise TypeError(f'the JSON object must be str, bytes or bytearray, '
+                                f'not {s.__class__.__name__}')
+E               TypeError: the JSON object must be str, bytes or bytearray, not dict
+
+/Users/baiyu/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/json/__init__.py:339: TypeError
+______ test_three_real_bailian_models_public_operations[streaming-light] _______
+
+f13_real_environment = RealEnvironment(client=<starlette.testclient.TestClient object at 0x10c4f94f0>, application=<fastapi.applications.Fast...lv86fj56zjgm8txl21tvpq00000gn/T/llmgw-f13-work-eifzl4on/pytest-stage-a-real/test_three_real_bailian_models6/f13-real'))
+group = 'light', mode = 'streaming'
+record_property = <function record_property.<locals>.append_property at 0x10daf14e0>
+
+    @pytest.mark.parametrize('group',list(MODELS))
+    @pytest.mark.parametrize('mode',['text','schema','streaming','health'])
+    def test_three_real_bailian_models_public_operations(f13_real_environment,group,mode,record_property):
+        env=f13_real_environment;client=env.client
+        if mode=='health':reply=client.post('/v1/models/'+group+'/health')
+        else:
+            body=payload(group,structured=mode=='schema')
+            if mode=='streaming':
+                body.pop('response_schema',None)
+                reply=client.post('/v1/llm/stream',json=body)
+                assert reply.status_code==202,reply.text
+                rid=reply.headers['x-request-id'];pending=env.trace(rid)
+                assert pending['status']=='pending' and pending['attempts']==[]
+                reply=client.get('/v1/llm/stream/'+rid+'/events')
+            else:reply=client.post('/v1/llm',json=body)
+        if mode!='streaming':rid=reply.headers['x-request-id']
+        trace=env.trace(rid)
+        record_property('f13_request_id',rid);record_property('f13_trace',json.dumps(trace,ensure_ascii=False))
+        assert reply.status_code==200,reply.text
+        if mode=='streaming':
+            events=sse_events(reply.text)
+            assert [seq for _,seq,_ in events]==list(range(1,len(events)+1))
+            assert events[-1][0]=='response.completed'
+            assert sum(event in {'response.completed','response.failed','response.canceled'} for event,_,_ in events)==1
+            text=''.join(value['delta'] for event,_,value in events if event=='response.delta')
+            assert 'A123' in text and '充电器' in text
+            assert client.get('/v1/llm/stream/'+rid+'/events',params={'after_seq':events[-1][1]}).status_code==204
+        elif mode=='schema':assert reply.json()['data']['parsed']=={'order_id':'A123','product':'充电器'}
+        elif mode=='text':assert 'A123' in reply.json()['data']['text'] and '充电器' in reply.json()['data']['text']
+        else:assert reply.json()['data']['latency_ms']>=0
+        assert trace['status']=='completed' and trace['input_token_kind']=='estimated'
+        assert trace['counter_version'].startswith('qwen_text_estimate_v1:')
+        assert trace['requested_model']==group
+        assert trace['attempts'] and all(a['adapter']=='bailian' and a['api_protocol']=='responses'
+            and a['configured_model']==MODELS[group] and a['actual_model']==MODELS[group]
+            and a['input_token_kind']=='estimated' for a in trace['attempts'])
+>       billing=env.verify(rid,trace)
+                ^^^^^^^^^^^^^^^^^^^^^
+
+tests/live/test_f13_models.py:70: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/f13_real_support.py:109: in verify
+    quoted=json.loads(charge[2]);assert quoted['version']==PRICE_VERSION
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+s = {'hit': '0.1', 'miss': '0.8', 'model': 'qwen3.8-flash', 'output': '2.7', ...}
+cls = None, object_hook = None, parse_float = None, parse_int = None
+parse_constant = None, object_pairs_hook = None, kw = {}
+
+    def loads(s, *, cls=None, object_hook=None, parse_float=None,
+            parse_int=None, parse_constant=None, object_pairs_hook=None, **kw):
+        """Deserialize ``s`` (a ``str``, ``bytes`` or ``bytearray`` instance
+        containing a JSON document) to a Python object.
+    
+        ``object_hook`` is an optional function that will be called with the
+        result of any object literal decode (a ``dict``). The return value of
+        ``object_hook`` will be used instead of the ``dict``. This feature
+        can be used to implement custom decoders (e.g. JSON-RPC class hinting).
+    
+        ``object_pairs_hook`` is an optional function that will be called with the
+        result of any object literal decoded with an ordered list of pairs.  The
+        return value of ``object_pairs_hook`` will be used instead of the ``dict``.
+        This feature can be used to implement custom decoders.  If ``object_hook``
+        is also defined, the ``object_pairs_hook`` takes priority.
+    
+        ``parse_float``, if specified, will be called with the string
+        of every JSON float to be decoded. By default this is equivalent to
+        float(num_str). This can be used to use another datatype or parser
+        for JSON floats (e.g. decimal.Decimal).
+    
+        ``parse_int``, if specified, will be called with the string
+        of every JSON int to be decoded. By default this is equivalent to
+        int(num_str). This can be used to use another datatype or parser
+        for JSON integers (e.g. float).
+    
+        ``parse_constant``, if specified, will be called with one of the
+        following strings: -Infinity, Infinity, NaN.
+        This can be used to raise an exception if invalid JSON numbers
+        are encountered.
+    
+        To use a custom ``JSONDecoder`` subclass, specify it with the ``cls``
+        kwarg; otherwise ``JSONDecoder`` is used.
+        """
+        if isinstance(s, str):
+            if s.startswith('\ufeff'):
+                raise JSONDecodeError("Unexpected UTF-8 BOM (decode using utf-8-sig)",
+                                      s, 0)
+        else:
+            if not isinstance(s, (bytes, bytearray)):
+>               raise TypeError(f'the JSON object must be str, bytes or bytearray, '
+                                f'not {s.__class__.__name__}')
+E               TypeError: the JSON object must be str, bytes or bytearray, not dict
+
+/Users/baiyu/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/json/__init__.py:339: TypeError
+_____ test_three_real_bailian_models_public_operations[streaming-general] ______
+
+f13_real_environment = RealEnvironment(client=<starlette.testclient.TestClient object at 0x10d7fef60>, application=<fastapi.applications.Fast...lv86fj56zjgm8txl21tvpq00000gn/T/llmgw-f13-work-eifzl4on/pytest-stage-a-real/test_three_real_bailian_models7/f13-real'))
+group = 'general', mode = 'streaming'
+record_property = <function record_property.<locals>.append_property at 0x10d75a980>
+
+    @pytest.mark.parametrize('group',list(MODELS))
+    @pytest.mark.parametrize('mode',['text','schema','streaming','health'])
+    def test_three_real_bailian_models_public_operations(f13_real_environment,group,mode,record_property):
+        env=f13_real_environment;client=env.client
+        if mode=='health':reply=client.post('/v1/models/'+group+'/health')
+        else:
+            body=payload(group,structured=mode=='schema')
+            if mode=='streaming':
+                body.pop('response_schema',None)
+                reply=client.post('/v1/llm/stream',json=body)
+                assert reply.status_code==202,reply.text
+                rid=reply.headers['x-request-id'];pending=env.trace(rid)
+                assert pending['status']=='pending' and pending['attempts']==[]
+                reply=client.get('/v1/llm/stream/'+rid+'/events')
+            else:reply=client.post('/v1/llm',json=body)
+        if mode!='streaming':rid=reply.headers['x-request-id']
+        trace=env.trace(rid)
+        record_property('f13_request_id',rid);record_property('f13_trace',json.dumps(trace,ensure_ascii=False))
+        assert reply.status_code==200,reply.text
+        if mode=='streaming':
+            events=sse_events(reply.text)
+            assert [seq for _,seq,_ in events]==list(range(1,len(events)+1))
+            assert events[-1][0]=='response.completed'
+            assert sum(event in {'response.completed','response.failed','response.canceled'} for event,_,_ in events)==1
+            text=''.join(value['delta'] for event,_,value in events if event=='response.delta')
+            assert 'A123' in text and '充电器' in text
+            assert client.get('/v1/llm/stream/'+rid+'/events',params={'after_seq':events[-1][1]}).status_code==204
+        elif mode=='schema':assert reply.json()['data']['parsed']=={'order_id':'A123','product':'充电器'}
+        elif mode=='text':assert 'A123' in reply.json()['data']['text'] and '充电器' in reply.json()['data']['text']
+        else:assert reply.json()['data']['latency_ms']>=0
+        assert trace['status']=='completed' and trace['input_token_kind']=='estimated'
+        assert trace['counter_version'].startswith('qwen_text_estimate_v1:')
+        assert trace['requested_model']==group
+        assert trace['attempts'] and all(a['adapter']=='bailian' and a['api_protocol']=='responses'
+            and a['configured_model']==MODELS[group] and a['actual_model']==MODELS[group]
+            and a['input_token_kind']=='estimated' for a in trace['attempts'])
+>       billing=env.verify(rid,trace)
+                ^^^^^^^^^^^^^^^^^^^^^
+
+tests/live/test_f13_models.py:70: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/f13_real_support.py:109: in verify
+    quoted=json.loads(charge[2]);assert quoted['version']==PRICE_VERSION
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+s = {'hit': '0.32', 'miss': '1.6', 'model': 'qwen3.7-plus', 'output': '6.4', ...}
+cls = None, object_hook = None, parse_float = None, parse_int = None
+parse_constant = None, object_pairs_hook = None, kw = {}
+
+    def loads(s, *, cls=None, object_hook=None, parse_float=None,
+            parse_int=None, parse_constant=None, object_pairs_hook=None, **kw):
+        """Deserialize ``s`` (a ``str``, ``bytes`` or ``bytearray`` instance
+        containing a JSON document) to a Python object.
+    
+        ``object_hook`` is an optional function that will be called with the
+        result of any object literal decode (a ``dict``). The return value of
+        ``object_hook`` will be used instead of the ``dict``. This feature
+        can be used to implement custom decoders (e.g. JSON-RPC class hinting).
+    
+        ``object_pairs_hook`` is an optional function that will be called with the
+        result of any object literal decoded with an ordered list of pairs.  The
+        return value of ``object_pairs_hook`` will be used instead of the ``dict``.
+        This feature can be used to implement custom decoders.  If ``object_hook``
+        is also defined, the ``object_pairs_hook`` takes priority.
+    
+        ``parse_float``, if specified, will be called with the string
+        of every JSON float to be decoded. By default this is equivalent to
+        float(num_str). This can be used to use another datatype or parser
+        for JSON floats (e.g. decimal.Decimal).
+    
+        ``parse_int``, if specified, will be called with the string
+        of every JSON int to be decoded. By default this is equivalent to
+        int(num_str). This can be used to use another datatype or parser
+        for JSON integers (e.g. float).
+    
+        ``parse_constant``, if specified, will be called with one of the
+        following strings: -Infinity, Infinity, NaN.
+        This can be used to raise an exception if invalid JSON numbers
+        are encountered.
+    
+        To use a custom ``JSONDecoder`` subclass, specify it with the ``cls``
+        kwarg; otherwise ``JSONDecoder`` is used.
+        """
+        if isinstance(s, str):
+            if s.startswith('\ufeff'):
+                raise JSONDecodeError("Unexpected UTF-8 BOM (decode using utf-8-sig)",
+                                      s, 0)
+        else:
+            if not isinstance(s, (bytes, bytearray)):
+>               raise TypeError(f'the JSON object must be str, bytes or bytearray, '
+                                f'not {s.__class__.__name__}')
+E               TypeError: the JSON object must be str, bytes or bytearray, not dict
+
+/Users/baiyu/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/json/__init__.py:339: TypeError
+_____ test_three_real_bailian_models_public_operations[streaming-analysis] _____
+
+f13_real_environment = RealEnvironment(client=<starlette.testclient.TestClient object at 0x10dfd4b60>, application=<fastapi.applications.Fast...lv86fj56zjgm8txl21tvpq00000gn/T/llmgw-f13-work-eifzl4on/pytest-stage-a-real/test_three_real_bailian_models8/f13-real'))
+group = 'analysis', mode = 'streaming'
+record_property = <function record_property.<locals>.append_property at 0x10df16ac0>
+
+    @pytest.mark.parametrize('group',list(MODELS))
+    @pytest.mark.parametrize('mode',['text','schema','streaming','health'])
+    def test_three_real_bailian_models_public_operations(f13_real_environment,group,mode,record_property):
+        env=f13_real_environment;client=env.client
+        if mode=='health':reply=client.post('/v1/models/'+group+'/health')
+        else:
+            body=payload(group,structured=mode=='schema')
+            if mode=='streaming':
+                body.pop('response_schema',None)
+                reply=client.post('/v1/llm/stream',json=body)
+                assert reply.status_code==202,reply.text
+                rid=reply.headers['x-request-id'];pending=env.trace(rid)
+                assert pending['status']=='pending' and pending['attempts']==[]
+                reply=client.get('/v1/llm/stream/'+rid+'/events')
+            else:reply=client.post('/v1/llm',json=body)
+        if mode!='streaming':rid=reply.headers['x-request-id']
+        trace=env.trace(rid)
+        record_property('f13_request_id',rid);record_property('f13_trace',json.dumps(trace,ensure_ascii=False))
+        assert reply.status_code==200,reply.text
+        if mode=='streaming':
+            events=sse_events(reply.text)
+            assert [seq for _,seq,_ in events]==list(range(1,len(events)+1))
+            assert events[-1][0]=='response.completed'
+            assert sum(event in {'response.completed','response.failed','response.canceled'} for event,_,_ in events)==1
+            text=''.join(value['delta'] for event,_,value in events if event=='response.delta')
+            assert 'A123' in text and '充电器' in text
+            assert client.get('/v1/llm/stream/'+rid+'/events',params={'after_seq':events[-1][1]}).status_code==204
+        elif mode=='schema':assert reply.json()['data']['parsed']=={'order_id':'A123','product':'充电器'}
+        elif mode=='text':assert 'A123' in reply.json()['data']['text'] and '充电器' in reply.json()['data']['text']
+        else:assert reply.json()['data']['latency_ms']>=0
+        assert trace['status']=='completed' and trace['input_token_kind']=='estimated'
+        assert trace['counter_version'].startswith('qwen_text_estimate_v1:')
+        assert trace['requested_model']==group
+        assert trace['attempts'] and all(a['adapter']=='bailian' and a['api_protocol']=='responses'
+            and a['configured_model']==MODELS[group] and a['actual_model']==MODELS[group]
+            and a['input_token_kind']=='estimated' for a in trace['attempts'])
+>       billing=env.verify(rid,trace)
+                ^^^^^^^^^^^^^^^^^^^^^
+
+tests/live/test_f13_models.py:70: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/f13_real_support.py:109: in verify
+    quoted=json.loads(charge[2]);assert quoted['version']==PRICE_VERSION
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+s = {'hit': '1.5', 'miss': '12', 'model': 'qwen3.8-max', 'output': '36', ...}
+cls = None, object_hook = None, parse_float = None, parse_int = None
+parse_constant = None, object_pairs_hook = None, kw = {}
+
+    def loads(s, *, cls=None, object_hook=None, parse_float=None,
+            parse_int=None, parse_constant=None, object_pairs_hook=None, **kw):
+        """Deserialize ``s`` (a ``str``, ``bytes`` or ``bytearray`` instance
+        containing a JSON document) to a Python object.
+    
+        ``object_hook`` is an optional function that will be called with the
+        result of any object literal decode (a ``dict``). The return value of
+        ``object_hook`` will be used instead of the ``dict``. This feature
+        can be used to implement custom decoders (e.g. JSON-RPC class hinting).
+    
+        ``object_pairs_hook`` is an optional function that will be called with the
+        result of any object literal decoded with an ordered list of pairs.  The
+        return value of ``object_pairs_hook`` will be used instead of the ``dict``.
+        This feature can be used to implement custom decoders.  If ``object_hook``
+        is also defined, the ``object_pairs_hook`` takes priority.
+    
+        ``parse_float``, if specified, will be called with the string
+        of every JSON float to be decoded. By default this is equivalent to
+        float(num_str). This can be used to use another datatype or parser
+        for JSON floats (e.g. decimal.Decimal).
+    
+        ``parse_int``, if specified, will be called with the string
+        of every JSON int to be decoded. By default this is equivalent to
+        int(num_str). This can be used to use another datatype or parser
+        for JSON integers (e.g. float).
+    
+        ``parse_constant``, if specified, will be called with one of the
+        following strings: -Infinity, Infinity, NaN.
+        This can be used to raise an exception if invalid JSON numbers
+        are encountered.
+    
+        To use a custom ``JSONDecoder`` subclass, specify it with the ``cls``
+        kwarg; otherwise ``JSONDecoder`` is used.
+        """
+        if isinstance(s, str):
+            if s.startswith('\ufeff'):
+                raise JSONDecodeError("Unexpected UTF-8 BOM (decode using utf-8-sig)",
+                                      s, 0)
+        else:
+            if not isinstance(s, (bytes, bytearray)):
+>               raise TypeError(f'the JSON object must be str, bytes or bytearray, '
+                                f'not {s.__class__.__name__}')
+E               TypeError: the JSON object must be str, bytes or bytearray, not dict
+
+/Users/baiyu/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/json/__init__.py:339: TypeError
+________ test_three_real_bailian_models_public_operations[health-light] ________
+
+f13_real_environment = RealEnvironment(client=<starlette.testclient.TestClient object at 0x10dfd6b40>, application=<fastapi.applications.Fast...lv86fj56zjgm8txl21tvpq00000gn/T/llmgw-f13-work-eifzl4on/pytest-stage-a-real/test_three_real_bailian_models9/f13-real'))
+group = 'light', mode = 'health'
+record_property = <function record_property.<locals>.append_property at 0x11740a980>
+
+    @pytest.mark.parametrize('group',list(MODELS))
+    @pytest.mark.parametrize('mode',['text','schema','streaming','health'])
+    def test_three_real_bailian_models_public_operations(f13_real_environment,group,mode,record_property):
+        env=f13_real_environment;client=env.client
+        if mode=='health':reply=client.post('/v1/models/'+group+'/health')
+        else:
+            body=payload(group,structured=mode=='schema')
+            if mode=='streaming':
+                body.pop('response_schema',None)
+                reply=client.post('/v1/llm/stream',json=body)
+                assert reply.status_code==202,reply.text
+                rid=reply.headers['x-request-id'];pending=env.trace(rid)
+                assert pending['status']=='pending' and pending['attempts']==[]
+                reply=client.get('/v1/llm/stream/'+rid+'/events')
+            else:reply=client.post('/v1/llm',json=body)
+        if mode!='streaming':rid=reply.headers['x-request-id']
+        trace=env.trace(rid)
+        record_property('f13_request_id',rid);record_property('f13_trace',json.dumps(trace,ensure_ascii=False))
+        assert reply.status_code==200,reply.text
+        if mode=='streaming':
+            events=sse_events(reply.text)
+            assert [seq for _,seq,_ in events]==list(range(1,len(events)+1))
+            assert events[-1][0]=='response.completed'
+            assert sum(event in {'response.completed','response.failed','response.canceled'} for event,_,_ in events)==1
+            text=''.join(value['delta'] for event,_,value in events if event=='response.delta')
+            assert 'A123' in text and '充电器' in text
+            assert client.get('/v1/llm/stream/'+rid+'/events',params={'after_seq':events[-1][1]}).status_code==204
+        elif mode=='schema':assert reply.json()['data']['parsed']=={'order_id':'A123','product':'充电器'}
+        elif mode=='text':assert 'A123' in reply.json()['data']['text'] and '充电器' in reply.json()['data']['text']
+        else:assert reply.json()['data']['latency_ms']>=0
+        assert trace['status']=='completed' and trace['input_token_kind']=='estimated'
+        assert trace['counter_version'].startswith('qwen_text_estimate_v1:')
+        assert trace['requested_model']==group
+        assert trace['attempts'] and all(a['adapter']=='bailian' and a['api_protocol']=='responses'
+            and a['configured_model']==MODELS[group] and a['actual_model']==MODELS[group]
+            and a['input_token_kind']=='estimated' for a in trace['attempts'])
+>       billing=env.verify(rid,trace)
+                ^^^^^^^^^^^^^^^^^^^^^
+
+tests/live/test_f13_models.py:70: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/f13_real_support.py:109: in verify
+    quoted=json.loads(charge[2]);assert quoted['version']==PRICE_VERSION
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+s = {'hit': '0.1', 'miss': '0.8', 'model': 'qwen3.8-flash', 'output': '2.7', ...}
+cls = None, object_hook = None, parse_float = None, parse_int = None
+parse_constant = None, object_pairs_hook = None, kw = {}
+
+    def loads(s, *, cls=None, object_hook=None, parse_float=None,
+            parse_int=None, parse_constant=None, object_pairs_hook=None, **kw):
+        """Deserialize ``s`` (a ``str``, ``bytes`` or ``bytearray`` instance
+        containing a JSON document) to a Python object.
+    
+        ``object_hook`` is an optional function that will be called with the
+        result of any object literal decode (a ``dict``). The return value of
+        ``object_hook`` will be used instead of the ``dict``. This feature
+        can be used to implement custom decoders (e.g. JSON-RPC class hinting).
+    
+        ``object_pairs_hook`` is an optional function that will be called with the
+        result of any object literal decoded with an ordered list of pairs.  The
+        return value of ``object_pairs_hook`` will be used instead of the ``dict``.
+        This feature can be used to implement custom decoders.  If ``object_hook``
+        is also defined, the ``object_pairs_hook`` takes priority.
+    
+        ``parse_float``, if specified, will be called with the string
+        of every JSON float to be decoded. By default this is equivalent to
+        float(num_str). This can be used to use another datatype or parser
+        for JSON floats (e.g. decimal.Decimal).
+    
+        ``parse_int``, if specified, will be called with the string
+        of every JSON int to be decoded. By default this is equivalent to
+        int(num_str). This can be used to use another datatype or parser
+        for JSON integers (e.g. float).
+    
+        ``parse_constant``, if specified, will be called with one of the
+        following strings: -Infinity, Infinity, NaN.
+        This can be used to raise an exception if invalid JSON numbers
+        are encountered.
+    
+        To use a custom ``JSONDecoder`` subclass, specify it with the ``cls``
+        kwarg; otherwise ``JSONDecoder`` is used.
+        """
+        if isinstance(s, str):
+            if s.startswith('\ufeff'):
+                raise JSONDecodeError("Unexpected UTF-8 BOM (decode using utf-8-sig)",
+                                      s, 0)
+        else:
+            if not isinstance(s, (bytes, bytearray)):
+>               raise TypeError(f'the JSON object must be str, bytes or bytearray, '
+                                f'not {s.__class__.__name__}')
+E               TypeError: the JSON object must be str, bytes or bytearray, not dict
+
+/Users/baiyu/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/json/__init__.py:339: TypeError
+_______ test_three_real_bailian_models_public_operations[health-general] _______
+
+f13_real_environment = RealEnvironment(client=<starlette.testclient.TestClient object at 0x1174de990>, application=<fastapi.applications.Fast...v86fj56zjgm8txl21tvpq00000gn/T/llmgw-f13-work-eifzl4on/pytest-stage-a-real/test_three_real_bailian_models10/f13-real'))
+group = 'general', mode = 'health'
+record_property = <function record_property.<locals>.append_property at 0x1174edf80>
+
+    @pytest.mark.parametrize('group',list(MODELS))
+    @pytest.mark.parametrize('mode',['text','schema','streaming','health'])
+    def test_three_real_bailian_models_public_operations(f13_real_environment,group,mode,record_property):
+        env=f13_real_environment;client=env.client
+        if mode=='health':reply=client.post('/v1/models/'+group+'/health')
+        else:
+            body=payload(group,structured=mode=='schema')
+            if mode=='streaming':
+                body.pop('response_schema',None)
+                reply=client.post('/v1/llm/stream',json=body)
+                assert reply.status_code==202,reply.text
+                rid=reply.headers['x-request-id'];pending=env.trace(rid)
+                assert pending['status']=='pending' and pending['attempts']==[]
+                reply=client.get('/v1/llm/stream/'+rid+'/events')
+            else:reply=client.post('/v1/llm',json=body)
+        if mode!='streaming':rid=reply.headers['x-request-id']
+        trace=env.trace(rid)
+        record_property('f13_request_id',rid);record_property('f13_trace',json.dumps(trace,ensure_ascii=False))
+        assert reply.status_code==200,reply.text
+        if mode=='streaming':
+            events=sse_events(reply.text)
+            assert [seq for _,seq,_ in events]==list(range(1,len(events)+1))
+            assert events[-1][0]=='response.completed'
+            assert sum(event in {'response.completed','response.failed','response.canceled'} for event,_,_ in events)==1
+            text=''.join(value['delta'] for event,_,value in events if event=='response.delta')
+            assert 'A123' in text and '充电器' in text
+            assert client.get('/v1/llm/stream/'+rid+'/events',params={'after_seq':events[-1][1]}).status_code==204
+        elif mode=='schema':assert reply.json()['data']['parsed']=={'order_id':'A123','product':'充电器'}
+        elif mode=='text':assert 'A123' in reply.json()['data']['text'] and '充电器' in reply.json()['data']['text']
+        else:assert reply.json()['data']['latency_ms']>=0
+        assert trace['status']=='completed' and trace['input_token_kind']=='estimated'
+        assert trace['counter_version'].startswith('qwen_text_estimate_v1:')
+        assert trace['requested_model']==group
+        assert trace['attempts'] and all(a['adapter']=='bailian' and a['api_protocol']=='responses'
+            and a['configured_model']==MODELS[group] and a['actual_model']==MODELS[group]
+            and a['input_token_kind']=='estimated' for a in trace['attempts'])
+>       billing=env.verify(rid,trace)
+                ^^^^^^^^^^^^^^^^^^^^^
+
+tests/live/test_f13_models.py:70: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/f13_real_support.py:109: in verify
+    quoted=json.loads(charge[2]);assert quoted['version']==PRICE_VERSION
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+s = {'hit': '0.32', 'miss': '1.6', 'model': 'qwen3.7-plus', 'output': '6.4', ...}
+cls = None, object_hook = None, parse_float = None, parse_int = None
+parse_constant = None, object_pairs_hook = None, kw = {}
+
+    def loads(s, *, cls=None, object_hook=None, parse_float=None,
+            parse_int=None, parse_constant=None, object_pairs_hook=None, **kw):
+        """Deserialize ``s`` (a ``str``, ``bytes`` or ``bytearray`` instance
+        containing a JSON document) to a Python object.
+    
+        ``object_hook`` is an optional function that will be called with the
+        result of any object literal decode (a ``dict``). The return value of
+        ``object_hook`` will be used instead of the ``dict``. This feature
+        can be used to implement custom decoders (e.g. JSON-RPC class hinting).
+    
+        ``object_pairs_hook`` is an optional function that will be called with the
+        result of any object literal decoded with an ordered list of pairs.  The
+        return value of ``object_pairs_hook`` will be used instead of the ``dict``.
+        This feature can be used to implement custom decoders.  If ``object_hook``
+        is also defined, the ``object_pairs_hook`` takes priority.
+    
+        ``parse_float``, if specified, will be called with the string
+        of every JSON float to be decoded. By default this is equivalent to
+        float(num_str). This can be used to use another datatype or parser
+        for JSON floats (e.g. decimal.Decimal).
+    
+        ``parse_int``, if specified, will be called with the string
+        of every JSON int to be decoded. By default this is equivalent to
+        int(num_str). This can be used to use another datatype or parser
+        for JSON integers (e.g. float).
+    
+        ``parse_constant``, if specified, will be called with one of the
+        following strings: -Infinity, Infinity, NaN.
+        This can be used to raise an exception if invalid JSON numbers
+        are encountered.
+    
+        To use a custom ``JSONDecoder`` subclass, specify it with the ``cls``
+        kwarg; otherwise ``JSONDecoder`` is used.
+        """
+        if isinstance(s, str):
+            if s.startswith('\ufeff'):
+                raise JSONDecodeError("Unexpected UTF-8 BOM (decode using utf-8-sig)",
+                                      s, 0)
+        else:
+            if not isinstance(s, (bytes, bytearray)):
+>               raise TypeError(f'the JSON object must be str, bytes or bytearray, '
+                                f'not {s.__class__.__name__}')
+E               TypeError: the JSON object must be str, bytes or bytearray, not dict
+
+/Users/baiyu/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/json/__init__.py:339: TypeError
+______ test_three_real_bailian_models_public_operations[health-analysis] _______
+
+f13_real_environment = RealEnvironment(client=<starlette.testclient.TestClient object at 0x1172b54f0>, application=<fastapi.applications.Fast...v86fj56zjgm8txl21tvpq00000gn/T/llmgw-f13-work-eifzl4on/pytest-stage-a-real/test_three_real_bailian_models11/f13-real'))
+group = 'analysis', mode = 'health'
+record_property = <function record_property.<locals>.append_property at 0x10df17740>
+
+    @pytest.mark.parametrize('group',list(MODELS))
+    @pytest.mark.parametrize('mode',['text','schema','streaming','health'])
+    def test_three_real_bailian_models_public_operations(f13_real_environment,group,mode,record_property):
+        env=f13_real_environment;client=env.client
+        if mode=='health':reply=client.post('/v1/models/'+group+'/health')
+        else:
+            body=payload(group,structured=mode=='schema')
+            if mode=='streaming':
+                body.pop('response_schema',None)
+                reply=client.post('/v1/llm/stream',json=body)
+                assert reply.status_code==202,reply.text
+                rid=reply.headers['x-request-id'];pending=env.trace(rid)
+                assert pending['status']=='pending' and pending['attempts']==[]
+                reply=client.get('/v1/llm/stream/'+rid+'/events')
+            else:reply=client.post('/v1/llm',json=body)
+        if mode!='streaming':rid=reply.headers['x-request-id']
+        trace=env.trace(rid)
+        record_property('f13_request_id',rid);record_property('f13_trace',json.dumps(trace,ensure_ascii=False))
+        assert reply.status_code==200,reply.text
+        if mode=='streaming':
+            events=sse_events(reply.text)
+            assert [seq for _,seq,_ in events]==list(range(1,len(events)+1))
+            assert events[-1][0]=='response.completed'
+            assert sum(event in {'response.completed','response.failed','response.canceled'} for event,_,_ in events)==1
+            text=''.join(value['delta'] for event,_,value in events if event=='response.delta')
+            assert 'A123' in text and '充电器' in text
+            assert client.get('/v1/llm/stream/'+rid+'/events',params={'after_seq':events[-1][1]}).status_code==204
+        elif mode=='schema':assert reply.json()['data']['parsed']=={'order_id':'A123','product':'充电器'}
+        elif mode=='text':assert 'A123' in reply.json()['data']['text'] and '充电器' in reply.json()['data']['text']
+        else:assert reply.json()['data']['latency_ms']>=0
+        assert trace['status']=='completed' and trace['input_token_kind']=='estimated'
+        assert trace['counter_version'].startswith('qwen_text_estimate_v1:')
+        assert trace['requested_model']==group
+        assert trace['attempts'] and all(a['adapter']=='bailian' and a['api_protocol']=='responses'
+            and a['configured_model']==MODELS[group] and a['actual_model']==MODELS[group]
+            and a['input_token_kind']=='estimated' for a in trace['attempts'])
+>       billing=env.verify(rid,trace)
+                ^^^^^^^^^^^^^^^^^^^^^
+
+tests/live/test_f13_models.py:70: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/f13_real_support.py:109: in verify
+    quoted=json.loads(charge[2]);assert quoted['version']==PRICE_VERSION
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+s = {'hit': '1.5', 'miss': '12', 'model': 'qwen3.8-max', 'output': '36', ...}
+cls = None, object_hook = None, parse_float = None, parse_int = None
+parse_constant = None, object_pairs_hook = None, kw = {}
+
+    def loads(s, *, cls=None, object_hook=None, parse_float=None,
+            parse_int=None, parse_constant=None, object_pairs_hook=None, **kw):
+        """Deserialize ``s`` (a ``str``, ``bytes`` or ``bytearray`` instance
+        containing a JSON document) to a Python object.
+    
+        ``object_hook`` is an optional function that will be called with the
+        result of any object literal decode (a ``dict``). The return value of
+        ``object_hook`` will be used instead of the ``dict``. This feature
+        can be used to implement custom decoders (e.g. JSON-RPC class hinting).
+    
+        ``object_pairs_hook`` is an optional function that will be called with the
+        result of any object literal decoded with an ordered list of pairs.  The
+        return value of ``object_pairs_hook`` will be used instead of the ``dict``.
+        This feature can be used to implement custom decoders.  If ``object_hook``
+        is also defined, the ``object_pairs_hook`` takes priority.
+    
+        ``parse_float``, if specified, will be called with the string
+        of every JSON float to be decoded. By default this is equivalent to
+        float(num_str). This can be used to use another datatype or parser
+        for JSON floats (e.g. decimal.Decimal).
+    
+        ``parse_int``, if specified, will be called with the string
+        of every JSON int to be decoded. By default this is equivalent to
+        int(num_str). This can be used to use another datatype or parser
+        for JSON integers (e.g. float).
+    
+        ``parse_constant``, if specified, will be called with one of the
+        following strings: -Infinity, Infinity, NaN.
+        This can be used to raise an exception if invalid JSON numbers
+        are encountered.
+    
+        To use a custom ``JSONDecoder`` subclass, specify it with the ``cls``
+        kwarg; otherwise ``JSONDecoder`` is used.
+        """
+        if isinstance(s, str):
+            if s.startswith('\ufeff'):
+                raise JSONDecodeError("Unexpected UTF-8 BOM (decode using utf-8-sig)",
+                                      s, 0)
+        else:
+            if not isinstance(s, (bytes, bytearray)):
+>               raise TypeError(f'the JSON object must be str, bytes or bytearray, '
+                                f'not {s.__class__.__name__}')
+E               TypeError: the JSON object must be str, bytes or bytearray, not dict
+
+/Users/baiyu/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/json/__init__.py:339: TypeError
+_________ test_real_qwen_estimate_covers_reported_input[chinese-light] _________
+
+f13_real_environment = RealEnvironment(client=<starlette.testclient.TestClient object at 0x10daaab10>, application=<fastapi.applications.Fast...lv86fj56zjgm8txl21tvpq00000gn/T/llmgw-f13-work-eifzl4on/pytest-stage-a-real/test_real_qwen_estimate_covers0/f13-real'))
+group = 'light', case = 'chinese'
+record_property = <function record_property.<locals>.append_property at 0x10dc68a40>
+
+    @pytest.mark.parametrize('group',list(MODELS))
+    @pytest.mark.parametrize('case',CALIBRATION_CASES)
+    def test_real_qwen_estimate_covers_reported_input(f13_real_environment,group,case,record_property):
+        env=f13_real_environment;body=calibration_payload(group,case)
+        reply=env.client.post('/v1/llm',json=body);rid=reply.headers['x-request-id'];trace=env.trace(rid)
+        record_property('f13_request_id',rid);record_property('f13_trace',json.dumps(trace,ensure_ascii=False))
+        assert reply.status_code==200,reply.text
+        assert trace['status']=='completed' and trace['input_token_kind']=='estimated'
+        calibration=[]
+        for attempt in trace['attempts']:
+            assert attempt['usage'] is not None
+            estimated=attempt['input_token_count'];actual=attempt['usage']['input_tokens']
+            assert estimated>=actual,(group,case,estimated,actual)
+            calibration.append(dict(estimate=estimated,actual=actual,difference=estimated-actual,
+                ratio=estimated/actual if actual else None,counter_version=attempt['counter_version']))
+        if case=='near_user_limit':assert len(body['messages'][0]['content'])==MAX_USER_MESSAGE_CHARS
+        if case=='large_schema':assert reply.json()['data']['parsed']=={'marker':'OK'}
+>       billing=env.verify(rid,trace)
+                ^^^^^^^^^^^^^^^^^^^^^
+
+tests/live/test_f13_models.py:117: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/f13_real_support.py:109: in verify
+    quoted=json.loads(charge[2]);assert quoted['version']==PRICE_VERSION
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+s = {'hit': '0.1', 'miss': '0.8', 'model': 'qwen3.8-flash', 'output': '2.7', ...}
+cls = None, object_hook = None, parse_float = None, parse_int = None
+parse_constant = None, object_pairs_hook = None, kw = {}
+
+    def loads(s, *, cls=None, object_hook=None, parse_float=None,
+            parse_int=None, parse_constant=None, object_pairs_hook=None, **kw):
+        """Deserialize ``s`` (a ``str``, ``bytes`` or ``bytearray`` instance
+        containing a JSON document) to a Python object.
+    
+        ``object_hook`` is an optional function that will be called with the
+        result of any object literal decode (a ``dict``). The return value of
+        ``object_hook`` will be used instead of the ``dict``. This feature
+        can be used to implement custom decoders (e.g. JSON-RPC class hinting).
+    
+        ``object_pairs_hook`` is an optional function that will be called with the
+        result of any object literal decoded with an ordered list of pairs.  The
+        return value of ``object_pairs_hook`` will be used instead of the ``dict``.
+        This feature can be used to implement custom decoders.  If ``object_hook``
+        is also defined, the ``object_pairs_hook`` takes priority.
+    
+        ``parse_float``, if specified, will be called with the string
+        of every JSON float to be decoded. By default this is equivalent to
+        float(num_str). This can be used to use another datatype or parser
+        for JSON floats (e.g. decimal.Decimal).
+    
+        ``parse_int``, if specified, will be called with the string
+        of every JSON int to be decoded. By default this is equivalent to
+        int(num_str). This can be used to use another datatype or parser
+        for JSON integers (e.g. float).
+    
+        ``parse_constant``, if specified, will be called with one of the
+        following strings: -Infinity, Infinity, NaN.
+        This can be used to raise an exception if invalid JSON numbers
+        are encountered.
+    
+        To use a custom ``JSONDecoder`` subclass, specify it with the ``cls``
+        kwarg; otherwise ``JSONDecoder`` is used.
+        """
+        if isinstance(s, str):
+            if s.startswith('\ufeff'):
+                raise JSONDecodeError("Unexpected UTF-8 BOM (decode using utf-8-sig)",
+                                      s, 0)
+        else:
+            if not isinstance(s, (bytes, bytearray)):
+>               raise TypeError(f'the JSON object must be str, bytes or bytearray, '
+                                f'not {s.__class__.__name__}')
+E               TypeError: the JSON object must be str, bytes or bytearray, not dict
+
+/Users/baiyu/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/json/__init__.py:339: TypeError
+________ test_real_qwen_estimate_covers_reported_input[chinese-general] ________
+
+f13_real_environment = RealEnvironment(client=<starlette.testclient.TestClient object at 0x10dd03d10>, application=<fastapi.applications.Fast...lv86fj56zjgm8txl21tvpq00000gn/T/llmgw-f13-work-eifzl4on/pytest-stage-a-real/test_real_qwen_estimate_covers1/f13-real'))
+group = 'general', case = 'chinese'
+record_property = <function record_property.<locals>.append_property at 0x11736d800>
+
+    @pytest.mark.parametrize('group',list(MODELS))
+    @pytest.mark.parametrize('case',CALIBRATION_CASES)
+    def test_real_qwen_estimate_covers_reported_input(f13_real_environment,group,case,record_property):
+        env=f13_real_environment;body=calibration_payload(group,case)
+        reply=env.client.post('/v1/llm',json=body);rid=reply.headers['x-request-id'];trace=env.trace(rid)
+        record_property('f13_request_id',rid);record_property('f13_trace',json.dumps(trace,ensure_ascii=False))
+        assert reply.status_code==200,reply.text
+        assert trace['status']=='completed' and trace['input_token_kind']=='estimated'
+        calibration=[]
+        for attempt in trace['attempts']:
+            assert attempt['usage'] is not None
+            estimated=attempt['input_token_count'];actual=attempt['usage']['input_tokens']
+            assert estimated>=actual,(group,case,estimated,actual)
+            calibration.append(dict(estimate=estimated,actual=actual,difference=estimated-actual,
+                ratio=estimated/actual if actual else None,counter_version=attempt['counter_version']))
+        if case=='near_user_limit':assert len(body['messages'][0]['content'])==MAX_USER_MESSAGE_CHARS
+        if case=='large_schema':assert reply.json()['data']['parsed']=={'marker':'OK'}
+>       billing=env.verify(rid,trace)
+                ^^^^^^^^^^^^^^^^^^^^^
+
+tests/live/test_f13_models.py:117: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/f13_real_support.py:109: in verify
+    quoted=json.loads(charge[2]);assert quoted['version']==PRICE_VERSION
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+s = {'hit': '0.32', 'miss': '1.6', 'model': 'qwen3.7-plus', 'output': '6.4', ...}
+cls = None, object_hook = None, parse_float = None, parse_int = None
+parse_constant = None, object_pairs_hook = None, kw = {}
+
+    def loads(s, *, cls=None, object_hook=None, parse_float=None,
+            parse_int=None, parse_constant=None, object_pairs_hook=None, **kw):
+        """Deserialize ``s`` (a ``str``, ``bytes`` or ``bytearray`` instance
+        containing a JSON document) to a Python object.
+    
+        ``object_hook`` is an optional function that will be called with the
+        result of any object literal decode (a ``dict``). The return value of
+        ``object_hook`` will be used instead of the ``dict``. This feature
+        can be used to implement custom decoders (e.g. JSON-RPC class hinting).
+    
+        ``object_pairs_hook`` is an optional function that will be called with the
+        result of any object literal decoded with an ordered list of pairs.  The
+        return value of ``object_pairs_hook`` will be used instead of the ``dict``.
+        This feature can be used to implement custom decoders.  If ``object_hook``
+        is also defined, the ``object_pairs_hook`` takes priority.
+    
+        ``parse_float``, if specified, will be called with the string
+        of every JSON float to be decoded. By default this is equivalent to
+        float(num_str). This can be used to use another datatype or parser
+        for JSON floats (e.g. decimal.Decimal).
+    
+        ``parse_int``, if specified, will be called with the string
+        of every JSON int to be decoded. By default this is equivalent to
+        int(num_str). This can be used to use another datatype or parser
+        for JSON integers (e.g. float).
+    
+        ``parse_constant``, if specified, will be called with one of the
+        following strings: -Infinity, Infinity, NaN.
+        This can be used to raise an exception if invalid JSON numbers
+        are encountered.
+    
+        To use a custom ``JSONDecoder`` subclass, specify it with the ``cls``
+        kwarg; otherwise ``JSONDecoder`` is used.
+        """
+        if isinstance(s, str):
+            if s.startswith('\ufeff'):
+                raise JSONDecodeError("Unexpected UTF-8 BOM (decode using utf-8-sig)",
+                                      s, 0)
+        else:
+            if not isinstance(s, (bytes, bytearray)):
+>               raise TypeError(f'the JSON object must be str, bytes or bytearray, '
+                                f'not {s.__class__.__name__}')
+E               TypeError: the JSON object must be str, bytes or bytearray, not dict
+
+/Users/baiyu/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/json/__init__.py:339: TypeError
+_______ test_real_qwen_estimate_covers_reported_input[chinese-analysis] ________
+
+f13_real_environment = RealEnvironment(client=<starlette.testclient.TestClient object at 0x10dc56ed0>, application=<fastapi.applications.Fast...lv86fj56zjgm8txl21tvpq00000gn/T/llmgw-f13-work-eifzl4on/pytest-stage-a-real/test_real_qwen_estimate_covers2/f13-real'))
+group = 'analysis', case = 'chinese'
+record_property = <function record_property.<locals>.append_property at 0x10d7ca660>
+
+    @pytest.mark.parametrize('group',list(MODELS))
+    @pytest.mark.parametrize('case',CALIBRATION_CASES)
+    def test_real_qwen_estimate_covers_reported_input(f13_real_environment,group,case,record_property):
+        env=f13_real_environment;body=calibration_payload(group,case)
+        reply=env.client.post('/v1/llm',json=body);rid=reply.headers['x-request-id'];trace=env.trace(rid)
+        record_property('f13_request_id',rid);record_property('f13_trace',json.dumps(trace,ensure_ascii=False))
+        assert reply.status_code==200,reply.text
+        assert trace['status']=='completed' and trace['input_token_kind']=='estimated'
+        calibration=[]
+        for attempt in trace['attempts']:
+            assert attempt['usage'] is not None
+            estimated=attempt['input_token_count'];actual=attempt['usage']['input_tokens']
+            assert estimated>=actual,(group,case,estimated,actual)
+            calibration.append(dict(estimate=estimated,actual=actual,difference=estimated-actual,
+                ratio=estimated/actual if actual else None,counter_version=attempt['counter_version']))
+        if case=='near_user_limit':assert len(body['messages'][0]['content'])==MAX_USER_MESSAGE_CHARS
+        if case=='large_schema':assert reply.json()['data']['parsed']=={'marker':'OK'}
+>       billing=env.verify(rid,trace)
+                ^^^^^^^^^^^^^^^^^^^^^
+
+tests/live/test_f13_models.py:117: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/f13_real_support.py:109: in verify
+    quoted=json.loads(charge[2]);assert quoted['version']==PRICE_VERSION
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+s = {'hit': '1.5', 'miss': '12', 'model': 'qwen3.8-max', 'output': '36', ...}
+cls = None, object_hook = None, parse_float = None, parse_int = None
+parse_constant = None, object_pairs_hook = None, kw = {}
+
+    def loads(s, *, cls=None, object_hook=None, parse_float=None,
+            parse_int=None, parse_constant=None, object_pairs_hook=None, **kw):
+        """Deserialize ``s`` (a ``str``, ``bytes`` or ``bytearray`` instance
+        containing a JSON document) to a Python object.
+    
+        ``object_hook`` is an optional function that will be called with the
+        result of any object literal decode (a ``dict``). The return value of
+        ``object_hook`` will be used instead of the ``dict``. This feature
+        can be used to implement custom decoders (e.g. JSON-RPC class hinting).
+    
+        ``object_pairs_hook`` is an optional function that will be called with the
+        result of any object literal decoded with an ordered list of pairs.  The
+        return value of ``object_pairs_hook`` will be used instead of the ``dict``.
+        This feature can be used to implement custom decoders.  If ``object_hook``
+        is also defined, the ``object_pairs_hook`` takes priority.
+    
+        ``parse_float``, if specified, will be called with the string
+        of every JSON float to be decoded. By default this is equivalent to
+        float(num_str). This can be used to use another datatype or parser
+        for JSON floats (e.g. decimal.Decimal).
+    
+        ``parse_int``, if specified, will be called with the string
+        of every JSON int to be decoded. By default this is equivalent to
+        int(num_str). This can be used to use another datatype or parser
+        for JSON integers (e.g. float).
+    
+        ``parse_constant``, if specified, will be called with one of the
+        following strings: -Infinity, Infinity, NaN.
+        This can be used to raise an exception if invalid JSON numbers
+        are encountered.
+    
+        To use a custom ``JSONDecoder`` subclass, specify it with the ``cls``
+        kwarg; otherwise ``JSONDecoder`` is used.
+        """
+        if isinstance(s, str):
+            if s.startswith('\ufeff'):
+                raise JSONDecodeError("Unexpected UTF-8 BOM (decode using utf-8-sig)",
+                                      s, 0)
+        else:
+            if not isinstance(s, (bytes, bytearray)):
+>               raise TypeError(f'the JSON object must be str, bytes or bytearray, '
+                                f'not {s.__class__.__name__}')
+E               TypeError: the JSON object must be str, bytes or bytearray, not dict
+
+/Users/baiyu/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/json/__init__.py:339: TypeError
+_________ test_real_qwen_estimate_covers_reported_input[english-light] _________
+
+f13_real_environment = RealEnvironment(client=<starlette.testclient.TestClient object at 0x117384590>, application=<fastapi.applications.Fast...lv86fj56zjgm8txl21tvpq00000gn/T/llmgw-f13-work-eifzl4on/pytest-stage-a-real/test_real_qwen_estimate_covers3/f13-real'))
+group = 'light', case = 'english'
+record_property = <function record_property.<locals>.append_property at 0x10dd8bf60>
+
+    @pytest.mark.parametrize('group',list(MODELS))
+    @pytest.mark.parametrize('case',CALIBRATION_CASES)
+    def test_real_qwen_estimate_covers_reported_input(f13_real_environment,group,case,record_property):
+        env=f13_real_environment;body=calibration_payload(group,case)
+        reply=env.client.post('/v1/llm',json=body);rid=reply.headers['x-request-id'];trace=env.trace(rid)
+        record_property('f13_request_id',rid);record_property('f13_trace',json.dumps(trace,ensure_ascii=False))
+        assert reply.status_code==200,reply.text
+        assert trace['status']=='completed' and trace['input_token_kind']=='estimated'
+        calibration=[]
+        for attempt in trace['attempts']:
+            assert attempt['usage'] is not None
+            estimated=attempt['input_token_count'];actual=attempt['usage']['input_tokens']
+            assert estimated>=actual,(group,case,estimated,actual)
+            calibration.append(dict(estimate=estimated,actual=actual,difference=estimated-actual,
+                ratio=estimated/actual if actual else None,counter_version=attempt['counter_version']))
+        if case=='near_user_limit':assert len(body['messages'][0]['content'])==MAX_USER_MESSAGE_CHARS
+        if case=='large_schema':assert reply.json()['data']['parsed']=={'marker':'OK'}
+>       billing=env.verify(rid,trace)
+                ^^^^^^^^^^^^^^^^^^^^^
+
+tests/live/test_f13_models.py:117: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/f13_real_support.py:109: in verify
+    quoted=json.loads(charge[2]);assert quoted['version']==PRICE_VERSION
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+s = {'hit': '0.1', 'miss': '0.8', 'model': 'qwen3.8-flash', 'output': '2.7', ...}
+cls = None, object_hook = None, parse_float = None, parse_int = None
+parse_constant = None, object_pairs_hook = None, kw = {}
+
+    def loads(s, *, cls=None, object_hook=None, parse_float=None,
+            parse_int=None, parse_constant=None, object_pairs_hook=None, **kw):
+        """Deserialize ``s`` (a ``str``, ``bytes`` or ``bytearray`` instance
+        containing a JSON document) to a Python object.
+    
+        ``object_hook`` is an optional function that will be called with the
+        result of any object literal decode (a ``dict``). The return value of
+        ``object_hook`` will be used instead of the ``dict``. This feature
+        can be used to implement custom decoders (e.g. JSON-RPC class hinting).
+    
+        ``object_pairs_hook`` is an optional function that will be called with the
+        result of any object literal decoded with an ordered list of pairs.  The
+        return value of ``object_pairs_hook`` will be used instead of the ``dict``.
+        This feature can be used to implement custom decoders.  If ``object_hook``
+        is also defined, the ``object_pairs_hook`` takes priority.
+    
+        ``parse_float``, if specified, will be called with the string
+        of every JSON float to be decoded. By default this is equivalent to
+        float(num_str). This can be used to use another datatype or parser
+        for JSON floats (e.g. decimal.Decimal).
+    
+        ``parse_int``, if specified, will be called with the string
+        of every JSON int to be decoded. By default this is equivalent to
+        int(num_str). This can be used to use another datatype or parser
+        for JSON integers (e.g. float).
+    
+        ``parse_constant``, if specified, will be called with one of the
+        following strings: -Infinity, Infinity, NaN.
+        This can be used to raise an exception if invalid JSON numbers
+        are encountered.
+    
+        To use a custom ``JSONDecoder`` subclass, specify it with the ``cls``
+        kwarg; otherwise ``JSONDecoder`` is used.
+        """
+        if isinstance(s, str):
+            if s.startswith('\ufeff'):
+                raise JSONDecodeError("Unexpected UTF-8 BOM (decode using utf-8-sig)",
+                                      s, 0)
+        else:
+            if not isinstance(s, (bytes, bytearray)):
+>               raise TypeError(f'the JSON object must be str, bytes or bytearray, '
+                                f'not {s.__class__.__name__}')
+E               TypeError: the JSON object must be str, bytes or bytearray, not dict
+
+/Users/baiyu/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/json/__init__.py:339: TypeError
+________ test_real_qwen_estimate_covers_reported_input[english-general] ________
+
+f13_real_environment = RealEnvironment(client=<starlette.testclient.TestClient object at 0x1174a28d0>, application=<fastapi.applications.Fast...lv86fj56zjgm8txl21tvpq00000gn/T/llmgw-f13-work-eifzl4on/pytest-stage-a-real/test_real_qwen_estimate_covers4/f13-real'))
+group = 'general', case = 'english'
+record_property = <function record_property.<locals>.append_property at 0x11752c540>
+
+    @pytest.mark.parametrize('group',list(MODELS))
+    @pytest.mark.parametrize('case',CALIBRATION_CASES)
+    def test_real_qwen_estimate_covers_reported_input(f13_real_environment,group,case,record_property):
+        env=f13_real_environment;body=calibration_payload(group,case)
+        reply=env.client.post('/v1/llm',json=body);rid=reply.headers['x-request-id'];trace=env.trace(rid)
+        record_property('f13_request_id',rid);record_property('f13_trace',json.dumps(trace,ensure_ascii=False))
+        assert reply.status_code==200,reply.text
+        assert trace['status']=='completed' and trace['input_token_kind']=='estimated'
+        calibration=[]
+        for attempt in trace['attempts']:
+            assert attempt['usage'] is not None
+            estimated=attempt['input_token_count'];actual=attempt['usage']['input_tokens']
+            assert estimated>=actual,(group,case,estimated,actual)
+            calibration.append(dict(estimate=estimated,actual=actual,difference=estimated-actual,
+                ratio=estimated/actual if actual else None,counter_version=attempt['counter_version']))
+        if case=='near_user_limit':assert len(body['messages'][0]['content'])==MAX_USER_MESSAGE_CHARS
+        if case=='large_schema':assert reply.json()['data']['parsed']=={'marker':'OK'}
+>       billing=env.verify(rid,trace)
+                ^^^^^^^^^^^^^^^^^^^^^
+
+tests/live/test_f13_models.py:117: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/f13_real_support.py:109: in verify
+    quoted=json.loads(charge[2]);assert quoted['version']==PRICE_VERSION
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+s = {'hit': '0.32', 'miss': '1.6', 'model': 'qwen3.7-plus', 'output': '6.4', ...}
+cls = None, object_hook = None, parse_float = None, parse_int = None
+parse_constant = None, object_pairs_hook = None, kw = {}
+
+    def loads(s, *, cls=None, object_hook=None, parse_float=None,
+            parse_int=None, parse_constant=None, object_pairs_hook=None, **kw):
+        """Deserialize ``s`` (a ``str``, ``bytes`` or ``bytearray`` instance
+        containing a JSON document) to a Python object.
+    
+        ``object_hook`` is an optional function that will be called with the
+        result of any object literal decode (a ``dict``). The return value of
+        ``object_hook`` will be used instead of the ``dict``. This feature
+        can be used to implement custom decoders (e.g. JSON-RPC class hinting).
+    
+        ``object_pairs_hook`` is an optional function that will be called with the
+        result of any object literal decoded with an ordered list of pairs.  The
+        return value of ``object_pairs_hook`` will be used instead of the ``dict``.
+        This feature can be used to implement custom decoders.  If ``object_hook``
+        is also defined, the ``object_pairs_hook`` takes priority.
+    
+        ``parse_float``, if specified, will be called with the string
+        of every JSON float to be decoded. By default this is equivalent to
+        float(num_str). This can be used to use another datatype or parser
+        for JSON floats (e.g. decimal.Decimal).
+    
+        ``parse_int``, if specified, will be called with the string
+        of every JSON int to be decoded. By default this is equivalent to
+        int(num_str). This can be used to use another datatype or parser
+        for JSON integers (e.g. float).
+    
+        ``parse_constant``, if specified, will be called with one of the
+        following strings: -Infinity, Infinity, NaN.
+        This can be used to raise an exception if invalid JSON numbers
+        are encountered.
+    
+        To use a custom ``JSONDecoder`` subclass, specify it with the ``cls``
+        kwarg; otherwise ``JSONDecoder`` is used.
+        """
+        if isinstance(s, str):
+            if s.startswith('\ufeff'):
+                raise JSONDecodeError("Unexpected UTF-8 BOM (decode using utf-8-sig)",
+                                      s, 0)
+        else:
+            if not isinstance(s, (bytes, bytearray)):
+>               raise TypeError(f'the JSON object must be str, bytes or bytearray, '
+                                f'not {s.__class__.__name__}')
+E               TypeError: the JSON object must be str, bytes or bytearray, not dict
+
+/Users/baiyu/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/json/__init__.py:339: TypeError
+_______ test_real_qwen_estimate_covers_reported_input[english-analysis] ________
+
+f13_real_environment = RealEnvironment(client=<starlette.testclient.TestClient object at 0x1175e7bc0>, application=<fastapi.applications.Fast...lv86fj56zjgm8txl21tvpq00000gn/T/llmgw-f13-work-eifzl4on/pytest-stage-a-real/test_real_qwen_estimate_covers5/f13-real'))
+group = 'analysis', case = 'english'
+record_property = <function record_property.<locals>.append_property at 0x117573a60>
+
+    @pytest.mark.parametrize('group',list(MODELS))
+    @pytest.mark.parametrize('case',CALIBRATION_CASES)
+    def test_real_qwen_estimate_covers_reported_input(f13_real_environment,group,case,record_property):
+        env=f13_real_environment;body=calibration_payload(group,case)
+        reply=env.client.post('/v1/llm',json=body);rid=reply.headers['x-request-id'];trace=env.trace(rid)
+        record_property('f13_request_id',rid);record_property('f13_trace',json.dumps(trace,ensure_ascii=False))
+        assert reply.status_code==200,reply.text
+        assert trace['status']=='completed' and trace['input_token_kind']=='estimated'
+        calibration=[]
+        for attempt in trace['attempts']:
+            assert attempt['usage'] is not None
+            estimated=attempt['input_token_count'];actual=attempt['usage']['input_tokens']
+            assert estimated>=actual,(group,case,estimated,actual)
+            calibration.append(dict(estimate=estimated,actual=actual,difference=estimated-actual,
+                ratio=estimated/actual if actual else None,counter_version=attempt['counter_version']))
+        if case=='near_user_limit':assert len(body['messages'][0]['content'])==MAX_USER_MESSAGE_CHARS
+        if case=='large_schema':assert reply.json()['data']['parsed']=={'marker':'OK'}
+>       billing=env.verify(rid,trace)
+                ^^^^^^^^^^^^^^^^^^^^^
+
+tests/live/test_f13_models.py:117: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/f13_real_support.py:109: in verify
+    quoted=json.loads(charge[2]);assert quoted['version']==PRICE_VERSION
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+s = {'hit': '1.5', 'miss': '12', 'model': 'qwen3.8-max', 'output': '36', ...}
+cls = None, object_hook = None, parse_float = None, parse_int = None
+parse_constant = None, object_pairs_hook = None, kw = {}
+
+    def loads(s, *, cls=None, object_hook=None, parse_float=None,
+            parse_int=None, parse_constant=None, object_pairs_hook=None, **kw):
+        """Deserialize ``s`` (a ``str``, ``bytes`` or ``bytearray`` instance
+        containing a JSON document) to a Python object.
+    
+        ``object_hook`` is an optional function that will be called with the
+        result of any object literal decode (a ``dict``). The return value of
+        ``object_hook`` will be used instead of the ``dict``. This feature
+        can be used to implement custom decoders (e.g. JSON-RPC class hinting).
+    
+        ``object_pairs_hook`` is an optional function that will be called with the
+        result of any object literal decoded with an ordered list of pairs.  The
+        return value of ``object_pairs_hook`` will be used instead of the ``dict``.
+        This feature can be used to implement custom decoders.  If ``object_hook``
+        is also defined, the ``object_pairs_hook`` takes priority.
+    
+        ``parse_float``, if specified, will be called with the string
+        of every JSON float to be decoded. By default this is equivalent to
+        float(num_str). This can be used to use another datatype or parser
+        for JSON floats (e.g. decimal.Decimal).
+    
+        ``parse_int``, if specified, will be called with the string
+        of every JSON int to be decoded. By default this is equivalent to
+        int(num_str). This can be used to use another datatype or parser
+        for JSON integers (e.g. float).
+    
+        ``parse_constant``, if specified, will be called with one of the
+        following strings: -Infinity, Infinity, NaN.
+        This can be used to raise an exception if invalid JSON numbers
+        are encountered.
+    
+        To use a custom ``JSONDecoder`` subclass, specify it with the ``cls``
+        kwarg; otherwise ``JSONDecoder`` is used.
+        """
+        if isinstance(s, str):
+            if s.startswith('\ufeff'):
+                raise JSONDecodeError("Unexpected UTF-8 BOM (decode using utf-8-sig)",
+                                      s, 0)
+        else:
+            if not isinstance(s, (bytes, bytearray)):
+>               raise TypeError(f'the JSON object must be str, bytes or bytearray, '
+                                f'not {s.__class__.__name__}')
+E               TypeError: the JSON object must be str, bytes or bytearray, not dict
+
+/Users/baiyu/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/json/__init__.py:339: TypeError
+__________ test_real_qwen_estimate_covers_reported_input[mixed-light] __________
+
+f13_real_environment = RealEnvironment(client=<starlette.testclient.TestClient object at 0x10dd66b10>, application=<fastapi.applications.Fast...lv86fj56zjgm8txl21tvpq00000gn/T/llmgw-f13-work-eifzl4on/pytest-stage-a-real/test_real_qwen_estimate_covers6/f13-real'))
+group = 'light', case = 'mixed'
+record_property = <function record_property.<locals>.append_property at 0x10ddbd1c0>
+
+    @pytest.mark.parametrize('group',list(MODELS))
+    @pytest.mark.parametrize('case',CALIBRATION_CASES)
+    def test_real_qwen_estimate_covers_reported_input(f13_real_environment,group,case,record_property):
+        env=f13_real_environment;body=calibration_payload(group,case)
+        reply=env.client.post('/v1/llm',json=body);rid=reply.headers['x-request-id'];trace=env.trace(rid)
+        record_property('f13_request_id',rid);record_property('f13_trace',json.dumps(trace,ensure_ascii=False))
+        assert reply.status_code==200,reply.text
+        assert trace['status']=='completed' and trace['input_token_kind']=='estimated'
+        calibration=[]
+        for attempt in trace['attempts']:
+            assert attempt['usage'] is not None
+            estimated=attempt['input_token_count'];actual=attempt['usage']['input_tokens']
+            assert estimated>=actual,(group,case,estimated,actual)
+            calibration.append(dict(estimate=estimated,actual=actual,difference=estimated-actual,
+                ratio=estimated/actual if actual else None,counter_version=attempt['counter_version']))
+        if case=='near_user_limit':assert len(body['messages'][0]['content'])==MAX_USER_MESSAGE_CHARS
+        if case=='large_schema':assert reply.json()['data']['parsed']=={'marker':'OK'}
+>       billing=env.verify(rid,trace)
+                ^^^^^^^^^^^^^^^^^^^^^
+
+tests/live/test_f13_models.py:117: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/f13_real_support.py:109: in verify
+    quoted=json.loads(charge[2]);assert quoted['version']==PRICE_VERSION
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+s = {'hit': '0.1', 'miss': '0.8', 'model': 'qwen3.8-flash', 'output': '2.7', ...}
+cls = None, object_hook = None, parse_float = None, parse_int = None
+parse_constant = None, object_pairs_hook = None, kw = {}
+
+    def loads(s, *, cls=None, object_hook=None, parse_float=None,
+            parse_int=None, parse_constant=None, object_pairs_hook=None, **kw):
+        """Deserialize ``s`` (a ``str``, ``bytes`` or ``bytearray`` instance
+        containing a JSON document) to a Python object.
+    
+        ``object_hook`` is an optional function that will be called with the
+        result of any object literal decode (a ``dict``). The return value of
+        ``object_hook`` will be used instead of the ``dict``. This feature
+        can be used to implement custom decoders (e.g. JSON-RPC class hinting).
+    
+        ``object_pairs_hook`` is an optional function that will be called with the
+        result of any object literal decoded with an ordered list of pairs.  The
+        return value of ``object_pairs_hook`` will be used instead of the ``dict``.
+        This feature can be used to implement custom decoders.  If ``object_hook``
+        is also defined, the ``object_pairs_hook`` takes priority.
+    
+        ``parse_float``, if specified, will be called with the string
+        of every JSON float to be decoded. By default this is equivalent to
+        float(num_str). This can be used to use another datatype or parser
+        for JSON floats (e.g. decimal.Decimal).
+    
+        ``parse_int``, if specified, will be called with the string
+        of every JSON int to be decoded. By default this is equivalent to
+        int(num_str). This can be used to use another datatype or parser
+        for JSON integers (e.g. float).
+    
+        ``parse_constant``, if specified, will be called with one of the
+        following strings: -Infinity, Infinity, NaN.
+        This can be used to raise an exception if invalid JSON numbers
+        are encountered.
+    
+        To use a custom ``JSONDecoder`` subclass, specify it with the ``cls``
+        kwarg; otherwise ``JSONDecoder`` is used.
+        """
+        if isinstance(s, str):
+            if s.startswith('\ufeff'):
+                raise JSONDecodeError("Unexpected UTF-8 BOM (decode using utf-8-sig)",
+                                      s, 0)
+        else:
+            if not isinstance(s, (bytes, bytearray)):
+>               raise TypeError(f'the JSON object must be str, bytes or bytearray, '
+                                f'not {s.__class__.__name__}')
+E               TypeError: the JSON object must be str, bytes or bytearray, not dict
+
+/Users/baiyu/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/json/__init__.py:339: TypeError
+_________ test_real_qwen_estimate_covers_reported_input[mixed-general] _________
+
+f13_real_environment = RealEnvironment(client=<starlette.testclient.TestClient object at 0x10db961e0>, application=<fastapi.applications.Fast...lv86fj56zjgm8txl21tvpq00000gn/T/llmgw-f13-work-eifzl4on/pytest-stage-a-real/test_real_qwen_estimate_covers7/f13-real'))
+group = 'general', case = 'mixed'
+record_property = <function record_property.<locals>.append_property at 0x1173e7560>
+
+    @pytest.mark.parametrize('group',list(MODELS))
+    @pytest.mark.parametrize('case',CALIBRATION_CASES)
+    def test_real_qwen_estimate_covers_reported_input(f13_real_environment,group,case,record_property):
+        env=f13_real_environment;body=calibration_payload(group,case)
+        reply=env.client.post('/v1/llm',json=body);rid=reply.headers['x-request-id'];trace=env.trace(rid)
+        record_property('f13_request_id',rid);record_property('f13_trace',json.dumps(trace,ensure_ascii=False))
+        assert reply.status_code==200,reply.text
+        assert trace['status']=='completed' and trace['input_token_kind']=='estimated'
+        calibration=[]
+        for attempt in trace['attempts']:
+            assert attempt['usage'] is not None
+            estimated=attempt['input_token_count'];actual=attempt['usage']['input_tokens']
+            assert estimated>=actual,(group,case,estimated,actual)
+            calibration.append(dict(estimate=estimated,actual=actual,difference=estimated-actual,
+                ratio=estimated/actual if actual else None,counter_version=attempt['counter_version']))
+        if case=='near_user_limit':assert len(body['messages'][0]['content'])==MAX_USER_MESSAGE_CHARS
+        if case=='large_schema':assert reply.json()['data']['parsed']=={'marker':'OK'}
+>       billing=env.verify(rid,trace)
+                ^^^^^^^^^^^^^^^^^^^^^
+
+tests/live/test_f13_models.py:117: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/f13_real_support.py:109: in verify
+    quoted=json.loads(charge[2]);assert quoted['version']==PRICE_VERSION
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+s = {'hit': '0.32', 'miss': '1.6', 'model': 'qwen3.7-plus', 'output': '6.4', ...}
+cls = None, object_hook = None, parse_float = None, parse_int = None
+parse_constant = None, object_pairs_hook = None, kw = {}
+
+    def loads(s, *, cls=None, object_hook=None, parse_float=None,
+            parse_int=None, parse_constant=None, object_pairs_hook=None, **kw):
+        """Deserialize ``s`` (a ``str``, ``bytes`` or ``bytearray`` instance
+        containing a JSON document) to a Python object.
+    
+        ``object_hook`` is an optional function that will be called with the
+        result of any object literal decode (a ``dict``). The return value of
+        ``object_hook`` will be used instead of the ``dict``. This feature
+        can be used to implement custom decoders (e.g. JSON-RPC class hinting).
+    
+        ``object_pairs_hook`` is an optional function that will be called with the
+        result of any object literal decoded with an ordered list of pairs.  The
+        return value of ``object_pairs_hook`` will be used instead of the ``dict``.
+        This feature can be used to implement custom decoders.  If ``object_hook``
+        is also defined, the ``object_pairs_hook`` takes priority.
+    
+        ``parse_float``, if specified, will be called with the string
+        of every JSON float to be decoded. By default this is equivalent to
+        float(num_str). This can be used to use another datatype or parser
+        for JSON floats (e.g. decimal.Decimal).
+    
+        ``parse_int``, if specified, will be called with the string
+        of every JSON int to be decoded. By default this is equivalent to
+        int(num_str). This can be used to use another datatype or parser
+        for JSON integers (e.g. float).
+    
+        ``parse_constant``, if specified, will be called with one of the
+        following strings: -Infinity, Infinity, NaN.
+        This can be used to raise an exception if invalid JSON numbers
+        are encountered.
+    
+        To use a custom ``JSONDecoder`` subclass, specify it with the ``cls``
+        kwarg; otherwise ``JSONDecoder`` is used.
+        """
+        if isinstance(s, str):
+            if s.startswith('\ufeff'):
+                raise JSONDecodeError("Unexpected UTF-8 BOM (decode using utf-8-sig)",
+                                      s, 0)
+        else:
+            if not isinstance(s, (bytes, bytearray)):
+>               raise TypeError(f'the JSON object must be str, bytes or bytearray, '
+                                f'not {s.__class__.__name__}')
+E               TypeError: the JSON object must be str, bytes or bytearray, not dict
+
+/Users/baiyu/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/json/__init__.py:339: TypeError
+________ test_real_qwen_estimate_covers_reported_input[mixed-analysis] _________
+
+f13_real_environment = RealEnvironment(client=<starlette.testclient.TestClient object at 0x1172715e0>, application=<fastapi.applications.Fast...lv86fj56zjgm8txl21tvpq00000gn/T/llmgw-f13-work-eifzl4on/pytest-stage-a-real/test_real_qwen_estimate_covers8/f13-real'))
+group = 'analysis', case = 'mixed'
+record_property = <function record_property.<locals>.append_property at 0x10d926700>
+
+    @pytest.mark.parametrize('group',list(MODELS))
+    @pytest.mark.parametrize('case',CALIBRATION_CASES)
+    def test_real_qwen_estimate_covers_reported_input(f13_real_environment,group,case,record_property):
+        env=f13_real_environment;body=calibration_payload(group,case)
+        reply=env.client.post('/v1/llm',json=body);rid=reply.headers['x-request-id'];trace=env.trace(rid)
+        record_property('f13_request_id',rid);record_property('f13_trace',json.dumps(trace,ensure_ascii=False))
+        assert reply.status_code==200,reply.text
+        assert trace['status']=='completed' and trace['input_token_kind']=='estimated'
+        calibration=[]
+        for attempt in trace['attempts']:
+            assert attempt['usage'] is not None
+            estimated=attempt['input_token_count'];actual=attempt['usage']['input_tokens']
+            assert estimated>=actual,(group,case,estimated,actual)
+            calibration.append(dict(estimate=estimated,actual=actual,difference=estimated-actual,
+                ratio=estimated/actual if actual else None,counter_version=attempt['counter_version']))
+        if case=='near_user_limit':assert len(body['messages'][0]['content'])==MAX_USER_MESSAGE_CHARS
+        if case=='large_schema':assert reply.json()['data']['parsed']=={'marker':'OK'}
+>       billing=env.verify(rid,trace)
+                ^^^^^^^^^^^^^^^^^^^^^
+
+tests/live/test_f13_models.py:117: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/f13_real_support.py:109: in verify
+    quoted=json.loads(charge[2]);assert quoted['version']==PRICE_VERSION
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+s = {'hit': '1.5', 'miss': '12', 'model': 'qwen3.8-max', 'output': '36', ...}
+cls = None, object_hook = None, parse_float = None, parse_int = None
+parse_constant = None, object_pairs_hook = None, kw = {}
+
+    def loads(s, *, cls=None, object_hook=None, parse_float=None,
+            parse_int=None, parse_constant=None, object_pairs_hook=None, **kw):
+        """Deserialize ``s`` (a ``str``, ``bytes`` or ``bytearray`` instance
+        containing a JSON document) to a Python object.
+    
+        ``object_hook`` is an optional function that will be called with the
+        result of any object literal decode (a ``dict``). The return value of
+        ``object_hook`` will be used instead of the ``dict``. This feature
+        can be used to implement custom decoders (e.g. JSON-RPC class hinting).
+    
+        ``object_pairs_hook`` is an optional function that will be called with the
+        result of any object literal decoded with an ordered list of pairs.  The
+        return value of ``object_pairs_hook`` will be used instead of the ``dict``.
+        This feature can be used to implement custom decoders.  If ``object_hook``
+        is also defined, the ``object_pairs_hook`` takes priority.
+    
+        ``parse_float``, if specified, will be called with the string
+        of every JSON float to be decoded. By default this is equivalent to
+        float(num_str). This can be used to use another datatype or parser
+        for JSON floats (e.g. decimal.Decimal).
+    
+        ``parse_int``, if specified, will be called with the string
+        of every JSON int to be decoded. By default this is equivalent to
+        int(num_str). This can be used to use another datatype or parser
+        for JSON integers (e.g. float).
+    
+        ``parse_constant``, if specified, will be called with one of the
+        following strings: -Infinity, Infinity, NaN.
+        This can be used to raise an exception if invalid JSON numbers
+        are encountered.
+    
+        To use a custom ``JSONDecoder`` subclass, specify it with the ``cls``
+        kwarg; otherwise ``JSONDecoder`` is used.
+        """
+        if isinstance(s, str):
+            if s.startswith('\ufeff'):
+                raise JSONDecodeError("Unexpected UTF-8 BOM (decode using utf-8-sig)",
+                                      s, 0)
+        else:
+            if not isinstance(s, (bytes, bytearray)):
+>               raise TypeError(f'the JSON object must be str, bytes or bytearray, '
+                                f'not {s.__class__.__name__}')
+E               TypeError: the JSON object must be str, bytes or bytearray, not dict
+
+/Users/baiyu/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/json/__init__.py:339: TypeError
+__________ test_real_qwen_estimate_covers_reported_input[code-light] ___________
+
+f13_real_environment = RealEnvironment(client=<starlette.testclient.TestClient object at 0x117384c80>, application=<fastapi.applications.Fast...lv86fj56zjgm8txl21tvpq00000gn/T/llmgw-f13-work-eifzl4on/pytest-stage-a-real/test_real_qwen_estimate_covers9/f13-real'))
+group = 'light', case = 'code'
+record_property = <function record_property.<locals>.append_property at 0x10dda45e0>
+
+    @pytest.mark.parametrize('group',list(MODELS))
+    @pytest.mark.parametrize('case',CALIBRATION_CASES)
+    def test_real_qwen_estimate_covers_reported_input(f13_real_environment,group,case,record_property):
+        env=f13_real_environment;body=calibration_payload(group,case)
+        reply=env.client.post('/v1/llm',json=body);rid=reply.headers['x-request-id'];trace=env.trace(rid)
+        record_property('f13_request_id',rid);record_property('f13_trace',json.dumps(trace,ensure_ascii=False))
+        assert reply.status_code==200,reply.text
+        assert trace['status']=='completed' and trace['input_token_kind']=='estimated'
+        calibration=[]
+        for attempt in trace['attempts']:
+            assert attempt['usage'] is not None
+            estimated=attempt['input_token_count'];actual=attempt['usage']['input_tokens']
+            assert estimated>=actual,(group,case,estimated,actual)
+            calibration.append(dict(estimate=estimated,actual=actual,difference=estimated-actual,
+                ratio=estimated/actual if actual else None,counter_version=attempt['counter_version']))
+        if case=='near_user_limit':assert len(body['messages'][0]['content'])==MAX_USER_MESSAGE_CHARS
+        if case=='large_schema':assert reply.json()['data']['parsed']=={'marker':'OK'}
+>       billing=env.verify(rid,trace)
+                ^^^^^^^^^^^^^^^^^^^^^
+
+tests/live/test_f13_models.py:117: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/f13_real_support.py:109: in verify
+    quoted=json.loads(charge[2]);assert quoted['version']==PRICE_VERSION
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+s = {'hit': '0.1', 'miss': '0.8', 'model': 'qwen3.8-flash', 'output': '2.7', ...}
+cls = None, object_hook = None, parse_float = None, parse_int = None
+parse_constant = None, object_pairs_hook = None, kw = {}
+
+    def loads(s, *, cls=None, object_hook=None, parse_float=None,
+            parse_int=None, parse_constant=None, object_pairs_hook=None, **kw):
+        """Deserialize ``s`` (a ``str``, ``bytes`` or ``bytearray`` instance
+        containing a JSON document) to a Python object.
+    
+        ``object_hook`` is an optional function that will be called with the
+        result of any object literal decode (a ``dict``). The return value of
+        ``object_hook`` will be used instead of the ``dict``. This feature
+        can be used to implement custom decoders (e.g. JSON-RPC class hinting).
+    
+        ``object_pairs_hook`` is an optional function that will be called with the
+        result of any object literal decoded with an ordered list of pairs.  The
+        return value of ``object_pairs_hook`` will be used instead of the ``dict``.
+        This feature can be used to implement custom decoders.  If ``object_hook``
+        is also defined, the ``object_pairs_hook`` takes priority.
+    
+        ``parse_float``, if specified, will be called with the string
+        of every JSON float to be decoded. By default this is equivalent to
+        float(num_str). This can be used to use another datatype or parser
+        for JSON floats (e.g. decimal.Decimal).
+    
+        ``parse_int``, if specified, will be called with the string
+        of every JSON int to be decoded. By default this is equivalent to
+        int(num_str). This can be used to use another datatype or parser
+        for JSON integers (e.g. float).
+    
+        ``parse_constant``, if specified, will be called with one of the
+        following strings: -Infinity, Infinity, NaN.
+        This can be used to raise an exception if invalid JSON numbers
+        are encountered.
+    
+        To use a custom ``JSONDecoder`` subclass, specify it with the ``cls``
+        kwarg; otherwise ``JSONDecoder`` is used.
+        """
+        if isinstance(s, str):
+            if s.startswith('\ufeff'):
+                raise JSONDecodeError("Unexpected UTF-8 BOM (decode using utf-8-sig)",
+                                      s, 0)
+        else:
+            if not isinstance(s, (bytes, bytearray)):
+>               raise TypeError(f'the JSON object must be str, bytes or bytearray, '
+                                f'not {s.__class__.__name__}')
+E               TypeError: the JSON object must be str, bytes or bytearray, not dict
+
+/Users/baiyu/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/json/__init__.py:339: TypeError
+_________ test_real_qwen_estimate_covers_reported_input[code-general] __________
+
+f13_real_environment = RealEnvironment(client=<starlette.testclient.TestClient object at 0x10df2d280>, application=<fastapi.applications.Fast...v86fj56zjgm8txl21tvpq00000gn/T/llmgw-f13-work-eifzl4on/pytest-stage-a-real/test_real_qwen_estimate_covers10/f13-real'))
+group = 'general', case = 'code'
+record_property = <function record_property.<locals>.append_property at 0x10dda56c0>
+
+    @pytest.mark.parametrize('group',list(MODELS))
+    @pytest.mark.parametrize('case',CALIBRATION_CASES)
+    def test_real_qwen_estimate_covers_reported_input(f13_real_environment,group,case,record_property):
+        env=f13_real_environment;body=calibration_payload(group,case)
+        reply=env.client.post('/v1/llm',json=body);rid=reply.headers['x-request-id'];trace=env.trace(rid)
+        record_property('f13_request_id',rid);record_property('f13_trace',json.dumps(trace,ensure_ascii=False))
+        assert reply.status_code==200,reply.text
+        assert trace['status']=='completed' and trace['input_token_kind']=='estimated'
+        calibration=[]
+        for attempt in trace['attempts']:
+            assert attempt['usage'] is not None
+            estimated=attempt['input_token_count'];actual=attempt['usage']['input_tokens']
+            assert estimated>=actual,(group,case,estimated,actual)
+            calibration.append(dict(estimate=estimated,actual=actual,difference=estimated-actual,
+                ratio=estimated/actual if actual else None,counter_version=attempt['counter_version']))
+        if case=='near_user_limit':assert len(body['messages'][0]['content'])==MAX_USER_MESSAGE_CHARS
+        if case=='large_schema':assert reply.json()['data']['parsed']=={'marker':'OK'}
+>       billing=env.verify(rid,trace)
+                ^^^^^^^^^^^^^^^^^^^^^
+
+tests/live/test_f13_models.py:117: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/f13_real_support.py:109: in verify
+    quoted=json.loads(charge[2]);assert quoted['version']==PRICE_VERSION
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+s = {'hit': '0.32', 'miss': '1.6', 'model': 'qwen3.7-plus', 'output': '6.4', ...}
+cls = None, object_hook = None, parse_float = None, parse_int = None
+parse_constant = None, object_pairs_hook = None, kw = {}
+
+    def loads(s, *, cls=None, object_hook=None, parse_float=None,
+            parse_int=None, parse_constant=None, object_pairs_hook=None, **kw):
+        """Deserialize ``s`` (a ``str``, ``bytes`` or ``bytearray`` instance
+        containing a JSON document) to a Python object.
+    
+        ``object_hook`` is an optional function that will be called with the
+        result of any object literal decode (a ``dict``). The return value of
+        ``object_hook`` will be used instead of the ``dict``. This feature
+        can be used to implement custom decoders (e.g. JSON-RPC class hinting).
+    
+        ``object_pairs_hook`` is an optional function that will be called with the
+        result of any object literal decoded with an ordered list of pairs.  The
+        return value of ``object_pairs_hook`` will be used instead of the ``dict``.
+        This feature can be used to implement custom decoders.  If ``object_hook``
+        is also defined, the ``object_pairs_hook`` takes priority.
+    
+        ``parse_float``, if specified, will be called with the string
+        of every JSON float to be decoded. By default this is equivalent to
+        float(num_str). This can be used to use another datatype or parser
+        for JSON floats (e.g. decimal.Decimal).
+    
+        ``parse_int``, if specified, will be called with the string
+        of every JSON int to be decoded. By default this is equivalent to
+        int(num_str). This can be used to use another datatype or parser
+        for JSON integers (e.g. float).
+    
+        ``parse_constant``, if specified, will be called with one of the
+        following strings: -Infinity, Infinity, NaN.
+        This can be used to raise an exception if invalid JSON numbers
+        are encountered.
+    
+        To use a custom ``JSONDecoder`` subclass, specify it with the ``cls``
+        kwarg; otherwise ``JSONDecoder`` is used.
+        """
+        if isinstance(s, str):
+            if s.startswith('\ufeff'):
+                raise JSONDecodeError("Unexpected UTF-8 BOM (decode using utf-8-sig)",
+                                      s, 0)
+        else:
+            if not isinstance(s, (bytes, bytearray)):
+>               raise TypeError(f'the JSON object must be str, bytes or bytearray, '
+                                f'not {s.__class__.__name__}')
+E               TypeError: the JSON object must be str, bytes or bytearray, not dict
+
+/Users/baiyu/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/json/__init__.py:339: TypeError
+_________ test_real_qwen_estimate_covers_reported_input[code-analysis] _________
+
+f13_real_environment = RealEnvironment(client=<starlette.testclient.TestClient object at 0x1174b11c0>, application=<fastapi.applications.Fast...v86fj56zjgm8txl21tvpq00000gn/T/llmgw-f13-work-eifzl4on/pytest-stage-a-real/test_real_qwen_estimate_covers11/f13-real'))
+group = 'analysis', case = 'code'
+record_property = <function record_property.<locals>.append_property at 0x11749cf40>
+
+    @pytest.mark.parametrize('group',list(MODELS))
+    @pytest.mark.parametrize('case',CALIBRATION_CASES)
+    def test_real_qwen_estimate_covers_reported_input(f13_real_environment,group,case,record_property):
+        env=f13_real_environment;body=calibration_payload(group,case)
+        reply=env.client.post('/v1/llm',json=body);rid=reply.headers['x-request-id'];trace=env.trace(rid)
+        record_property('f13_request_id',rid);record_property('f13_trace',json.dumps(trace,ensure_ascii=False))
+        assert reply.status_code==200,reply.text
+        assert trace['status']=='completed' and trace['input_token_kind']=='estimated'
+        calibration=[]
+        for attempt in trace['attempts']:
+            assert attempt['usage'] is not None
+            estimated=attempt['input_token_count'];actual=attempt['usage']['input_tokens']
+            assert estimated>=actual,(group,case,estimated,actual)
+            calibration.append(dict(estimate=estimated,actual=actual,difference=estimated-actual,
+                ratio=estimated/actual if actual else None,counter_version=attempt['counter_version']))
+        if case=='near_user_limit':assert len(body['messages'][0]['content'])==MAX_USER_MESSAGE_CHARS
+        if case=='large_schema':assert reply.json()['data']['parsed']=={'marker':'OK'}
+>       billing=env.verify(rid,trace)
+                ^^^^^^^^^^^^^^^^^^^^^
+
+tests/live/test_f13_models.py:117: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/f13_real_support.py:109: in verify
+    quoted=json.loads(charge[2]);assert quoted['version']==PRICE_VERSION
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+s = {'hit': '1.5', 'miss': '12', 'model': 'qwen3.8-max', 'output': '36', ...}
+cls = None, object_hook = None, parse_float = None, parse_int = None
+parse_constant = None, object_pairs_hook = None, kw = {}
+
+    def loads(s, *, cls=None, object_hook=None, parse_float=None,
+            parse_int=None, parse_constant=None, object_pairs_hook=None, **kw):
+        """Deserialize ``s`` (a ``str``, ``bytes`` or ``bytearray`` instance
+        containing a JSON document) to a Python object.
+    
+        ``object_hook`` is an optional function that will be called with the
+        result of any object literal decode (a ``dict``). The return value of
+        ``object_hook`` will be used instead of the ``dict``. This feature
+        can be used to implement custom decoders (e.g. JSON-RPC class hinting).
+    
+        ``object_pairs_hook`` is an optional function that will be called with the
+        result of any object literal decoded with an ordered list of pairs.  The
+        return value of ``object_pairs_hook`` will be used instead of the ``dict``.
+        This feature can be used to implement custom decoders.  If ``object_hook``
+        is also defined, the ``object_pairs_hook`` takes priority.
+    
+        ``parse_float``, if specified, will be called with the string
+        of every JSON float to be decoded. By default this is equivalent to
+        float(num_str). This can be used to use another datatype or parser
+        for JSON floats (e.g. decimal.Decimal).
+    
+        ``parse_int``, if specified, will be called with the string
+        of every JSON int to be decoded. By default this is equivalent to
+        int(num_str). This can be used to use another datatype or parser
+        for JSON integers (e.g. float).
+    
+        ``parse_constant``, if specified, will be called with one of the
+        following strings: -Infinity, Infinity, NaN.
+        This can be used to raise an exception if invalid JSON numbers
+        are encountered.
+    
+        To use a custom ``JSONDecoder`` subclass, specify it with the ``cls``
+        kwarg; otherwise ``JSONDecoder`` is used.
+        """
+        if isinstance(s, str):
+            if s.startswith('\ufeff'):
+                raise JSONDecodeError("Unexpected UTF-8 BOM (decode using utf-8-sig)",
+                                      s, 0)
+        else:
+            if not isinstance(s, (bytes, bytearray)):
+>               raise TypeError(f'the JSON object must be str, bytes or bytearray, '
+                                f'not {s.__class__.__name__}')
+E               TypeError: the JSON object must be str, bytes or bytearray, not dict
+
+/Users/baiyu/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/json/__init__.py:339: TypeError
+_________ test_real_qwen_estimate_covers_reported_input[unicode-light] _________
+
+f13_real_environment = RealEnvironment(client=<starlette.testclient.TestClient object at 0x10d7fd7f0>, application=<fastapi.applications.Fast...v86fj56zjgm8txl21tvpq00000gn/T/llmgw-f13-work-eifzl4on/pytest-stage-a-real/test_real_qwen_estimate_covers12/f13-real'))
+group = 'light', case = 'unicode'
+record_property = <function record_property.<locals>.append_property at 0x11747b380>
+
+    @pytest.mark.parametrize('group',list(MODELS))
+    @pytest.mark.parametrize('case',CALIBRATION_CASES)
+    def test_real_qwen_estimate_covers_reported_input(f13_real_environment,group,case,record_property):
+        env=f13_real_environment;body=calibration_payload(group,case)
+        reply=env.client.post('/v1/llm',json=body);rid=reply.headers['x-request-id'];trace=env.trace(rid)
+        record_property('f13_request_id',rid);record_property('f13_trace',json.dumps(trace,ensure_ascii=False))
+        assert reply.status_code==200,reply.text
+        assert trace['status']=='completed' and trace['input_token_kind']=='estimated'
+        calibration=[]
+        for attempt in trace['attempts']:
+            assert attempt['usage'] is not None
+            estimated=attempt['input_token_count'];actual=attempt['usage']['input_tokens']
+            assert estimated>=actual,(group,case,estimated,actual)
+            calibration.append(dict(estimate=estimated,actual=actual,difference=estimated-actual,
+                ratio=estimated/actual if actual else None,counter_version=attempt['counter_version']))
+        if case=='near_user_limit':assert len(body['messages'][0]['content'])==MAX_USER_MESSAGE_CHARS
+        if case=='large_schema':assert reply.json()['data']['parsed']=={'marker':'OK'}
+>       billing=env.verify(rid,trace)
+                ^^^^^^^^^^^^^^^^^^^^^
+
+tests/live/test_f13_models.py:117: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/f13_real_support.py:109: in verify
+    quoted=json.loads(charge[2]);assert quoted['version']==PRICE_VERSION
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+s = {'hit': '0.1', 'miss': '0.8', 'model': 'qwen3.8-flash', 'output': '2.7', ...}
+cls = None, object_hook = None, parse_float = None, parse_int = None
+parse_constant = None, object_pairs_hook = None, kw = {}
+
+    def loads(s, *, cls=None, object_hook=None, parse_float=None,
+            parse_int=None, parse_constant=None, object_pairs_hook=None, **kw):
+        """Deserialize ``s`` (a ``str``, ``bytes`` or ``bytearray`` instance
+        containing a JSON document) to a Python object.
+    
+        ``object_hook`` is an optional function that will be called with the
+        result of any object literal decode (a ``dict``). The return value of
+        ``object_hook`` will be used instead of the ``dict``. This feature
+        can be used to implement custom decoders (e.g. JSON-RPC class hinting).
+    
+        ``object_pairs_hook`` is an optional function that will be called with the
+        result of any object literal decoded with an ordered list of pairs.  The
+        return value of ``object_pairs_hook`` will be used instead of the ``dict``.
+        This feature can be used to implement custom decoders.  If ``object_hook``
+        is also defined, the ``object_pairs_hook`` takes priority.
+    
+        ``parse_float``, if specified, will be called with the string
+        of every JSON float to be decoded. By default this is equivalent to
+        float(num_str). This can be used to use another datatype or parser
+        for JSON floats (e.g. decimal.Decimal).
+    
+        ``parse_int``, if specified, will be called with the string
+        of every JSON int to be decoded. By default this is equivalent to
+        int(num_str). This can be used to use another datatype or parser
+        for JSON integers (e.g. float).
+    
+        ``parse_constant``, if specified, will be called with one of the
+        following strings: -Infinity, Infinity, NaN.
+        This can be used to raise an exception if invalid JSON numbers
+        are encountered.
+    
+        To use a custom ``JSONDecoder`` subclass, specify it with the ``cls``
+        kwarg; otherwise ``JSONDecoder`` is used.
+        """
+        if isinstance(s, str):
+            if s.startswith('\ufeff'):
+                raise JSONDecodeError("Unexpected UTF-8 BOM (decode using utf-8-sig)",
+                                      s, 0)
+        else:
+            if not isinstance(s, (bytes, bytearray)):
+>               raise TypeError(f'the JSON object must be str, bytes or bytearray, '
+                                f'not {s.__class__.__name__}')
+E               TypeError: the JSON object must be str, bytes or bytearray, not dict
+
+/Users/baiyu/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/json/__init__.py:339: TypeError
+________ test_real_qwen_estimate_covers_reported_input[unicode-general] ________
+
+f13_real_environment = RealEnvironment(client=<starlette.testclient.TestClient object at 0x1172879e0>, application=<fastapi.applications.Fast...v86fj56zjgm8txl21tvpq00000gn/T/llmgw-f13-work-eifzl4on/pytest-stage-a-real/test_real_qwen_estimate_covers13/f13-real'))
+group = 'general', case = 'unicode'
+record_property = <function record_property.<locals>.append_property at 0x10dd8af20>
+
+    @pytest.mark.parametrize('group',list(MODELS))
+    @pytest.mark.parametrize('case',CALIBRATION_CASES)
+    def test_real_qwen_estimate_covers_reported_input(f13_real_environment,group,case,record_property):
+        env=f13_real_environment;body=calibration_payload(group,case)
+        reply=env.client.post('/v1/llm',json=body);rid=reply.headers['x-request-id'];trace=env.trace(rid)
+        record_property('f13_request_id',rid);record_property('f13_trace',json.dumps(trace,ensure_ascii=False))
+        assert reply.status_code==200,reply.text
+        assert trace['status']=='completed' and trace['input_token_kind']=='estimated'
+        calibration=[]
+        for attempt in trace['attempts']:
+            assert attempt['usage'] is not None
+            estimated=attempt['input_token_count'];actual=attempt['usage']['input_tokens']
+            assert estimated>=actual,(group,case,estimated,actual)
+            calibration.append(dict(estimate=estimated,actual=actual,difference=estimated-actual,
+                ratio=estimated/actual if actual else None,counter_version=attempt['counter_version']))
+        if case=='near_user_limit':assert len(body['messages'][0]['content'])==MAX_USER_MESSAGE_CHARS
+        if case=='large_schema':assert reply.json()['data']['parsed']=={'marker':'OK'}
+>       billing=env.verify(rid,trace)
+                ^^^^^^^^^^^^^^^^^^^^^
+
+tests/live/test_f13_models.py:117: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/f13_real_support.py:109: in verify
+    quoted=json.loads(charge[2]);assert quoted['version']==PRICE_VERSION
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+s = {'hit': '0.32', 'miss': '1.6', 'model': 'qwen3.7-plus', 'output': '6.4', ...}
+cls = None, object_hook = None, parse_float = None, parse_int = None
+parse_constant = None, object_pairs_hook = None, kw = {}
+
+    def loads(s, *, cls=None, object_hook=None, parse_float=None,
+            parse_int=None, parse_constant=None, object_pairs_hook=None, **kw):
+        """Deserialize ``s`` (a ``str``, ``bytes`` or ``bytearray`` instance
+        containing a JSON document) to a Python object.
+    
+        ``object_hook`` is an optional function that will be called with the
+        result of any object literal decode (a ``dict``). The return value of
+        ``object_hook`` will be used instead of the ``dict``. This feature
+        can be used to implement custom decoders (e.g. JSON-RPC class hinting).
+    
+        ``object_pairs_hook`` is an optional function that will be called with the
+        result of any object literal decoded with an ordered list of pairs.  The
+        return value of ``object_pairs_hook`` will be used instead of the ``dict``.
+        This feature can be used to implement custom decoders.  If ``object_hook``
+        is also defined, the ``object_pairs_hook`` takes priority.
+    
+        ``parse_float``, if specified, will be called with the string
+        of every JSON float to be decoded. By default this is equivalent to
+        float(num_str). This can be used to use another datatype or parser
+        for JSON floats (e.g. decimal.Decimal).
+    
+        ``parse_int``, if specified, will be called with the string
+        of every JSON int to be decoded. By default this is equivalent to
+        int(num_str). This can be used to use another datatype or parser
+        for JSON integers (e.g. float).
+    
+        ``parse_constant``, if specified, will be called with one of the
+        following strings: -Infinity, Infinity, NaN.
+        This can be used to raise an exception if invalid JSON numbers
+        are encountered.
+    
+        To use a custom ``JSONDecoder`` subclass, specify it with the ``cls``
+        kwarg; otherwise ``JSONDecoder`` is used.
+        """
+        if isinstance(s, str):
+            if s.startswith('\ufeff'):
+                raise JSONDecodeError("Unexpected UTF-8 BOM (decode using utf-8-sig)",
+                                      s, 0)
+        else:
+            if not isinstance(s, (bytes, bytearray)):
+>               raise TypeError(f'the JSON object must be str, bytes or bytearray, '
+                                f'not {s.__class__.__name__}')
+E               TypeError: the JSON object must be str, bytes or bytearray, not dict
+
+/Users/baiyu/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/json/__init__.py:339: TypeError
+_______ test_real_qwen_estimate_covers_reported_input[unicode-analysis] ________
+
+f13_real_environment = RealEnvironment(client=<starlette.testclient.TestClient object at 0x1173297f0>, application=<fastapi.applications.Fast...v86fj56zjgm8txl21tvpq00000gn/T/llmgw-f13-work-eifzl4on/pytest-stage-a-real/test_real_qwen_estimate_covers14/f13-real'))
+group = 'analysis', case = 'unicode'
+record_property = <function record_property.<locals>.append_property at 0x11752e160>
+
+    @pytest.mark.parametrize('group',list(MODELS))
+    @pytest.mark.parametrize('case',CALIBRATION_CASES)
+    def test_real_qwen_estimate_covers_reported_input(f13_real_environment,group,case,record_property):
+        env=f13_real_environment;body=calibration_payload(group,case)
+        reply=env.client.post('/v1/llm',json=body);rid=reply.headers['x-request-id'];trace=env.trace(rid)
+        record_property('f13_request_id',rid);record_property('f13_trace',json.dumps(trace,ensure_ascii=False))
+        assert reply.status_code==200,reply.text
+        assert trace['status']=='completed' and trace['input_token_kind']=='estimated'
+        calibration=[]
+        for attempt in trace['attempts']:
+            assert attempt['usage'] is not None
+            estimated=attempt['input_token_count'];actual=attempt['usage']['input_tokens']
+            assert estimated>=actual,(group,case,estimated,actual)
+            calibration.append(dict(estimate=estimated,actual=actual,difference=estimated-actual,
+                ratio=estimated/actual if actual else None,counter_version=attempt['counter_version']))
+        if case=='near_user_limit':assert len(body['messages'][0]['content'])==MAX_USER_MESSAGE_CHARS
+        if case=='large_schema':assert reply.json()['data']['parsed']=={'marker':'OK'}
+>       billing=env.verify(rid,trace)
+                ^^^^^^^^^^^^^^^^^^^^^
+
+tests/live/test_f13_models.py:117: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/f13_real_support.py:109: in verify
+    quoted=json.loads(charge[2]);assert quoted['version']==PRICE_VERSION
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+s = {'hit': '1.5', 'miss': '12', 'model': 'qwen3.8-max', 'output': '36', ...}
+cls = None, object_hook = None, parse_float = None, parse_int = None
+parse_constant = None, object_pairs_hook = None, kw = {}
+
+    def loads(s, *, cls=None, object_hook=None, parse_float=None,
+            parse_int=None, parse_constant=None, object_pairs_hook=None, **kw):
+        """Deserialize ``s`` (a ``str``, ``bytes`` or ``bytearray`` instance
+        containing a JSON document) to a Python object.
+    
+        ``object_hook`` is an optional function that will be called with the
+        result of any object literal decode (a ``dict``). The return value of
+        ``object_hook`` will be used instead of the ``dict``. This feature
+        can be used to implement custom decoders (e.g. JSON-RPC class hinting).
+    
+        ``object_pairs_hook`` is an optional function that will be called with the
+        result of any object literal decoded with an ordered list of pairs.  The
+        return value of ``object_pairs_hook`` will be used instead of the ``dict``.
+        This feature can be used to implement custom decoders.  If ``object_hook``
+        is also defined, the ``object_pairs_hook`` takes priority.
+    
+        ``parse_float``, if specified, will be called with the string
+        of every JSON float to be decoded. By default this is equivalent to
+        float(num_str). This can be used to use another datatype or parser
+        for JSON floats (e.g. decimal.Decimal).
+    
+        ``parse_int``, if specified, will be called with the string
+        of every JSON int to be decoded. By default this is equivalent to
+        int(num_str). This can be used to use another datatype or parser
+        for JSON integers (e.g. float).
+    
+        ``parse_constant``, if specified, will be called with one of the
+        following strings: -Infinity, Infinity, NaN.
+        This can be used to raise an exception if invalid JSON numbers
+        are encountered.
+    
+        To use a custom ``JSONDecoder`` subclass, specify it with the ``cls``
+        kwarg; otherwise ``JSONDecoder`` is used.
+        """
+        if isinstance(s, str):
+            if s.startswith('\ufeff'):
+                raise JSONDecodeError("Unexpected UTF-8 BOM (decode using utf-8-sig)",
+                                      s, 0)
+        else:
+            if not isinstance(s, (bytes, bytearray)):
+>               raise TypeError(f'the JSON object must be str, bytes or bytearray, '
+                                f'not {s.__class__.__name__}')
+E               TypeError: the JSON object must be str, bytes or bytearray, not dict
+
+/Users/baiyu/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/json/__init__.py:339: TypeError
+_____ test_real_qwen_estimate_covers_reported_input[near_user_limit-light] _____
+
+f13_real_environment = RealEnvironment(client=<starlette.testclient.TestClient object at 0x10dc67020>, application=<fastapi.applications.Fast...v86fj56zjgm8txl21tvpq00000gn/T/llmgw-f13-work-eifzl4on/pytest-stage-a-real/test_real_qwen_estimate_covers15/f13-real'))
+group = 'light', case = 'near_user_limit'
+record_property = <function record_property.<locals>.append_property at 0x10de56520>
+
+    @pytest.mark.parametrize('group',list(MODELS))
+    @pytest.mark.parametrize('case',CALIBRATION_CASES)
+    def test_real_qwen_estimate_covers_reported_input(f13_real_environment,group,case,record_property):
+        env=f13_real_environment;body=calibration_payload(group,case)
+        reply=env.client.post('/v1/llm',json=body);rid=reply.headers['x-request-id'];trace=env.trace(rid)
+        record_property('f13_request_id',rid);record_property('f13_trace',json.dumps(trace,ensure_ascii=False))
+        assert reply.status_code==200,reply.text
+        assert trace['status']=='completed' and trace['input_token_kind']=='estimated'
+        calibration=[]
+        for attempt in trace['attempts']:
+            assert attempt['usage'] is not None
+            estimated=attempt['input_token_count'];actual=attempt['usage']['input_tokens']
+            assert estimated>=actual,(group,case,estimated,actual)
+            calibration.append(dict(estimate=estimated,actual=actual,difference=estimated-actual,
+                ratio=estimated/actual if actual else None,counter_version=attempt['counter_version']))
+        if case=='near_user_limit':assert len(body['messages'][0]['content'])==MAX_USER_MESSAGE_CHARS
+        if case=='large_schema':assert reply.json()['data']['parsed']=={'marker':'OK'}
+>       billing=env.verify(rid,trace)
+                ^^^^^^^^^^^^^^^^^^^^^
+
+tests/live/test_f13_models.py:117: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/f13_real_support.py:109: in verify
+    quoted=json.loads(charge[2]);assert quoted['version']==PRICE_VERSION
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+s = {'hit': '0.1', 'miss': '0.8', 'model': 'qwen3.8-flash', 'output': '2.7', ...}
+cls = None, object_hook = None, parse_float = None, parse_int = None
+parse_constant = None, object_pairs_hook = None, kw = {}
+
+    def loads(s, *, cls=None, object_hook=None, parse_float=None,
+            parse_int=None, parse_constant=None, object_pairs_hook=None, **kw):
+        """Deserialize ``s`` (a ``str``, ``bytes`` or ``bytearray`` instance
+        containing a JSON document) to a Python object.
+    
+        ``object_hook`` is an optional function that will be called with the
+        result of any object literal decode (a ``dict``). The return value of
+        ``object_hook`` will be used instead of the ``dict``. This feature
+        can be used to implement custom decoders (e.g. JSON-RPC class hinting).
+    
+        ``object_pairs_hook`` is an optional function that will be called with the
+        result of any object literal decoded with an ordered list of pairs.  The
+        return value of ``object_pairs_hook`` will be used instead of the ``dict``.
+        This feature can be used to implement custom decoders.  If ``object_hook``
+        is also defined, the ``object_pairs_hook`` takes priority.
+    
+        ``parse_float``, if specified, will be called with the string
+        of every JSON float to be decoded. By default this is equivalent to
+        float(num_str). This can be used to use another datatype or parser
+        for JSON floats (e.g. decimal.Decimal).
+    
+        ``parse_int``, if specified, will be called with the string
+        of every JSON int to be decoded. By default this is equivalent to
+        int(num_str). This can be used to use another datatype or parser
+        for JSON integers (e.g. float).
+    
+        ``parse_constant``, if specified, will be called with one of the
+        following strings: -Infinity, Infinity, NaN.
+        This can be used to raise an exception if invalid JSON numbers
+        are encountered.
+    
+        To use a custom ``JSONDecoder`` subclass, specify it with the ``cls``
+        kwarg; otherwise ``JSONDecoder`` is used.
+        """
+        if isinstance(s, str):
+            if s.startswith('\ufeff'):
+                raise JSONDecodeError("Unexpected UTF-8 BOM (decode using utf-8-sig)",
+                                      s, 0)
+        else:
+            if not isinstance(s, (bytes, bytearray)):
+>               raise TypeError(f'the JSON object must be str, bytes or bytearray, '
+                                f'not {s.__class__.__name__}')
+E               TypeError: the JSON object must be str, bytes or bytearray, not dict
+
+/Users/baiyu/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/json/__init__.py:339: TypeError
+____ test_real_qwen_estimate_covers_reported_input[near_user_limit-general] ____
+
+f13_real_environment = RealEnvironment(client=<starlette.testclient.TestClient object at 0x10d8f9e80>, application=<fastapi.applications.Fast...v86fj56zjgm8txl21tvpq00000gn/T/llmgw-f13-work-eifzl4on/pytest-stage-a-real/test_real_qwen_estimate_covers16/f13-real'))
+group = 'general', case = 'near_user_limit'
+record_property = <function record_property.<locals>.append_property at 0x1172e8400>
+
+    @pytest.mark.parametrize('group',list(MODELS))
+    @pytest.mark.parametrize('case',CALIBRATION_CASES)
+    def test_real_qwen_estimate_covers_reported_input(f13_real_environment,group,case,record_property):
+        env=f13_real_environment;body=calibration_payload(group,case)
+        reply=env.client.post('/v1/llm',json=body);rid=reply.headers['x-request-id'];trace=env.trace(rid)
+        record_property('f13_request_id',rid);record_property('f13_trace',json.dumps(trace,ensure_ascii=False))
+        assert reply.status_code==200,reply.text
+        assert trace['status']=='completed' and trace['input_token_kind']=='estimated'
+        calibration=[]
+        for attempt in trace['attempts']:
+            assert attempt['usage'] is not None
+            estimated=attempt['input_token_count'];actual=attempt['usage']['input_tokens']
+            assert estimated>=actual,(group,case,estimated,actual)
+            calibration.append(dict(estimate=estimated,actual=actual,difference=estimated-actual,
+                ratio=estimated/actual if actual else None,counter_version=attempt['counter_version']))
+        if case=='near_user_limit':assert len(body['messages'][0]['content'])==MAX_USER_MESSAGE_CHARS
+        if case=='large_schema':assert reply.json()['data']['parsed']=={'marker':'OK'}
+>       billing=env.verify(rid,trace)
+                ^^^^^^^^^^^^^^^^^^^^^
+
+tests/live/test_f13_models.py:117: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/f13_real_support.py:109: in verify
+    quoted=json.loads(charge[2]);assert quoted['version']==PRICE_VERSION
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+s = {'hit': '0.32', 'miss': '1.6', 'model': 'qwen3.7-plus', 'output': '6.4', ...}
+cls = None, object_hook = None, parse_float = None, parse_int = None
+parse_constant = None, object_pairs_hook = None, kw = {}
+
+    def loads(s, *, cls=None, object_hook=None, parse_float=None,
+            parse_int=None, parse_constant=None, object_pairs_hook=None, **kw):
+        """Deserialize ``s`` (a ``str``, ``bytes`` or ``bytearray`` instance
+        containing a JSON document) to a Python object.
+    
+        ``object_hook`` is an optional function that will be called with the
+        result of any object literal decode (a ``dict``). The return value of
+        ``object_hook`` will be used instead of the ``dict``. This feature
+        can be used to implement custom decoders (e.g. JSON-RPC class hinting).
+    
+        ``object_pairs_hook`` is an optional function that will be called with the
+        result of any object literal decoded with an ordered list of pairs.  The
+        return value of ``object_pairs_hook`` will be used instead of the ``dict``.
+        This feature can be used to implement custom decoders.  If ``object_hook``
+        is also defined, the ``object_pairs_hook`` takes priority.
+    
+        ``parse_float``, if specified, will be called with the string
+        of every JSON float to be decoded. By default this is equivalent to
+        float(num_str). This can be used to use another datatype or parser
+        for JSON floats (e.g. decimal.Decimal).
+    
+        ``parse_int``, if specified, will be called with the string
+        of every JSON int to be decoded. By default this is equivalent to
+        int(num_str). This can be used to use another datatype or parser
+        for JSON integers (e.g. float).
+    
+        ``parse_constant``, if specified, will be called with one of the
+        following strings: -Infinity, Infinity, NaN.
+        This can be used to raise an exception if invalid JSON numbers
+        are encountered.
+    
+        To use a custom ``JSONDecoder`` subclass, specify it with the ``cls``
+        kwarg; otherwise ``JSONDecoder`` is used.
+        """
+        if isinstance(s, str):
+            if s.startswith('\ufeff'):
+                raise JSONDecodeError("Unexpected UTF-8 BOM (decode using utf-8-sig)",
+                                      s, 0)
+        else:
+            if not isinstance(s, (bytes, bytearray)):
+>               raise TypeError(f'the JSON object must be str, bytes or bytearray, '
+                                f'not {s.__class__.__name__}')
+E               TypeError: the JSON object must be str, bytes or bytearray, not dict
+
+/Users/baiyu/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/json/__init__.py:339: TypeError
+___ test_real_qwen_estimate_covers_reported_input[near_user_limit-analysis] ____
+
+f13_real_environment = RealEnvironment(client=<starlette.testclient.TestClient object at 0x10d91f140>, application=<fastapi.applications.Fast...v86fj56zjgm8txl21tvpq00000gn/T/llmgw-f13-work-eifzl4on/pytest-stage-a-real/test_real_qwen_estimate_covers17/f13-real'))
+group = 'analysis', case = 'near_user_limit'
+record_property = <function record_property.<locals>.append_property at 0x1175dc4a0>
+
+    @pytest.mark.parametrize('group',list(MODELS))
+    @pytest.mark.parametrize('case',CALIBRATION_CASES)
+    def test_real_qwen_estimate_covers_reported_input(f13_real_environment,group,case,record_property):
+        env=f13_real_environment;body=calibration_payload(group,case)
+        reply=env.client.post('/v1/llm',json=body);rid=reply.headers['x-request-id'];trace=env.trace(rid)
+        record_property('f13_request_id',rid);record_property('f13_trace',json.dumps(trace,ensure_ascii=False))
+        assert reply.status_code==200,reply.text
+        assert trace['status']=='completed' and trace['input_token_kind']=='estimated'
+        calibration=[]
+        for attempt in trace['attempts']:
+            assert attempt['usage'] is not None
+            estimated=attempt['input_token_count'];actual=attempt['usage']['input_tokens']
+            assert estimated>=actual,(group,case,estimated,actual)
+            calibration.append(dict(estimate=estimated,actual=actual,difference=estimated-actual,
+                ratio=estimated/actual if actual else None,counter_version=attempt['counter_version']))
+        if case=='near_user_limit':assert len(body['messages'][0]['content'])==MAX_USER_MESSAGE_CHARS
+        if case=='large_schema':assert reply.json()['data']['parsed']=={'marker':'OK'}
+>       billing=env.verify(rid,trace)
+                ^^^^^^^^^^^^^^^^^^^^^
+
+tests/live/test_f13_models.py:117: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/f13_real_support.py:109: in verify
+    quoted=json.loads(charge[2]);assert quoted['version']==PRICE_VERSION
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+s = {'hit': '1.5', 'miss': '12', 'model': 'qwen3.8-max', 'output': '36', ...}
+cls = None, object_hook = None, parse_float = None, parse_int = None
+parse_constant = None, object_pairs_hook = None, kw = {}
+
+    def loads(s, *, cls=None, object_hook=None, parse_float=None,
+            parse_int=None, parse_constant=None, object_pairs_hook=None, **kw):
+        """Deserialize ``s`` (a ``str``, ``bytes`` or ``bytearray`` instance
+        containing a JSON document) to a Python object.
+    
+        ``object_hook`` is an optional function that will be called with the
+        result of any object literal decode (a ``dict``). The return value of
+        ``object_hook`` will be used instead of the ``dict``. This feature
+        can be used to implement custom decoders (e.g. JSON-RPC class hinting).
+    
+        ``object_pairs_hook`` is an optional function that will be called with the
+        result of any object literal decoded with an ordered list of pairs.  The
+        return value of ``object_pairs_hook`` will be used instead of the ``dict``.
+        This feature can be used to implement custom decoders.  If ``object_hook``
+        is also defined, the ``object_pairs_hook`` takes priority.
+    
+        ``parse_float``, if specified, will be called with the string
+        of every JSON float to be decoded. By default this is equivalent to
+        float(num_str). This can be used to use another datatype or parser
+        for JSON floats (e.g. decimal.Decimal).
+    
+        ``parse_int``, if specified, will be called with the string
+        of every JSON int to be decoded. By default this is equivalent to
+        int(num_str). This can be used to use another datatype or parser
+        for JSON integers (e.g. float).
+    
+        ``parse_constant``, if specified, will be called with one of the
+        following strings: -Infinity, Infinity, NaN.
+        This can be used to raise an exception if invalid JSON numbers
+        are encountered.
+    
+        To use a custom ``JSONDecoder`` subclass, specify it with the ``cls``
+        kwarg; otherwise ``JSONDecoder`` is used.
+        """
+        if isinstance(s, str):
+            if s.startswith('\ufeff'):
+                raise JSONDecodeError("Unexpected UTF-8 BOM (decode using utf-8-sig)",
+                                      s, 0)
+        else:
+            if not isinstance(s, (bytes, bytearray)):
+>               raise TypeError(f'the JSON object must be str, bytes or bytearray, '
+                                f'not {s.__class__.__name__}')
+E               TypeError: the JSON object must be str, bytes or bytearray, not dict
+
+/Users/baiyu/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/json/__init__.py:339: TypeError
+________ test_real_qwen_estimate_covers_reported_input[few_shot-light] _________
+
+f13_real_environment = RealEnvironment(client=<starlette.testclient.TestClient object at 0x11772d7c0>, application=<fastapi.applications.Fast...v86fj56zjgm8txl21tvpq00000gn/T/llmgw-f13-work-eifzl4on/pytest-stage-a-real/test_real_qwen_estimate_covers18/f13-real'))
+group = 'light', case = 'few_shot'
+record_property = <function record_property.<locals>.append_property at 0x117713920>
+
+    @pytest.mark.parametrize('group',list(MODELS))
+    @pytest.mark.parametrize('case',CALIBRATION_CASES)
+    def test_real_qwen_estimate_covers_reported_input(f13_real_environment,group,case,record_property):
+        env=f13_real_environment;body=calibration_payload(group,case)
+        reply=env.client.post('/v1/llm',json=body);rid=reply.headers['x-request-id'];trace=env.trace(rid)
+        record_property('f13_request_id',rid);record_property('f13_trace',json.dumps(trace,ensure_ascii=False))
+        assert reply.status_code==200,reply.text
+        assert trace['status']=='completed' and trace['input_token_kind']=='estimated'
+        calibration=[]
+        for attempt in trace['attempts']:
+            assert attempt['usage'] is not None
+            estimated=attempt['input_token_count'];actual=attempt['usage']['input_tokens']
+            assert estimated>=actual,(group,case,estimated,actual)
+            calibration.append(dict(estimate=estimated,actual=actual,difference=estimated-actual,
+                ratio=estimated/actual if actual else None,counter_version=attempt['counter_version']))
+        if case=='near_user_limit':assert len(body['messages'][0]['content'])==MAX_USER_MESSAGE_CHARS
+        if case=='large_schema':assert reply.json()['data']['parsed']=={'marker':'OK'}
+>       billing=env.verify(rid,trace)
+                ^^^^^^^^^^^^^^^^^^^^^
+
+tests/live/test_f13_models.py:117: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/f13_real_support.py:109: in verify
+    quoted=json.loads(charge[2]);assert quoted['version']==PRICE_VERSION
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+s = {'hit': '0.1', 'miss': '0.8', 'model': 'qwen3.8-flash', 'output': '2.7', ...}
+cls = None, object_hook = None, parse_float = None, parse_int = None
+parse_constant = None, object_pairs_hook = None, kw = {}
+
+    def loads(s, *, cls=None, object_hook=None, parse_float=None,
+            parse_int=None, parse_constant=None, object_pairs_hook=None, **kw):
+        """Deserialize ``s`` (a ``str``, ``bytes`` or ``bytearray`` instance
+        containing a JSON document) to a Python object.
+    
+        ``object_hook`` is an optional function that will be called with the
+        result of any object literal decode (a ``dict``). The return value of
+        ``object_hook`` will be used instead of the ``dict``. This feature
+        can be used to implement custom decoders (e.g. JSON-RPC class hinting).
+    
+        ``object_pairs_hook`` is an optional function that will be called with the
+        result of any object literal decoded with an ordered list of pairs.  The
+        return value of ``object_pairs_hook`` will be used instead of the ``dict``.
+        This feature can be used to implement custom decoders.  If ``object_hook``
+        is also defined, the ``object_pairs_hook`` takes priority.
+    
+        ``parse_float``, if specified, will be called with the string
+        of every JSON float to be decoded. By default this is equivalent to
+        float(num_str). This can be used to use another datatype or parser
+        for JSON floats (e.g. decimal.Decimal).
+    
+        ``parse_int``, if specified, will be called with the string
+        of every JSON int to be decoded. By default this is equivalent to
+        int(num_str). This can be used to use another datatype or parser
+        for JSON integers (e.g. float).
+    
+        ``parse_constant``, if specified, will be called with one of the
+        following strings: -Infinity, Infinity, NaN.
+        This can be used to raise an exception if invalid JSON numbers
+        are encountered.
+    
+        To use a custom ``JSONDecoder`` subclass, specify it with the ``cls``
+        kwarg; otherwise ``JSONDecoder`` is used.
+        """
+        if isinstance(s, str):
+            if s.startswith('\ufeff'):
+                raise JSONDecodeError("Unexpected UTF-8 BOM (decode using utf-8-sig)",
+                                      s, 0)
+        else:
+            if not isinstance(s, (bytes, bytearray)):
+>               raise TypeError(f'the JSON object must be str, bytes or bytearray, '
+                                f'not {s.__class__.__name__}')
+E               TypeError: the JSON object must be str, bytes or bytearray, not dict
+
+/Users/baiyu/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/json/__init__.py:339: TypeError
+_______ test_real_qwen_estimate_covers_reported_input[few_shot-general] ________
+
+f13_real_environment = RealEnvironment(client=<starlette.testclient.TestClient object at 0x11768ee10>, application=<fastapi.applications.Fast...v86fj56zjgm8txl21tvpq00000gn/T/llmgw-f13-work-eifzl4on/pytest-stage-a-real/test_real_qwen_estimate_covers19/f13-real'))
+group = 'general', case = 'few_shot'
+record_property = <function record_property.<locals>.append_property at 0x10d963c40>
+
+    @pytest.mark.parametrize('group',list(MODELS))
+    @pytest.mark.parametrize('case',CALIBRATION_CASES)
+    def test_real_qwen_estimate_covers_reported_input(f13_real_environment,group,case,record_property):
+        env=f13_real_environment;body=calibration_payload(group,case)
+        reply=env.client.post('/v1/llm',json=body);rid=reply.headers['x-request-id'];trace=env.trace(rid)
+        record_property('f13_request_id',rid);record_property('f13_trace',json.dumps(trace,ensure_ascii=False))
+        assert reply.status_code==200,reply.text
+        assert trace['status']=='completed' and trace['input_token_kind']=='estimated'
+        calibration=[]
+        for attempt in trace['attempts']:
+            assert attempt['usage'] is not None
+            estimated=attempt['input_token_count'];actual=attempt['usage']['input_tokens']
+            assert estimated>=actual,(group,case,estimated,actual)
+            calibration.append(dict(estimate=estimated,actual=actual,difference=estimated-actual,
+                ratio=estimated/actual if actual else None,counter_version=attempt['counter_version']))
+        if case=='near_user_limit':assert len(body['messages'][0]['content'])==MAX_USER_MESSAGE_CHARS
+        if case=='large_schema':assert reply.json()['data']['parsed']=={'marker':'OK'}
+>       billing=env.verify(rid,trace)
+                ^^^^^^^^^^^^^^^^^^^^^
+
+tests/live/test_f13_models.py:117: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/f13_real_support.py:109: in verify
+    quoted=json.loads(charge[2]);assert quoted['version']==PRICE_VERSION
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+s = {'hit': '0.32', 'miss': '1.6', 'model': 'qwen3.7-plus', 'output': '6.4', ...}
+cls = None, object_hook = None, parse_float = None, parse_int = None
+parse_constant = None, object_pairs_hook = None, kw = {}
+
+    def loads(s, *, cls=None, object_hook=None, parse_float=None,
+            parse_int=None, parse_constant=None, object_pairs_hook=None, **kw):
+        """Deserialize ``s`` (a ``str``, ``bytes`` or ``bytearray`` instance
+        containing a JSON document) to a Python object.
+    
+        ``object_hook`` is an optional function that will be called with the
+        result of any object literal decode (a ``dict``). The return value of
+        ``object_hook`` will be used instead of the ``dict``. This feature
+        can be used to implement custom decoders (e.g. JSON-RPC class hinting).
+    
+        ``object_pairs_hook`` is an optional function that will be called with the
+        result of any object literal decoded with an ordered list of pairs.  The
+        return value of ``object_pairs_hook`` will be used instead of the ``dict``.
+        This feature can be used to implement custom decoders.  If ``object_hook``
+        is also defined, the ``object_pairs_hook`` takes priority.
+    
+        ``parse_float``, if specified, will be called with the string
+        of every JSON float to be decoded. By default this is equivalent to
+        float(num_str). This can be used to use another datatype or parser
+        for JSON floats (e.g. decimal.Decimal).
+    
+        ``parse_int``, if specified, will be called with the string
+        of every JSON int to be decoded. By default this is equivalent to
+        int(num_str). This can be used to use another datatype or parser
+        for JSON integers (e.g. float).
+    
+        ``parse_constant``, if specified, will be called with one of the
+        following strings: -Infinity, Infinity, NaN.
+        This can be used to raise an exception if invalid JSON numbers
+        are encountered.
+    
+        To use a custom ``JSONDecoder`` subclass, specify it with the ``cls``
+        kwarg; otherwise ``JSONDecoder`` is used.
+        """
+        if isinstance(s, str):
+            if s.startswith('\ufeff'):
+                raise JSONDecodeError("Unexpected UTF-8 BOM (decode using utf-8-sig)",
+                                      s, 0)
+        else:
+            if not isinstance(s, (bytes, bytearray)):
+>               raise TypeError(f'the JSON object must be str, bytes or bytearray, '
+                                f'not {s.__class__.__name__}')
+E               TypeError: the JSON object must be str, bytes or bytearray, not dict
+
+/Users/baiyu/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/json/__init__.py:339: TypeError
+_______ test_real_qwen_estimate_covers_reported_input[few_shot-analysis] _______
+
+f13_real_environment = RealEnvironment(client=<starlette.testclient.TestClient object at 0x11743cf80>, application=<fastapi.applications.Fast...v86fj56zjgm8txl21tvpq00000gn/T/llmgw-f13-work-eifzl4on/pytest-stage-a-real/test_real_qwen_estimate_covers20/f13-real'))
+group = 'analysis', case = 'few_shot'
+record_property = <function record_property.<locals>.append_property at 0x1175720c0>
+
+    @pytest.mark.parametrize('group',list(MODELS))
+    @pytest.mark.parametrize('case',CALIBRATION_CASES)
+    def test_real_qwen_estimate_covers_reported_input(f13_real_environment,group,case,record_property):
+        env=f13_real_environment;body=calibration_payload(group,case)
+        reply=env.client.post('/v1/llm',json=body);rid=reply.headers['x-request-id'];trace=env.trace(rid)
+        record_property('f13_request_id',rid);record_property('f13_trace',json.dumps(trace,ensure_ascii=False))
+>       assert reply.status_code==200,reply.text
+E       AssertionError: {"success":false,"code":"output_truncated","data":null,"message":"模型输出达到长度限制，未完整完成"}
+E       assert 502 == 200
+E        +  where 502 = <Response [502 Bad Gateway]>.status_code
+
+tests/live/test_f13_models.py:106: AssertionError
+______ test_real_qwen_estimate_covers_reported_input[large_schema-light] _______
+
+f13_real_environment = RealEnvironment(client=<starlette.testclient.TestClient object at 0x11732aa20>, application=<fastapi.applications.Fast...v86fj56zjgm8txl21tvpq00000gn/T/llmgw-f13-work-eifzl4on/pytest-stage-a-real/test_real_qwen_estimate_covers21/f13-real'))
+group = 'light', case = 'large_schema'
+record_property = <function record_property.<locals>.append_property at 0x10dda5440>
+
+    @pytest.mark.parametrize('group',list(MODELS))
+    @pytest.mark.parametrize('case',CALIBRATION_CASES)
+    def test_real_qwen_estimate_covers_reported_input(f13_real_environment,group,case,record_property):
+        env=f13_real_environment;body=calibration_payload(group,case)
+        reply=env.client.post('/v1/llm',json=body);rid=reply.headers['x-request-id'];trace=env.trace(rid)
+        record_property('f13_request_id',rid);record_property('f13_trace',json.dumps(trace,ensure_ascii=False))
+>       assert reply.status_code==200,reply.text
+E       AssertionError: {"success":false,"code":"invalid_response_schema","data":null,"message":"response_schema 不符合平台支持规则"}
+E       assert 400 == 200
+E        +  where 400 = <Response [400 Bad Request]>.status_code
+
+tests/live/test_f13_models.py:106: AssertionError
+_____ test_real_qwen_estimate_covers_reported_input[large_schema-general] ______
+
+f13_real_environment = RealEnvironment(client=<starlette.testclient.TestClient object at 0x1173bc2c0>, application=<fastapi.applications.Fast...v86fj56zjgm8txl21tvpq00000gn/T/llmgw-f13-work-eifzl4on/pytest-stage-a-real/test_real_qwen_estimate_covers22/f13-real'))
+group = 'general', case = 'large_schema'
+record_property = <function record_property.<locals>.append_property at 0x10dfab4c0>
+
+    @pytest.mark.parametrize('group',list(MODELS))
+    @pytest.mark.parametrize('case',CALIBRATION_CASES)
+    def test_real_qwen_estimate_covers_reported_input(f13_real_environment,group,case,record_property):
+        env=f13_real_environment;body=calibration_payload(group,case)
+        reply=env.client.post('/v1/llm',json=body);rid=reply.headers['x-request-id'];trace=env.trace(rid)
+        record_property('f13_request_id',rid);record_property('f13_trace',json.dumps(trace,ensure_ascii=False))
+>       assert reply.status_code==200,reply.text
+E       AssertionError: {"success":false,"code":"invalid_response_schema","data":null,"message":"response_schema 不符合平台支持规则"}
+E       assert 400 == 200
+E        +  where 400 = <Response [400 Bad Request]>.status_code
+
+tests/live/test_f13_models.py:106: AssertionError
+_____ test_real_qwen_estimate_covers_reported_input[large_schema-analysis] _____
+
+f13_real_environment = RealEnvironment(client=<starlette.testclient.TestClient object at 0x1175b0e90>, application=<fastapi.applications.Fast...v86fj56zjgm8txl21tvpq00000gn/T/llmgw-f13-work-eifzl4on/pytest-stage-a-real/test_real_qwen_estimate_covers23/f13-real'))
+group = 'analysis', case = 'large_schema'
+record_property = <function record_property.<locals>.append_property at 0x10dbf6f20>
+
+    @pytest.mark.parametrize('group',list(MODELS))
+    @pytest.mark.parametrize('case',CALIBRATION_CASES)
+    def test_real_qwen_estimate_covers_reported_input(f13_real_environment,group,case,record_property):
+        env=f13_real_environment;body=calibration_payload(group,case)
+        reply=env.client.post('/v1/llm',json=body);rid=reply.headers['x-request-id'];trace=env.trace(rid)
+        record_property('f13_request_id',rid);record_property('f13_trace',json.dumps(trace,ensure_ascii=False))
+>       assert reply.status_code==200,reply.text
+E       AssertionError: {"success":false,"code":"invalid_response_schema","data":null,"message":"response_schema 不符合平台支持规则"}
+E       assert 400 == 200
+E        +  where 400 = <Response [400 Bad Request]>.status_code
+
+tests/live/test_f13_models.py:106: AssertionError
+=========================== short test summary info ============================
+FAILED tests/live/test_f13_models.py::test_three_real_bailian_models_public_operations[text-light]
+FAILED tests/live/test_f13_models.py::test_three_real_bailian_models_public_operations[text-general]
+FAILED tests/live/test_f13_models.py::test_three_real_bailian_models_public_operations[text-analysis]
+FAILED tests/live/test_f13_models.py::test_three_real_bailian_models_public_operations[schema-light]
+FAILED tests/live/test_f13_models.py::test_three_real_bailian_models_public_operations[schema-general]
+FAILED tests/live/test_f13_models.py::test_three_real_bailian_models_public_operations[schema-analysis]
+FAILED tests/live/test_f13_models.py::test_three_real_bailian_models_public_operations[streaming-light]
+FAILED tests/live/test_f13_models.py::test_three_real_bailian_models_public_operations[streaming-general]
+FAILED tests/live/test_f13_models.py::test_three_real_bailian_models_public_operations[streaming-analysis]
+FAILED tests/live/test_f13_models.py::test_three_real_bailian_models_public_operations[health-light]
+FAILED tests/live/test_f13_models.py::test_three_real_bailian_models_public_operations[health-general]
+FAILED tests/live/test_f13_models.py::test_three_real_bailian_models_public_operations[health-analysis]
+FAILED tests/live/test_f13_models.py::test_real_qwen_estimate_covers_reported_input[chinese-light]
+FAILED tests/live/test_f13_models.py::test_real_qwen_estimate_covers_reported_input[chinese-general]
+FAILED tests/live/test_f13_models.py::test_real_qwen_estimate_covers_reported_input[chinese-analysis]
+FAILED tests/live/test_f13_models.py::test_real_qwen_estimate_covers_reported_input[english-light]
+FAILED tests/live/test_f13_models.py::test_real_qwen_estimate_covers_reported_input[english-general]
+FAILED tests/live/test_f13_models.py::test_real_qwen_estimate_covers_reported_input[english-analysis]
+FAILED tests/live/test_f13_models.py::test_real_qwen_estimate_covers_reported_input[mixed-light]
+FAILED tests/live/test_f13_models.py::test_real_qwen_estimate_covers_reported_input[mixed-general]
+FAILED tests/live/test_f13_models.py::test_real_qwen_estimate_covers_reported_input[mixed-analysis]
+FAILED tests/live/test_f13_models.py::test_real_qwen_estimate_covers_reported_input[code-light]
+FAILED tests/live/test_f13_models.py::test_real_qwen_estimate_covers_reported_input[code-general]
+FAILED tests/live/test_f13_models.py::test_real_qwen_estimate_covers_reported_input[code-analysis]
+FAILED tests/live/test_f13_models.py::test_real_qwen_estimate_covers_reported_input[unicode-light]
+FAILED tests/live/test_f13_models.py::test_real_qwen_estimate_covers_reported_input[unicode-general]
+FAILED tests/live/test_f13_models.py::test_real_qwen_estimate_covers_reported_input[unicode-analysis]
+FAILED tests/live/test_f13_models.py::test_real_qwen_estimate_covers_reported_input[near_user_limit-light]
+FAILED tests/live/test_f13_models.py::test_real_qwen_estimate_covers_reported_input[near_user_limit-general]
+FAILED tests/live/test_f13_models.py::test_real_qwen_estimate_covers_reported_input[near_user_limit-analysis]
+FAILED tests/live/test_f13_models.py::test_real_qwen_estimate_covers_reported_input[few_shot-light]
+FAILED tests/live/test_f13_models.py::test_real_qwen_estimate_covers_reported_input[few_shot-general]
+FAILED tests/live/test_f13_models.py::test_real_qwen_estimate_covers_reported_input[few_shot-analysis]
+FAILED tests/live/test_f13_models.py::test_real_qwen_estimate_covers_reported_input[large_schema-light]
+FAILED tests/live/test_f13_models.py::test_real_qwen_estimate_covers_reported_input[large_schema-general]
+FAILED tests/live/test_f13_models.py::test_real_qwen_estimate_covers_reported_input[large_schema-analysis]
+36 failed in 64.80s (0:01:04)

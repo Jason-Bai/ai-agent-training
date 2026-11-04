@@ -1,0 +1,42 @@
+test_failed_generation_still_runs_known_usage_verifier (__main__.Contract.test_failed_generation_still_runs_known_usage_verifier) ... FAIL
+test_quality_counts_classification_while_reporting_generation_failure (__main__.Contract.test_quality_counts_classification_while_reporting_generation_failure) ... FAIL
+test_terminal_poll_waits_for_deferred_writer (__main__.Contract.test_terminal_poll_waits_for_deferred_writer) ... ok
+test_unknown_consumption_is_pending_not_fake_zero (__main__.Contract.test_unknown_consumption_is_pending_not_fake_zero) ... FAIL
+
+======================================================================
+FAIL: test_failed_generation_still_runs_known_usage_verifier (__main__.Contract.test_failed_generation_still_runs_known_usage_verifier)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llmgw-f13-work-eifzl4on/pricing-routing-quality-contract.py", line 22, in test_failed_generation_still_runs_known_usage_verifier
+    m.verify_quality_lifecycle(env,'recorded',actual,Reply({'code':'output_truncated'},502),Reply(bill))
+  File "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/tests/live/test_f13_routing.py", line 135, in verify_quality_lifecycle
+    assert len(attempts)==len(bill['attempts'])
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError
+
+======================================================================
+FAIL: test_quality_counts_classification_while_reporting_generation_failure (__main__.Contract.test_quality_counts_classification_while_reporting_generation_failure)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llmgw-f13-work-eifzl4on/pricing-routing-quality-contract.py", line 66, in test_quality_counts_classification_while_reporting_generation_failure
+    m.run_quality(env,'development',lambda *args:None)
+  File "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/tests/live/test_f13_routing.py", line 257, in run_quality
+    assert not report['integrity_failures'],report['integrity_failures']
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: [{'id': 'F13-D001', 'error': ''}, {'id': 'F13-D002', 'error': ''}, {'id': 'F13-D003', 'error': ''}, {'id': 'F13-D004', 'error': ''}, {'id': 'F13-D005', 'error': ''}, {'id': 'F13-D006', 'error': ''}, {'id': 'F13-D007', 'error': ''}, {'id': 'F13-D008', 'error': ''}, {'id': 'F13-D009', 'error': ''}, {'id': 'F13-D010', 'error': ''}, {'id': 'F13-D011', 'error': ''}, {'id': 'F13-D012', 'error': ''}, {'id': 'F13-D013', 'error': ''}, {'id': 'F13-D014', 'error': ''}, {'id': 'F13-D015', 'error': ''}, {'id': 'F13-D016', 'error': ''}, {'id': 'F13-D017', 'error': ''}, {'id': 'F13-D018', 'error': ''}, {'id': 'F13-D019', 'error': ''}, {'id': 'F13-D020', 'error': ''}, {'id': 'F13-D021', 'error': ''}, {'id': 'F13-D022', 'error': ''}, {'id': 'F13-D023', 'error': ''}, {'id': 'F13-D024', 'error': ''}, {'id': 'F13-D025', 'error': ''}, {'id': 'F13-D026', 'error': ''}, {'id': 'F13-D027', 'error': ''}, {'id': 'F13-D028', 'error': ''}, {'id': 'F13-D029', 'error': ''}, {'id': 'F13-D030', 'error': ''}]
+
+======================================================================
+FAIL: test_unknown_consumption_is_pending_not_fake_zero (__main__.Contract.test_unknown_consumption_is_pending_not_fake_zero)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llmgw-f13-work-eifzl4on/pricing-routing-quality-contract.py", line 46, in test_unknown_consumption_is_pending_not_fake_zero
+    m.verify_quality_lifecycle(env,'synthetic',trace,reply,billing)
+  File "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/tests/live/test_f13_routing.py", line 135, in verify_quality_lifecycle
+    assert len(attempts)==len(bill['attempts'])
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.049s
+
+FAILED (failures=3)

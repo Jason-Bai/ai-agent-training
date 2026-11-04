@@ -1,0 +1,9 @@
+{
+  "agent": "/root/f8_independent_review",
+  "round": 2,
+  "outcome": "BLOCKED",
+  "readonly": "instruction",
+  "before_after_manifest_equal": true,
+  "manifest_sha256": "8f73f4a803529a1d08fd1b83a90ac146e71d787b7be0a3d0764d7354dff0cefe",
+  "prompt_sha256": "26d84dac0e60f94a80f3b9928dc644a6ec2f47b0648023721c5cde00e179fc5d"
+}

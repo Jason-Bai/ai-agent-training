@@ -1,0 +1,7 @@
+tests/live/test_f13_routing.py::test_real_auto_routing_public_operations[text]
+tests/live/test_f13_routing.py::test_real_auto_routing_public_operations[schema]
+tests/live/test_f13_routing.py::test_real_auto_routing_public_operations[streaming]
+tests/live/test_f13_routing.py::test_real_routing_quality_development_30
+tests/live/test_f13_routing.py::test_real_routing_quality_sealed_acceptance_30
+
+5 tests collected in 0.06s

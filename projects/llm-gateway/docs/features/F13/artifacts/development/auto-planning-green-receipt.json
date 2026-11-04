@@ -1,0 +1,13 @@
+{
+  "command": [
+    ".venv/bin/python",
+    "-W",
+    "error",
+    "-m",
+    "pytest",
+    "tests/unit/test_f13_auto_planning.py",
+    "-q"
+  ],
+  "exit_code": 0,
+  "at": "2026-11-03T15:26:10.256436+00:00"
+}

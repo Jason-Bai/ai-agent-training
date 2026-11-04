@@ -1,0 +1,37 @@
+{
+  "corrected_at": "2026-11-03T16:11:14.186178+00:00",
+  "authorship": "implementation Agent authored synthetic cases and labels from user-confirmed three-category rules",
+  "human_per_case_annotation": false,
+  "original_label_source_text_in_corpus_is_inaccurate": true,
+  "user_confirmation": "采用，独审核对并如实标注来源（推荐）",
+  "metric": "classification agreement against pre-fixed synthetic labels; not real-business accuracy",
+  "independent_review": "after first formal run, independent reviewer checks all development and acceptance labels; do not retag to improve observed score",
+  "corpora": {
+    "development": {
+      "path": "tests/fixtures/f13_routing_development.json",
+      "sha256": "2f8679f79eea562467b0229310b9bdd7eec3a6561a1530776d72a382872ba589",
+      "content_and_labels_unchanged": true
+    },
+    "acceptance": {
+      "path": "tests/fixtures/f13_routing_acceptance.json",
+      "sha256": "4237bab0402c6643560c23354e1b7859351bbf9ec99cdf5e5073849a429c925b",
+      "content_and_labels_unchanged": true
+    }
+  },
+  "independent_label_review": {
+    "recorded_at": "2026-11-03T17:13:37.831306+00:00",
+    "reviewer": "/root/f13_independent_review; independent context, read-only task",
+    "development": {
+      "cases_reviewed": 30,
+      "labels_supported_by_confirmed_rules": 30,
+      "label_changes": 0
+    },
+    "acceptance": {
+      "cases_reviewed": 30,
+      "labels_supported_by_confirmed_rules": 30,
+      "label_changes": 0,
+      "read_only_after_first_formal_run_ended": true
+    },
+    "finding": "No blocking ambiguity found. Labels remain synthetic Agent-authored, not human-annotated. This does not certify real-business accuracy."
+  }
+}

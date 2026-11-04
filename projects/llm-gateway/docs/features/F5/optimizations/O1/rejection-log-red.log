@@ -1,0 +1,36 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_______ test_rejection_record_failure_keeps_original_error_and_safe_log ________
+
+pg_server = <postgres_support.PostgresServer object at 0x10eca0980>
+pg_config = ('case_3efe87c0621242739aecb1d916029c1e', PosixPath('/private/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/pytest-of-baiyu/pytest-127/test_rejection_record_failure_0/config'))
+caplog = <_pytest.logging.LogCaptureFixture object at 0x10eca35f0>
+
+    def test_rejection_record_failure_keeps_original_error_and_safe_log(pg_server, pg_config, caplog):
+        from persistence.database import StorageUnavailable
+        name, config_dir = pg_config
+        migrate(config_dir)
+        provider = MockProvider()
+        app = make_app(config_dir, provider)
+        original = app.state.storage.finish
+    
+        async def unavailable(*args, **kwargs):
+            raise StorageUnavailable()
+    
+        with TestClient(app) as client:
+            app.state.storage.finish = unavailable
+            response = client.post('/v1/llm', content='{private invalid body',
+                                   headers={'content-type': 'application/json'})
+            app.state.storage.finish = original
+            assert response.status_code == 422 and response.json()['code'] == 'invalid_request'
+            assert provider.calls == provider.stream_calls == []
+            with pg_server.connect(name) as conn:
+                assert conn.execute('SELECT count(*) FROM tb_llm_request').fetchone() == (0,)
+>           assert response.headers['x-request-id'] in caplog.text
+E           AssertionError: assert 'e07b52ae-96ed-4239-8997-e2b400f393d5' in ''
+E            +  where '' = <_pytest.logging.LogCaptureFixture object at 0x10eca35f0>.text
+
+tests/integration/test_f5o1_http.py:545: AssertionError
+=========================== short test summary info ============================
+FAILED tests/integration/test_f5o1_http.py::test_rejection_record_failure_keeps_original_error_and_safe_log
+1 failed, 44 deselected in 3.55s

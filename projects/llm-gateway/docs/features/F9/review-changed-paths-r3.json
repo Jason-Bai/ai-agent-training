@@ -1,0 +1,6 @@
+[
+  "docs/contracts.md",
+  "src/persistence/billing_query.py",
+  "src/providers/streaming.py",
+  "tests/integration/test_f9_final_usage.py"
+]

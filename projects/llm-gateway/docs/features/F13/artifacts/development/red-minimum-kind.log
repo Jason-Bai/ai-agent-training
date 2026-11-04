@@ -1,0 +1,46 @@
+.FFF                                                                     [100%]
+=================================== FAILURES ===================================
+__ test_generation_below_endpoint_minimum_is_rejected_without_call[changes0] ___
+
+changes = {'max_output_tokens': 15}
+
+    @pytest.mark.parametrize('changes',[{'max_output_tokens':15},
+        {'max_output_tokens':128,'initial_output_tokens':15}])
+    async def test_generation_below_endpoint_minimum_is_rejected_without_call(changes):
+        definitions=registry({n:{'min_output_tokens':16} for n in ('chat-a','responses-b')})
+        gateway,trace,a,b,traces=service(definitions)
+>       with pytest.raises(GatewayError) as caught:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE GatewayError
+
+tests/unit/test_f13_configuration.py:29: Failed
+__ test_generation_below_endpoint_minimum_is_rejected_without_call[changes1] ___
+
+changes = {'max_output_tokens': 128, 'initial_output_tokens': 15}
+
+    @pytest.mark.parametrize('changes',[{'max_output_tokens':15},
+        {'max_output_tokens':128,'initial_output_tokens':15}])
+    async def test_generation_below_endpoint_minimum_is_rejected_without_call(changes):
+        definitions=registry({n:{'min_output_tokens':16} for n in ('chat-a','responses-b')})
+        gateway,trace,a,b,traces=service(definitions)
+>       with pytest.raises(GatewayError) as caught:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE GatewayError
+
+tests/unit/test_f13_configuration.py:29: Failed
+___________ test_estimation_kind_is_preserved_in_request_and_attempt ___________
+
+    async def test_estimation_kind_is_preserved_in_request_and_attempt():
+        counter=FixedCounter(100,'example-estimate-v1');counter.kind='estimated'
+        gateway,trace,a,b,traces=service(budget=TokenBudget({'deepseek_v41':counter}))
+        await gateway.complete(request(),trace)
+>       assert trace.input_token_kind=='estimated'
+               ^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'RequestTrace' object has no attribute 'input_token_kind'. Did you mean: 'input_token_count'?
+
+tests/unit/test_f13_configuration.py:39: AttributeError
+=========================== short test summary info ============================
+FAILED tests/unit/test_f13_configuration.py::test_generation_below_endpoint_minimum_is_rejected_without_call[changes0]
+FAILED tests/unit/test_f13_configuration.py::test_generation_below_endpoint_minimum_is_rejected_without_call[changes1]
+FAILED tests/unit/test_f13_configuration.py::test_estimation_kind_is_preserved_in_request_and_attempt
+3 failed, 1 passed in 0.30s

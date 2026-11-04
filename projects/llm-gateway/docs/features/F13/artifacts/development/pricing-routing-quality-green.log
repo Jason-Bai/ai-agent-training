@@ -1,0 +1,9 @@
+test_failed_generation_still_runs_known_usage_verifier (__main__.Contract.test_failed_generation_still_runs_known_usage_verifier) ... ok
+test_quality_counts_classification_while_reporting_generation_failure (__main__.Contract.test_quality_counts_classification_while_reporting_generation_failure) ... ok
+test_terminal_poll_waits_for_deferred_writer (__main__.Contract.test_terminal_poll_waits_for_deferred_writer) ... ok
+test_unknown_consumption_is_pending_not_fake_zero (__main__.Contract.test_unknown_consumption_is_pending_not_fake_zero) ... ok
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.049s
+
+OK

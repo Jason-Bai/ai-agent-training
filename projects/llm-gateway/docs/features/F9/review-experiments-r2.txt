@@ -1,0 +1,4 @@
+final False state pending charge None summary {'attempts': 1, 'unknown_attempts': 0, 'known_subtotal': {'input_tokens': 10, 'output_tokens': 1, 'total_tokens': 11}}
+.final True state pending charge None summary {'attempts': 1, 'unknown_attempts': 0, 'known_subtotal': {'input_tokens': 10, 'output_tokens': 1, 'total_tokens': 11}}
+.
+2 passed in 3.74s

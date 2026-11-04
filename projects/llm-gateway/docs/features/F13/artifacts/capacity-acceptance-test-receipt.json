@@ -1,0 +1,14 @@
+{
+  "command": [
+    ".venv/bin/python",
+    "-W",
+    "error",
+    "-m",
+    "pytest",
+    "tests/unit/test_f13_capacity_acceptance.py",
+    "tests/unit/test_f10_metrics.py",
+    "tests/unit/test_f11_upstream_evidence.py",
+    "-q"
+  ],
+  "exit_code": 0
+}

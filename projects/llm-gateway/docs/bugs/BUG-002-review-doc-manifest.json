@@ -1,0 +1,15 @@
+{
+  "docs/bugs/BUG-002-acceptance-report.md": "29b89231d20002b17ad0c8683410f2946c2eaa37f2a2a753fc1e59b5570fe009",
+  "docs/bugs/BUG-002-capacity-final.json.gz": "573db57fab54a9dfc3111af1d35f974fb8d7b8d1df917b6bcb9d344ec5b48a56",
+  "docs/bugs/BUG-002-evidence-development.json": "2d22273311b3c8a5d9e64cb3a161bdc8b71948c5c994fa31fc9ba751104c1fdd",
+  "docs/bugs/BUG-002-evidence-final.json": "a4146fe32b49e2ca61cefc62317c7631786b6fba9ba8ad43b2eda37bc77cb3e2",
+  "docs/bugs/BUG-002-evidence-source-check.json": "e723c191d5a28186eb94be5f2fe56e0c8fc6ea0fcd73d346d5c4025fb43e61cd",
+  "docs/bugs/BUG-002-full-final.log": "b490935a08d4aee49eeaa2aeda57cde10b1abd9b0aefa47513c3bb8170ae78dd",
+  "docs/bugs/BUG-002-full-final.xml.gz": "6715177c025ee8267cef3955d03f05902661ef63bda4e44c1002927c33b35ba4",
+  "docs/bugs/BUG-002-implementation-plan.md": "66406ff4494df31c0aa62cc4ad455c9c998cf4ad4c8b8a070cbffcd07c621b4e",
+  "docs/bugs/BUG-002-implementation-summary.md": "01dd65e5128ea9b31ee528110f13c176720e0f2f02f513e54de0804810493e69",
+  "docs/bugs/BUG-002-mock-observations.json.gz": "10c57a8fa3bf18af508853ac73d6807d3485583138f01f54577f095f612c6d5f",
+  "docs/bugs/BUG-002-offline-config-isolation.md": "529791d3882546a295d4673e51c69f84af6016f9074c7f89b600ed0a7f5755d5",
+  "docs/bugs/BUG-002-review-material-r1.md": "58043058b99ced6f0dd6e075e9820eea073497f319954d6d6336bff502797dc7",
+  "docs/bugs/BUG-002-review-prompt-r1.md": "8aa810ca43a39354a001842bcd18d607cf976903170d6ae39df4630de72537f5"
+}

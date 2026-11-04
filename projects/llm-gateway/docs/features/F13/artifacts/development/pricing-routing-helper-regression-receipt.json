@@ -1,0 +1,12 @@
+{
+  "command": [
+    "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/.venv/bin/python",
+    "-m",
+    "pytest",
+    "tests/unit/test_f13_real_helper.py",
+    "-q"
+  ],
+  "returncode": 0,
+  "seconds": 0.593674898147583,
+  "scope": "fake decoded PG rows only; no PG or Provider calls"
+}

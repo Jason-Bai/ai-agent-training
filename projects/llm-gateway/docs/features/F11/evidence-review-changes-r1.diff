@@ -1,0 +1,2415 @@
+--- baseline/README.md
++++ candidate/README.md
+@@ -2,7 +2,7 @@
+ 
+ > **1.6 已收尾（2026-11-03）**：当前限定内部Agent、本机或隔离网络、单实例单worker。完成范围、最终证据、Mock/真实Provider定位及非阻断遗留统一见[1.6收尾记录](docs/1.6-closeout.md)。
+ 
+-> **1.7交付顺序已确认，BUG-002验收通过**：[BUG-002测试隔离 → 并发治理 → 模型管理与路由](docs/1.7-plan.md)。后两项分别作为独立Feature，逐项确认完整设计与测试后实施；BUG-002已完成TDD、全量2086通过（含28个真实节点，零跳过）及首轮独审APPROVED，见[验收记录](docs/bugs/BUG-002-acceptance-report.md)与[代码导读](docs/bugs/BUG-002-implementation-summary.md)。[F11并发治理设计](docs/features/F11/design.md)已按用户最新决定收敛为全局/Agent两层请求名额，内部重试全程持有，[测试方案](docs/features/F11/test-plan.md)待单独确认，尚未实现。
++> **1.7交付顺序已确认，BUG-002验收通过**：[BUG-002测试隔离 → 并发治理 → 模型管理与路由](docs/1.7-plan.md)。后两项分别作为独立Feature，逐项确认完整设计与测试后实施；BUG-002已完成TDD、全量2086通过（含28个真实节点，零跳过）及首轮独审APPROVED，见[验收记录](docs/bugs/BUG-002-acceptance-report.md)与[代码导读](docs/bugs/BUG-002-implementation-summary.md)。[F11并发治理设计](docs/features/F11/design.md)已按用户最新决定收敛为全局/Agent两层请求名额，内部重试全程持有，[测试方案](docs/features/F11/test-plan.md)已单独确认，已接入，真实验收阻塞。
+ 
+ > 状态：F1/F1-O1/F2/F3 已验收；F4 已验收通过：离线836、Python3.12关键233、真实六例通过，Claude Code第1轮APPROVED。F5 已验收：最终离线1099、Python3.12关键235、最新真实两例通过，原生Claude Code第2轮APPROVED；F6验收通过，F7验收通过，F8 已验收通过（[代码导读](docs/features/F8/implementation-summary.md)），F9 已验收（最终2010通过含真实16，[修复及独审](docs/bugs/F9-B1.md)），F10 已验收（全量2039通过、首轮独审APPROVED，[总验收报告](docs/features/F10/acceptance-report.md)）。默认配置仍使用 Mock。
+ 
+@@ -228,13 +228,21 @@
+ | [F9 用量与计费](docs/features/F9/design.md)（验收通过） | 价格配置与版本、实际用量分类、费用计算、账单持久化与对账；区分本地预估与实际 Usage，未知用量不得按零结算。Agent 手动拨款、按尝试预留与结算、消耗总览及请求明细 |
+ | [F10 总验收](docs/features/F10/design.md)（验收通过，全量2039及独立审查APPROVED） | 调用方使用闭环、故障及账务一致性、并发与持续运行基线、历史全量和真实接入 |
+ 
+-本阶段已按“F5-O1 持久化基础 → F5-O2 两阶段调用与续传 → F6 主动取消 → F7 重试与 fallback → F8 Trace 完整性 → F9 用量与计费 → F10 总验收”完成交付。计费按每次实际Provider尝试留痕，覆盖失败、取消及重试可能产生的用量，供应商成本与Agent扣款分别记录；缓存等分类按配置价格计算，本地Token计数用于预检与预估。正式供应商账单对账仍未验证。1.7按[递增计划](docs/1.7-plan.md)推进：BUG-002已验收；[F11并发治理](docs/features/F11/design.md)两层设计已确认：全局/Agent请求上限，首次满额拒绝、不排队，内部重试持有原名额，[23组测试方案](docs/features/F11/test-plan.md)待单独确认，当前仅文档；模型管理与路由随后另行讨论。1.6遗留及历史证据边界见[收尾记录](docs/1.6-closeout.md)。
++本阶段已按“F5-O1 持久化基础 → F5-O2 两阶段调用与续传 → F6 主动取消 → F7 重试与 fallback → F8 Trace 完整性 → F9 用量与计费 → F10 总验收”完成交付。计费按每次实际Provider尝试留痕，覆盖失败、取消及重试可能产生的用量，供应商成本与Agent扣款分别记录；缓存等分类按配置价格计算，本地Token计数用于预检与预估。正式供应商账单对账仍未验证。1.7按[递增计划](docs/1.7-plan.md)推进：BUG-002已验收；[F11并发治理](docs/features/F11/design.md)两层设计已确认：全局/Agent请求上限，首次满额拒绝、不排队，内部重试持有原名额，[23组测试方案](docs/features/F11/test-plan.md)已单独确认，已接入，真实验收阻塞；模型管理与路由随后另行讨论。1.6遗留及历史证据边界见[收尾记录](docs/1.6-closeout.md)。
+ 
+ 每个功能先确认设计，再单独确认本项测试方案，随后按 Red → Green → Refactor 推进。Mock、FastAPI 接口测试和真实 Provider 冒烟测试分开记录，不能互相替代。跨功能标准见 [测试原则](docs/test-plan.md)，当前状态见 [进度记录](docs/progress.md)。
+ 
+ F1 的最小范围见 [F1 设计方案](docs/features/F1/design.md)，逐例验收见 [F1 测试方案](docs/features/F1/test-plan.md)；后续功能按 [文档约定](docs/AGENTS.md) 分别维护设计与测试方案。F1 先用单一静态模板和模型白名单兑现“Prompt 必选、未知模型不调用 Provider”的入口契约；F2/F3 再扩展完整能力，不把 F1 的最小能力称为已完成 F2/F3。
+ 
+ ## 当前代码结构
++
++F11当前已接入两层请求名额；首轮完整2153通过/5个真实节点失败，旁路上游HTTP503，未验收通过。验收进度见[测试方案](docs/features/F11/test-plan.md)。`gateway.yaml`必须包含以下配置；旧文件只合并此块，保留原Provider、模型及数据库配置，修改后重启。当前默认全局20、单Agent5；内部重试/退避/fallback持有原名额，首次满额HTTP429/concurrency_limited。流式POST不占位，首次GET准入，满额保持pending；断连不释放，执行与清理实际结束才释放。Provider限流仍由F7处理，不增加上游组或排队接口。
++
++```yaml
++concurrency:
++  max_requests: 20
++  max_requests_per_agent: 5
++```
+ 
+ 下面仅列当前实际源码。F1–F5 的组件之外，F5-O1 增加 persistence 数据库/表结构/事务存储组件；项目根的 compose.yaml 管理 PostgreSQL，alembic.ini 与 migrations/ 管理显式迁移。O2增加生成任务所有者和只读订阅组件；F6在现有管理器/执行器内实现主动取消和首次Provider启动协调，当前验收通过。
+ 
+@@ -262,6 +270,7 @@
+ │   └── request_context.py
+ ├── services/
+ │   ├── gateway.py
++│   ├── concurrency.py
+ │   ├── recovery.py
+ │   ├── prices.py
+ │   ├── streaming.py
+--- baseline/config/gateway.example.yaml
++++ candidate/config/gateway.example.yaml
+@@ -49,3 +49,7 @@
+   max_attempts_per_model: 2
+   base_delay_seconds: 0.1
+   max_delay_seconds: 1.0
++
++concurrency:
++  max_requests: 20
++  max_requests_per_agent: 5
+--- baseline/config/gateway.yaml
++++ candidate/config/gateway.yaml
+@@ -40,3 +40,7 @@
+     safety_margin_tokens: 1024
+     default_timeout_seconds: 30
+     max_timeout_seconds: 120
++
++concurrency:
++  max_requests: 20
++  max_requests_per_agent: 5
+--- baseline/docs/1.7-plan.md
++++ candidate/docs/1.7-plan.md
+@@ -1,6 +1,6 @@
+ # 1.7 递增交付计划
+ 
+-日期：2026-11-03。**交付顺序及两个Feature的划分已由用户确认；BUG-002已验收；F11并发治理两层调整已确认，更新后的测试方案待单独确认；模型管理与路由完整设计及测试仍待讨论。** 1.6保持已收尾，历史基线见[收尾记录](1.6-closeout.md)。
++日期：2026-11-03。**交付顺序及两个Feature的划分已由用户确认；BUG-002已验收；F11并发治理两层调整已确认，更新后的测试方案已单独确认、已接入，真实验收阻塞；模型管理与路由完整设计及测试仍待讨论。** 1.6保持已收尾，历史基线见[收尾记录](1.6-closeout.md)。
+ 
+ ## 1. 已确认的顺序
+ 
+@@ -13,7 +13,7 @@
+ | 顺序 | 独立事项 | 当前状态 | 交付给下一项的基础 |
+ | --- | --- | --- | --- |
+ | 1 | [BUG-002测试隔离](bugs/BUG-002-offline-config-isolation.md#2026-11-03当前修复方案与测试方案已确认) | 验收通过：全量2086通过（含28个真实节点，零跳过），首轮独审APPROVED。[验收记录](bugs/BUG-002-acceptance-report.md)。 | Mock/协议替身测试显式管理模型配置，独立于维护者本地Provider绑定；真实测试继续显式启用。 |
+-| 2 | [F11并发治理](features/F11/design.md) | 两层调整已确认；[测试方案](features/F11/test-plan.md)已更新、待单独确认，当前仅文档。 | 调用名额的准入、持有、释放与超额结果形成可验收契约，后续路由复用同一治理组件。 |
++| 2 | [F11并发治理](features/F11/design.md) | 两层调整及[测试方案](features/F11/test-plan.md)均已确认，已接入，真实验收阻塞。 | 调用名额的准入、持有、释放与超额结果形成可验收契约，后续路由复用同一治理组件。 |
+ | 3 | 模型管理与路由 | 作为独立Feature，主题与顺序已确认；完整需求、设计及测试待讨论。 | 最小端点管理、可解释的候选选择及与既有恢复/并发治理的整合。 |
+ 
+ 按上述顺序分别完成设计/测试确认、TDD、回归、证据及独立审查，通过一项再进入下一项。当前不并行实施三项，不把顺序确认当作各项测试方案已经确认；并发治理正式编号为F11；下一Feature编号在建立其正式设计时确定，不预建空目录。
+@@ -39,7 +39,7 @@
+ 
+ **F11最新两层设计已确认（2026-11-03）：**仅全局/单Agent请求名额，初始20/5，可按YAML调整并重启。首次两层原子准入，满额立即拒绝，不排队；首次GET拒绝保持pending，重连/补读不重复占位；内部恢复沿用原名额，不会因为再次申请本地名额而失败。删除上游组配置/名额与内部等位，供应商自行控制其容量，Gateway继续按F7处理供应商限流和有限恢复。
+ 
+-接口、期限、取消/清理所有权、错误/账务/日志及最小组件统一见[完整设计](features/F11/design.md)，不在计划中重复维护；[23组测试方案](features/F11/test-plan.md)待用户单独确认。当前未编写实现或测试，也未取得本项运行证据。
++接口、期限、取消/清理所有权、错误/账务/日志及最小组件统一见[完整设计](features/F11/design.md)，不在计划中重复维护；[23组测试方案](features/F11/test-plan.md)已单独确认；依[实施步骤](features/F11/implementation-plan.md)推进，具体结果在本项测试方案记录。
+ 
+ ## 4. 模型管理与路由：控制这次选择谁
+ 
+@@ -62,4 +62,4 @@
+ - 当前不为多实例、分布式限流、复杂加权/智能路由、Prompt灰度或管理后台预建接口；需求出现时再讨论优先级。
+ - 每项依现有[工作流](../AGENTS.md)完成确认、实现、回归和最多三轮完整独审。顺序确认不替代测试方案确认，文档存在不代表能力已实现。
+ 
+-BUG-002已验收通过，用户随后确认F11两层调整。当前提交更新后的F11测试方案供单独确认；确认后再制定实施步骤并进入TDD。并发治理和模型管理与路由均尚未实现。
++BUG-002已验收通过，用户随后确认F11两层调整。用户已单独确认更新后的F11测试方案；当前按实施步骤执行TDD及回归，最终验收尚未完成。模型管理与路由尚未实施。
+--- baseline/docs/architecture.md
++++ candidate/docs/architecture.md
+@@ -1,4 +1,6 @@
+ # 架构与执行边界
++
++F11两层并发已接入，最终真实验收被上游不可用阻塞，见[设计](features/F11/design.md)、[代码导读](features/F11/implementation-summary.md)及[测试方案](features/F11/test-plan.md)。应用生命周期建立唯一ConcurrencyLimiter，普通/探测与StreamingManager共用；首次执行取得全局/可信Agent请求凭证，全部内部恢复持有原凭证，本地执行及清理完成后释放。Limiter不管理Provider组、协议、预算或账本；满额立即拒绝，无队列。流式名额由后台任务持有，不随订阅断开归还，迟到清理由Task完成回调交接。本项不重写Provider或原流式执行器。
+ 
+ > 状态：F1/F1-O1/F2/F3均已验收。当前具备受控Prompt、YAML模型配置、统一Provider、完整消息Token预算、超时与探测；F4已验收。F5 完整设计与测试方案已分别确认，已验收通过；F6已验收；F7已验收，F8 的实现与验证进度见[测试方案](features/F8/test-plan.md)。
+ 
+--- baseline/docs/contracts.md
++++ candidate/docs/contracts.md
+@@ -1,4 +1,6 @@
+ # 接口与事件契约草案
++
++F11两层并发当前已接入，当前真实验收阻塞/独审状态见[测试方案](features/F11/test-plan.md)。普通/结构化、pending首次GET启动、Provider主动探测在首次执行前同时检查全局及可信Agent请求额度；满额HTTP429、`code=concurrency_limited`、`data=null`、原四字段与请求ID响应头保持，零Provider调用/Attempt/预留。pending拒绝GET不写生成failed，不改变原状态/事件/期限。重试/退避/修复/fallback持续持有原名额，不重新准入；已开始SSE不会新增本地名额不足终态。订阅/补读、取消、Trace、账务及healthz不占生成名额。Provider限流仍为provider_rate_limited并沿用F7。完整配置及释放所有权见[F11设计](features/F11/design.md)。
+ 
+ > 状态：F1/F1-O1/F2/F3/F4 已验收；F5及O1/O2已验收。F6设计/测试方案均已确认，主动取消已验收通过；F7有限恢复已验收，F8 诊断查询见本页专节。当前实现与F6目标协议分节说明。
+ 
+--- baseline/docs/features/F11/design.md
++++ candidate/docs/features/F11/design.md
+@@ -1,6 +1,6 @@
+ # F11：并发治理
+ 
+-> 状态：待测试方案确认。2026-11-03，用户确认收敛为全局与Agent两层请求名额；内部重试继续持有原名额。[测试方案](test-plan.md)按调整后的范围另行确认。当前仅落文档，未实现、未运行本项测试。
++> 状态：阻塞（真实上游不可用），实现已接入。2026-11-03，用户确认收敛为全局与Agent两层请求名额；内部重试继续持有原名额。用户随后单独确认更新后的[测试方案](test-plan.md)，已按[实施步骤](implementation-plan.md)进入TDD。实际验证进度以测试方案执行记录为准，未完成最终回归及独审前不称验收通过。
+ 
+ ## 1. 目标与边界
+ 
+@@ -115,12 +115,12 @@
+ 
+ Mock/受控上游确定性制造等待、429、失败、清理阻塞及取消；真实DeepSeek Chat与OpenAICompatible Responses运行共用公共场景并分别留证，二者仍同属DeepSeek。保持原2086节点及原真实接入/容量；旧容量测试显式使用能容纳原20并发负载的测试限额，不能为新默认值缩小历史负载或跳过失败。
+ 
+-逐例方案及运行安排见[test-plan.md](test-plan.md)。当前所有运行结论均未验证；必须先确认测试方案，再制定实施步骤、TDD和独立审查。
++逐例方案及运行安排见[test-plan.md](test-plan.md)。设计与测试方案均已确认；已开始TDD，实际命令、结果和未验证项在测试方案单独记录。
+ 
+ ## 5. 状态与交接
+ 
+ - 最新确认记录：用户提出只保留全局和Agent请求名额，由供应商自行控制其容量；对“删除上游组配置/名额与内部等位，内部重试持有原名额，保留Provider有限恢复”的推荐方案回复“确认”。本设计以该决定为准，替代此前的上游组方案；此前测试草案未获确认、未执行。
+-- 本轮交付：本设计与测试草案，README、进度、1.7计划同步；不修改源码、测试、运行配置、迁移、AGENTS或原Feature工件。
++- 文档阶段历史：设计/测试草案及索引同步时未改代码或配置；用户单独确认测试方案后进入实施。当前仅最小修改已确认范围，运行YAML只增加两项上限，Provider绑定、凭据、迁移、AGENTS及原Feature工件保持。
+ - 文档核验：本轮5份文档本地链接均存在、代码围栏配对、JSON示例可解析、YAML示例仅两项上限；C01—C23编号连续不重复，无旧分组配置/内部再申请路径，441份受保护文件摘要一致。只核验文档，未运行产品测试或真实调用。
+ - 一次合理性自检：首次两层原子准入；pending拒绝不写failed；断线不释放、取消等待清理；重试始终持有同一请求凭证、不再次准入；旧容量测试需独立限额。均纳入更新后的测试映射。
+ - 模板回看：现有模板已覆盖生命周期、副作用、并发交错、分层证据与独审，未发现需要扩展的通用缺口，本次不改模板。
+--- baseline/docs/features/F11/implementation-plan.md
++++ candidate/docs/features/F11/implementation-plan.md
+@@ -0,0 +1,41 @@
++# F11：两层请求并发实施步骤
++
++> 设计及更新后的23组测试方案均已获用户确认（2026-11-03）。按TDD执行，使用独立任务分工；共同入口由主执行者集成，不依赖Git或worktree。当前运行结果另写test-plan.md，不以计划代替通过。
++
++目标：首次执行原子取得全局/Agent请求名额，同一请求所有重试、退避、修复、fallback及清理持续持有，最终仅释放一次。初始值20/5，Provider配置不增加治理字段。
++
++## 1. 基线及共同接口
++
++- [x] 保存安全文件快照、摘要和原2086测试节点；排除Key、数据库密码、.env及缓存。原Feature/BUG历史工件和AGENTS只读。
++- Limiter接口：ConcurrencyLimiter(policy)，同步acquire(agent_id, request_id)返回RequestPermit；检查/递增之间不挂起，单worker事件循环原子。满额抛GatewayError(concurrency_limited, HTTP429)，安全日志记录scope/limit/in_use/request_id。
++- RequestPermit.release()幂等；release_when_done(tasks)在全部指定本地Task真正结束后才归还，用于清理超时后的所有权交接。Limiter.snapshot()只供内部诊断/测试，不新增HTTP入口。
++- ConcurrencyPolicy为严格配置，两正整数max_requests、max_requests_per_agent，后者<=前者。ModelRegistry显式持有该策略，YAML必填concurrency块。
++
++## 2. 独立任务与文件归属
++
++| 所有者 | 可修改范围 | 依赖与验证 |
++| --- | --- | --- |
++| 组件任务 | 新services/concurrency.py、tests/unit/test_f11_concurrency.py | 只依赖已确定策略属性；先准备最小接口再取得真实容量争抢Red，不把ImportError当业务Red；覆盖原子、归属、重复释放、清理持有。 |
++| 配置/迁移任务 | services/models.py、安全YAML；既有tests中的Registry/YAML及直接Gateway构造迁移；新tests/unit/test_f11_config.py | 不改main/gateway/streaming_manager/streaming入口；历史断言和节点名不删减；配置Red→Green；普通历史夹具显式足额，F10保留20并发/600秒。 |
++| 公共验收任务（组件稳定后） | 新tests/f11_scenarios.py、新tests/f11_support.py及新integration/smoke/live test_f11_concurrency.py | 不修改历史夹具/产品文件；使用真实Limiter与Gateway/PG；Mock与真实共用场景，受控故障独立验证。 |
++| 主执行者 | main.py、api/dependencies.py、api/routes.py、services/gateway.py/streaming_manager.py/streaming.py、必要的test标记排除与文档 | 统一接线、已有任务/取消/清理所有权；测试先行；不同时写其他任务文件。 |
++
++历史测试迁移中GatewayService直接构造需显式注入Limiter；主链由create_app建立一个共享实例。F10测试Environment增加测试侧concurrency参数供新场景配置，默认显式足额；这不是产品绕过开关。配置迁移任务统一维护tests/f10_support.py，公共验收任务只消费。
++
++## 3. 实施与集成顺序
++
++- [x] 两层配置有效/非法、名额边界/并发争抢/释放各取得Red，保留输出，再最小实现Green。
++- [x] 普通/结构化/探测：校验后、prepare/首次费用预留前取得名额；整个恢复循环不再申请；执行停止后释放。写真实Provider进入屏障，验证满额零调用、退避中原请求仍能成功。
++- [x] 流式：首次pending认领前取得，Task注册成功交接；认领ACK不确定/建Task失败/Task首次运行前取消回收。request_id锁保证首次唯一。断连/多订阅不重复占位。
++- [x] 流生成终止后观察execution.cleanup_tasks；若仍活跃，将凭证交给这些Task和生成Task的完成回调。清理超时不能提前释放；实际退出后回收。取消、重启、存储补写保持原终态/账务归属。
++- [x] 接通HTTP429文档与错误元数据，保留pending拒绝后的状态、游标、账户不变；记录安全诊断，不新增本地满额型SSE终态。
++- [x] 目标单元→Mock接口/受控双协议→PG/进程→真实共用场景串行集成。组件独立测试可并行，宿主数据库停启/故障套件不得并行。
++- [x] 核对C01—C23实际用例映射、原2086节点保留，完善导读及操作示例。配置只合并两项上限，不覆盖维护者Provider绑定或凭据。
++- [ ] 稳定版本完整执行：`uv run --python 3.12 python -W error -m pytest --run-live -o junit_family=xunit1 --junitxml=/tmp/llmgw-f11-final.xml -ra -q`，零跳过/筛除，含原真实容量。
++- [ ] 一次提交前自检，冻结安全基线/实际差分、实际提示词及原始回执，使用全新上下文Agent三维独审，最多三轮。修复按原场景及影响范围复测，无阻断后报告验收，更新README/进度/1.7计划。
++
++## 4. 验证与留证
++
++开发命令与最终命令见[test-plan.md](test-plan.md)。每个任务在临时工作证据目录保存Red/Green命令、完整输出及返回码；由主执行者统一归档。没有真实前置条件时报失败，不偷换Mock；费用不作为跳过理由。若新证据要求改变契约，返回需求讨论；普通实现/测试失败自主闭环。
++
++本计划沿用项目一次合理性自检及一次完整独审门槛，不为各任务叠加多轮完整评估。AGENTS、模板和历史Feature验收工件保持原样。
+--- baseline/docs/features/F11/implementation-summary.md
++++ candidate/docs/features/F11/implementation-summary.md
+@@ -0,0 +1,50 @@
++# F11：两层请求并发——代码实现导读
++
++> 状态：实现已接入；首轮完整2153通过/5个真实节点失败，旁路上游HTTP503，整体验收阻塞；独立审查不得替代缺失真实验证。对应[设计](design.md)、[23组测试方案](test-plan.md)及[实施步骤](implementation-plan.md)。本次仅全局/Agent请求额度，不含上游组。
++
++## 1. 问题与行为变化
++
++以前配置和调用预算有效就会进入执行，Gateway没有统一的本地并发准入。现在首次执行前原子检查全局和可信agent_id额度，满额返回HTTP429/concurrency_limited，零Provider调用、零Attempt/费用预留。有效请求使用一份RequestPermit同时占两层额度。
++
++重试、退避、结构化修复、输出增额和fallback都在同一请求生命周期内，不重复申请。流式POST仅创建pending，首次有效GET才准入；满额保持pending。重连、订阅数量、已提交终态不决定生成名额。名额在本地执行及清理实际停止后归还；未知Usage仍按旧账务规则处理。
++
++## 2. 调用链及组件
++
++普通/探测：API依赖注入应用共享Limiter → Gateway确定性校验/完整预算 → acquire → prepare/各Attempt → 结果验收及旧调用清理 → finally释放。普通路径的最终存储写入仍由原_recorded_completion处理；已停止的执行不因后台补写永久占名额。
++
++流式：POST保存pending → GET归属/游标校验 → request_id认领锁 → acquire → claim_stream → 注册后台Task并交接凭证 → 原StreamingExecution执行全部Attempt及清理 → _release_permit。没有在执行器每次stream调用处加新准入。
++
++清理超时：_generate读取执行器现有cleanup_tasks，将凭证登记到尚未结束的清理Task及当前生成Task。RequestPermit.release_when_done逐个观察实际完成，最后一个Task退出才释放。Task.cancel只提出中断，不当作结束。首次Task尚未运行就取消时，_task_done回调负责收回凭证；认领失败/ACK不确定/建Task失败时也撤回。执行器原清理实现不为本功能重写。
++
++## 3. 阅读顺序
++
++| 顺序 | 文件/入口 | 读完能回答什么 |
++| --- | --- | --- |
++| 1 | [models.py](../../../src/services/models.py)：ConcurrencyPolicy、ModelRegistry、load_registry | 为什么YAML必须显式提供两项严格正整数，且Agent<=global；Provider定义为什么不变。 |
++| 2 | [concurrency.py](../../../src/services/concurrency.py)：ConcurrencyLimiter.acquire | 如何在单worker事件循环中无挂起地检查两层并一次占用；为什么拒绝无部分获取。 |
++| 3 | 同文件RequestPermit.release/release_when_done | 为什么用所有者凭证防重复释放；如何在取消后仍持有，避免提前空出容量。 |
++| 4 | [main.py](../../../src/main.py)、[dependencies.py](../../../src/api/dependencies.py) | 应用只建一个Limiter，为什么每次创建GatewayService不会获得一套新额度。 |
++| 5 | [gateway.py](../../../src/services/gateway.py)：_complete | 准入放在整个恢复循环外，为什么满额期间原请求仍能重试成功；验证错误为什么优先。 |
++| 6 | [streaming_manager.py](../../../src/services/streaming_manager.py)：subscribe、_generate、_task_done、_release_permit | 名额如何从GET交给后台；断线为什么不释放；Task未启动及迟到清理怎样回收。 |
++| 7 | [routes.py](../../../src/api/routes.py)及既有错误/Trace | 哪些接口声明429，为什么POST创建、取消、读Trace/账务/事件不做生成准入。 |
++| 8 | [生命周期专项](../../../tests/integration/test_f11_lifecycle.py)、[普通恢复专项](../../../tests/unit/test_f11_ordinary_lifecycle.py) | 如何复现重试期间其他请求被拒绝、原请求成功，以及取消/存储/清理故障下的真实占用。 |
++| 9 | [共用步骤](../../../tests/f11_scenarios.py)、[测试进程屏障](../../../tests/f11_support.py) | 同一业务断言怎样分别执行Mock/真实Adapter；屏障为何不伪造Provider输出或并发控制。 |
++
++## 4. 配置及历史测试迁移
++
++运行/示例YAML仅合并concurrency.max_requests=20及max_requests_per_agent=5；未覆盖已有Provider绑定，不读取/修改Key。旧YAML缺块会明确启动拒绝，需要维护者迁移。没有数据库迁移、新表或公共管理接口。
++
++ModelRegistry程序内构造需显式策略，GatewayService/StreamingManager需注入Limiter。历史测试因此补显式策略、测试身份及YAML；不删旧节点或业务断言。历史F10测试Environment默认显式64/64，以容纳原20并发及600秒负载；这只是测试条件，实际运行配置仍20/5。新治理场景用1/1、2/1验证边界。
++
++测试新增入口避免同basename导入冲突：unit/test_f11_concurrency.py、unit/test_f11_config.py、unit/test_f11_ordinary_lifecycle.py、integration/test_f11_lifecycle.py、integration/test_f11_public_acceptance.py、live/test_f11_real_acceptance.py。公共integration本身使用独立进程/TCP/PG，不另建重复smoke。
++
++## 5. 验证、定位与边界
++
++- 正确Red：满额仍进入第二次HTTP调用，实际200、期望429；组件另取得容量、活跃清理及异常观察反例。配置缺块原实现未拒绝也先失败。
++- 当前已运行：组件13通过、配置/旧解析批次249通过、生命周期及恢复相关130通过、公共Mock6通过、真实6通过；各批次有重叠，不相加当最终全量。
++- 开发中两个测试假设已修正：Task首次执行前取消后的SQL由原1秒后台写入收口，测试等待实际终态；非协作关闭反例可同时有多条清理调用，检查仍活跃时持有、全部退出后释放，不错误假定永远只有一个aclose。
++- 首轮完整2153通过/5个真实节点失败，全部非live2124通过；后续真实八例8失败，旁路上游503。容量仅完成单并发阶段，后续档位/600秒未执行；[来源及边界](test-plan.md#6-首轮完整回归与当前阻塞)保留，整体验收未通过。
++
++定位时先区分concurrency_limited与provider_rate_limited。前者查看request_id对应日志的scope/limit/in_use：global是全局已满，agent是同一可信Agent已满；被拒绝普通/探测Trace无Attempt和费用。pending GET拒绝只留访问诊断，不污染原生成。名额未释放先找生成及cleanup Task是否真的done；本地已停后仍占用才追查凭证交接。
++
++供应商正式账单、长期生产容量、多实例协调未因F11得到验证；两条真实协议仍同属DeepSeek。历史Trace/事件保留策略及其增长边界保持，不把本地名额释放当作供应商已停止生成或计费的证明。
+--- baseline/docs/features/F11/review-material-r1.md
++++ candidate/docs/features/F11/review-material-r1.md
+@@ -0,0 +1,37 @@
++# F11 首轮独立审查材料
++
++本项是全局/Agent两层请求名额，设计和更新后的23组测试均已确认。当前实现及全部非live验证完成，真实验证存在阻塞，材料不预设审查通过。
++
++## 用户原文及确认
++
++- 用户：“我在想是否只需要两层：全局请求名额和Agent 请求名额呢，上游组调用名额就由各家模型提供方自己来控制即可，你觉得呢”。
++- 执行者推荐：“F11只做全局＋Agent两层；删除上游组配置、名额管理及内部等位机制，保留现有Provider错误恢复。”用户回复：“确认”。
++- 更新设计/测试文档后，执行者请求：“请确认更新后的测试方案；确认后进入 TDD 实施。”用户回复：“确认”。
++- 用户此前明确：“不要怕花钱，都要跑一遍，不然不算验收通过”；完整回归继续显式--run-live，不缩小原真实负载或跳过失败。
++- AGENTS.md变更必须先经用户确认，本次两份AGENTS未改。Gateway仅内部Agent/本机或隔离网络/单实例单worker，不新增对外Chat/Responses兼容入口。
++
++已确认设计决定：首次执行全局/Agent原子准入，初始20/5；重试/退避/修复/增长/fallback继续持有原凭证，执行及清理实际停止后释放。pending创建不占位，首次GET才准入，拒绝仍pending。取消/只读接口不做生成准入。供应商错误处理沿用F7，未知费用不记零。完整细节见design.md，测试标准见test-plan.md。
++
++## 固定基线与真实差分
++
++实施前安全快照位于evidence-baseline.tar.gz，内容为原源码/测试/安全配置及相关文档，不含凭据、.env或缓存。没有Git；evidence-review-changes-r1.diff为真实累计差分，evidence-review-changes-r1.json列明旧/新摘要，evidence-source-manifest-r1.json固定本轮候选文件。
++
++本次实际产品变化：services/concurrency.py新增；models.py配置、main/dependencies单例注入、gateway.py首次准入/释放、streaming_manager.py任务/清理所有权、routes.py的429声明。streaming.py与Provider实现未改。历史测试补显式策略/测试身份，不删原节点；F10观察器增加名额采样。原2086节点全部保留、新增72。293份受保护文件不变，运行/示例YAML仅追加20/5，见evidence-protection.json。
++
++## 已运行证据及缺口
++
++- 开发原始回执：evidence-development.json，含准备错误、正确Red、观察假设修正及Green，不能把所有失败都当正确业务Red。
++- 公共Mock六例6通过；新增真实六例单独6通过/50.44秒，原Adapter/TCP/Usage/源观察在evidence-real-public-raw.json.gz。本轮全量新增六例也均通过。
++- 首轮完整实际2158节点、2153通过/5失败，含34 live、0跳过/筛除，1114.69秒、exit1；全部2124非live通过。209份冻结文件在运行期间无漂移。原始JUnit/控制台/来源见evidence-full-first.*。
++- 五个失败：容量单并发阶段的上游读取总超时；F5备用流总超时；F4备用结构化总超时；F4主/备健康探测provider_unavailable。保持原代码/门槛复测F5/F4八例，8失败；旁路原Provider HTTP客户端得到上游503，见evidence-real-recheck.*和evidence-direct-upstream.json。
++- 容量仅完成1并发/60秒：34请求、33成功、1 request_timeout；逐请求终态、Attempt、事件/费用核对完成，未知费用pending，阶段后名额/任务归零。原5/10/20档及600秒未执行，不能因原F10历史曾通过便认定本项已验证。
++
++首轮全量失败和后续复测均保留；未改成允许失败、未增大超时或跳过必测。旁路503只证明该请求不经过Gateway也失败，不证明供应商全站故障或每笔超时归因均确定。当前只能独立核对代码及已有证据，整体验收保持未通过；缺少真实容量证据时不得给整体验收APPROVED。
++
++## 三维重点
++
++1. 需求：所有名额均为请求级；内部恢复不再次申请；身份来自鉴权；Provider组未重引入。
++2. 一致性：拒绝零上游/Attempt/预留；pending拒绝不污染；全局/Agent原子检查；凭证幂等/归属；日志与错误类别安全。
++3. 系统：普通/探测/流式共享一个实例；Task建造失败、首次字节码前取消、ACK不确定、取消与清理超时及迟到Task退出；全部旧功能及费用/终态语义；真实失败是否可能由本次代码造成，不能因旁路503就停止沿调用链审查。
++
++审查者只读，禁止测试/付费调用/修改；通用工具并未强制只读，这只是任务约束。需要最小实验由主执行者运行并回传原始输出。问题按实际P0—P3分级，不凑数量；无代码阻断项也须独立说明关键验收证据缺口与未验证边界。
+--- baseline/docs/features/F11/review-prompt-r1.md
++++ candidate/docs/features/F11/review-prompt-r1.md
+@@ -0,0 +1,15 @@
++你是F11首轮独立代码审查者，使用全新上下文，不继承实现对话。仓库：/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway。
++
++本轮只读：不修改文件，不运行测试、API调用或付费请求，不读取config/credentials.yaml、数据库密码、.env、缓存/venv或其他敏感文件。通用工具并未技术强制只读，这是任务约束。需要实验时报告最小复现，由主执行者执行并回传。不要调用其他实现Agent寻求结论。
++
++先读项目AGENTS.md、docs/AGENTS.md、docs/features/F11/review-material-r1.md、design.md、test-plan.md、implementation-plan.md、implementation-summary.md和docs/templates/独立审查提示词模板.md。材料把真实用户原文、确认后的设计决定、执行者证据分别列明；它们仍需你独立核实，不预设实现或验收正确。当前产品是内部Agent、本机或隔离网络、单实例单worker，后续Router/多实例不在F11范围。
++
++固定基线：docs/features/F11/evidence-baseline.tar.gz是实施前真实安全快照；本轮候选evidence-source-manifest-r1.json、实际累计差分evidence-review-changes-r1.diff及evidence-review-changes-r1.json。无Git，不把文件清单冒充变更证明。核对候选摘要，沿差分读取完整调用链，确认审查结束前后源码/测试/安全配置是否变化。不要打开实际运行配置；需要比较配置时用已归档的安全基线和diff，主执行者另已核对运行YAML只追加20/5，配置/保护证据在evidence-protection.json。
++
++必须按需求正确性、实现一致性、系统正确性三维审查，尤其：两层原子准入/无部分获取；Agent来源和跨凭据/模型计数；重试/修复/输出增额/fallback全程只持有一份名额；普通/探测/流式共享实例；pending拒绝无污染；认领ACK不确定、建Task失败、首次字节码前取消、取消与清理重叠、清理超时仍活跃和迟到Task退出；重复释放/所有权；资源、账务、日志、Trace和终态回归。不要只看测试是否通过，独立推导反例和时序，并检查测试替身/断言/观察是否掩盖错误。
++
++实际回执：evidence-development.json；evidence-node-mapping.json（原2086保留、新72）；evidence-real-public-raw.json.gz（单独真实六例原观察）；evidence-full-first.json、evidence-full-first.xml.gz、evidence-full-first.log；evidence-capacity-first.json.gz及evidence-capacity-wire-first.json.gz；evidence-real-recheck.xml.gz/log；evidence-direct-upstream.json。主执行者实际运行了2158节点，2153通过/5个真实节点失败，34 live、0跳过/筛除；全部2124非live通过，新F11真实六例通过。容量因单并发34请求中的1个上游读取总超时未达门槛，后续5/10/20档和600秒未执行。后来原代码八个真实复测均失败，旁路同一上游HTTP请求返回503。请核实，不把旁路失败等同所有超时归因已确定；也不能把未通过的全量叫通过。
++
++独立区分代码缺陷、外部可用性及证据不足。真实验证仍阻塞，因此关键容量证据未补齐时不得判整体验收APPROVED；可分别报告代码三维发现与整体验收就绪状态。不要为了消除外部失败擅自建议放宽已有门槛或假装有生产证明。每个发现给文件/行、触发条件、影响、违反契约、最小验证方式及建议，并标注已复现/静态确定/待验证。无发现不凑问题。
++
++最终报告逐维覆盖、独立反例与核查结论、实读/未读范围、工具和验证来源、摘要核对结果、P0/P1/P2/P3数量、关键证据缺口及明确VERDICT。测试是主执行者运行的，不能声称你执行了测试。首轮完整审查最多三轮规则适用，当前为第1轮。将完整报告作为最终回复回传，由主执行者按原文归档。
+--- baseline/docs/features/F11/test-plan.md
++++ candidate/docs/features/F11/test-plan.md
+@@ -1,6 +1,6 @@
+ # F11：并发治理——测试方案
+ 
+-> 状态：讨论中，待用户单独确认。对应[已确认的两层设计](design.md)：全局与Agent请求名额，内部重试全程持有。本文件替代未经确认、未执行的原测试草案；是执行计划，不是测试通过记录，当前未编写测试或功能实现。
++> 状态：阻塞（真实上游不可用），用户已单独确认方案（2026-11-03）。对应[已确认的两层设计](design.md)：全局与Agent请求名额，内部重试全程持有。本文件替代未经确认、未执行的原测试草案；执行计划与实际结果分节记录，不以计划代替通过。当前依[实施步骤](implementation-plan.md)推进。
+ 
+ ## 1. 范围与通过标准
+ 
+@@ -55,13 +55,13 @@
+ 
+ Python3.12、严格警告；测试自建YAML、配置注册表、PG/随机回环端口和子进程，保留BUG-002拒读/外网守卫。真实调用仅在--run-live启用后读取已由用户本机配置的Key，缺前置条件明确失败；不在聊天/工件中保存凭据。
+ 
+-新增计划入口：tests/unit/test_f11_concurrency.py、tests/unit/test_f11_config.py、tests/integration/test_f11_concurrency.py、tests/smoke/test_f11_concurrency.py、tests/live/test_f11_concurrency.py；共用步骤放tests/f11_scenarios.py。实施时先验证无重名且可收集；若文件拆分变化保留场景映射，不改变必测范围。
++新增计划入口：tests/unit/test_f11_concurrency.py、tests/unit/test_f11_config.py、tests/integration/test_f11_public_acceptance.py、tests/live/test_f11_real_acceptance.py、tests/integration/test_f11_lifecycle.py、tests/unit/test_f11_ordinary_lifecycle.py；共用步骤放tests/f11_scenarios.py。实施时先验证无重名且可收集；若文件拆分变化保留场景映射，不改变必测范围。
+ 
+ Mock/真实共用C05—C07及C10/C13正常路径；C07只验证全局/Agent跨接入统一计数，不建立上游组。原普通/结构化/流式/续传/取消公共节点继续两种执行。真实并发测试使用测试侧观察/屏障：保留真实Adapter/TCP/Usage及原文证据，在实际上游结果交付或关闭边界暂停来稳定持有名额，不伪造模型结果、不替换Limiter、不为测试增加产品开关。屏障只证明相应本地资源仍持有，不冒称供应商此时仍在生成。两条真实协议均运行，不要求远端按脚本制造取消/故障时序。
+ 
+ C03/C11/C12/C15—C19精确交错用Event/Future屏障和受控协议服务器。清理永不退出负例由测试在断言后解除屏障并回收，避免测试自身泄漏或阻塞整套回归。观察器先写正负对照，不能把计数采样器本身当未经验证的真相。
+ 
+-### 4.2 TDD与运行顺序（待确认后执行）
++### 4.2 已确认的TDD与运行顺序
+ 
+ 1. 冻结安全基线和原节点清单。先写“最后一个名额只能被一个请求取得”的Red，确认因缺失治理而失败；模块未建立时的导入错误仅作准备，不当正确业务Red。配置、两层原子准入、重试全程持有及生命周期接线分别取得相应行为Red/Green。
+ 2. 纯逻辑/配置→普通/结构化→流式/取消/恢复接线，按依赖集成。Limiter稳定后，独立普通与流式测试可分工；公共模型/工厂/持久化接线由统一集成者处理。
+@@ -69,14 +69,14 @@
+ 4. 显式运行两条真实接入的F11共用场景；稳定后完整执行所有测试含原真实容量，不以费用缩减范围。
+ 5. 一次自检，形成代码导读、原始证据及结论，再提交全新上下文Agent三维独审。报告实际提示词、冻结差分、原报告及处置，最多三轮；纯文档同步不自动重复全量。
+ 
+-计划命令，目标文件在实施后才存在，当前未执行：
++计划命令；实际执行命令、返回码和版本边界见文末。集成验收本身已使用独立Gateway进程/TCP/PG，不另建重复的smoke入口。单元、集成、真实入口使用不同basename，避免pytest模块名冲突：
+ 
+ ```bash
+ # 定向开发及相关回归；前置是实际节点已成功收集。
+-uv run --python 3.12 python -W error -m pytest tests/unit/test_f11_concurrency.py tests/unit/test_f11_config.py tests/integration/test_f11_concurrency.py tests/smoke/test_f11_concurrency.py -ra -q
++uv run --python 3.12 python -W error -m pytest tests/unit/test_f11_concurrency.py tests/unit/test_f11_config.py tests/integration/test_f11_public_acceptance.py tests/integration/test_f11_lifecycle.py tests/unit/test_f11_ordinary_lifecycle.py -ra -q
+ 
+ # 真实接入共用场景，独立运行后仍包含在最终全量。
+-uv run --python 3.12 python -W error -m pytest tests/live/test_f11_concurrency.py --run-live -ra -q
++uv run --python 3.12 python -W error -m pytest tests/live/test_f11_real_acceptance.py --run-live -ra -q
+ 
+ # 最终必须保留全量、显式live和JUnit，不通过-k/-m筛除历史节点。
+ uv run --python 3.12 python -W error -m pytest --run-live -o junit_family=xunit1 --junitxml=/tmp/llmgw-f11-final.xml -ra -q
+@@ -89,8 +89,37 @@
+ | 项目 | 当前状态 |
+ | --- | --- |
+ | 整体设计 | 用户已确认两层调整，取代此前上游组设计 |
+-| 本测试方案 | 已按两层调整，仍待用户单独确认 |
+-| 实施步骤、Red/Green、回归/真实调用 | 未开始、未验证 |
+-| 独立审查/代码导读/验收结论 | 未开始，当前不能称F11已实现或通过 |
++| 本测试方案 | 已按两层调整并获用户单独确认 |
++| 实施步骤、Red/Green、回归/真实调用 | 已开始，实际回执见下方阶段记录 |
++| 代码导读/独立审查/验收结论 | [代码导读](implementation-summary.md)已形成；独审记录当前验证缺口，整体验收未通过 |
+ 
+ 模板回看：沿用现有功能测试模板的准备→调用→结果/副作用/Trace要求；本项没有发现需推广的新缺口。模板中历史Claude Code措辞按项目AGENTS当前独立Agent规则执行，不改写模板或新增审批节点。
++
++## 5. 开发执行记录（非最终验收）
++
++- Limiter正确Red：满额未拒绝1失败；活跃清理提前释放2失败；异常Task未观察1失败。组件最终13通过。初期缺接口造成的AttributeError只算准备，不当业务Red。
++- 配置正确Red：缺concurrency原实现未拒绝1失败；原配置/解析目标最终249通过，新配置24节点。历史直接Gateway构造补显式Limiter、Registry策略和测试Agent，不允许产品侧省略身份绕过。
++- 主链正确Red：退避期间第二请求实际200而非429，1失败；独立进程公共global也取得同类正确Red。第一次root shell用了zsh只读变量名导致回执包装失败，随后用独立命令重跑，pytest业务Red已明确返回1。
++- 生命周期及相关恢复130通过；中途两个失败是对原异步SQL收口及非协作关闭并发的测试观察假设，修改为等待已提交终态、检查所有关闭实际退出后释放，未放宽名额上限。
++- 公共Mock六例6通过/38.29秒；双真实协议六例6通过/50.44秒，保持原Adapter/TCP/Usage和业务事实；这两类采用同一scenario。
++- 开发离线广泛回归（明确忽略live，仅作开发批次）2123通过、1失败/741.11秒；失败为旧F7并发恢复测试另建Trace遗漏agent_id。只补该测试可信身份，原场景及新单元相关67通过/2.95秒，产品身份要求不变。最终不重复该开发批次，改由完整--run-live覆盖最终全部文件。
++- 最终收集2158节点，原2086全部保留，新增72；34个live。容量观察补充active_requests及agent_requests，验证运行时上限和阶段排空后的两层名额归零，原20并发/600秒负载未缩小。原历史工件不重写。
++
++开发原始输出会随本项证据归档，批次数量有重叠、不累加作为全量。最终冻结版本回归和独审尚待完成。
++
++## 6. 首轮完整回归与当前阻塞
++
++冻结209份安全文件后完整执行--run-live，返回1：**2153 passed、5 failed /1114.69秒**，共2158节点、34个live、0跳过/筛除；运行期间冻结文件摘要无变化。全部2124个非live节点通过，F11新增六个真实公共节点本轮也全部通过。不能把部分通过或上轮单独真实六例通过当成本轮全量通过。
++
++| 未通过节点 | 实际表现 |
++| --- | --- |
++| F10真实容量 | 单并发34次中33成功、1次流式request_timeout，上游只收到“订单”后在provider阶段达到30秒总期限。阶段排空后名额/生成/清理/取消归零，终态与账务核查一致；未知费用保持pending。原门槛判失败，后续5/10/20档与600秒持续运行未执行。 |
++| F5备用真实流 | request_timeout，未正常完成。 |
++| F4备用结构化 | HTTP504/request_timeout。 |
++| F4主、备主动探测 | HTTP503/provider_unavailable。 |
++
++随后保持源码、配置、超时及测试门槛不变，复测原F5/F4八个真实节点：**8 failed /39.19秒**，表现为provider_unavailable或request_timeout；另一次最小probe复现为provider_timeout。进一步用原Provider HTTP客户端旁路Gateway，向同一模型发送最小请求，实际返回**上游HTTP503 /0.2856秒**。这证明该次旁路失败不经过本地Limiter；不据此声称供应商全站故障或把所有超时根因认定为已查明。
++
++[首轮完整来源](evidence-full-first.json)、[完整JUnit](evidence-full-first.xml.gz)、[控制台](evidence-full-first.log)、[容量报告](evidence-capacity-first.json.gz)、[原始上游帧](evidence-capacity-wire-first.json.gz)、[后续真实复测](evidence-real-recheck.log)、[旁路诊断](evidence-direct-upstream.json)均保留。Mock/真实共用场景的[单独真实观察](evidence-real-public-raw.json.gz)与[原节点映射](evidence-node-mapping.json)单独归档。
++
++当前验收**未通过**，不修改期望、不增大超时、不跳过失败。等待真实上游可用性恢复期间，可以对已完成实现及已通过本地/F11真实证据先做独立静态审查，但关键容量证据仍缺失；审查不能代替最终真实回归，也不能据此判整体验收通过。恢复后仍须完成原四档及600秒实验和最终全部用例。
+--- baseline/docs/progress.md
++++ candidate/docs/progress.md
+@@ -8,9 +8,9 @@
+ 
+ ## 当前状态
+ 
+-1.7当前推进：**BUG-002测试隔离 → 并发治理 → 模型管理与路由**。主题划分及顺序已确认，逐项设计和测试仍分别确认；当前BUG-002验收通过：最终全量2086通过、28个真实节点、零跳过；首轮独审APPROVED，P0—P3均为0。[验收记录](bugs/BUG-002-acceptance-report.md)。[F11并发治理设计](features/F11/design.md)已按最新确认调整为全局/Agent两层，内部重试持有原名额，[测试方案](features/F11/test-plan.md)待单独确认，仅完成文档；模型管理与路由尚未开始完整需求讨论，不提前实施。基线F1—F10的验收状态保持如下。
++1.7当前推进：**BUG-002测试隔离 → 并发治理 → 模型管理与路由**。主题划分及顺序已确认，逐项设计和测试仍分别确认；当前BUG-002验收通过：最终全量2086通过、28个真实节点、零跳过；首轮独审APPROVED，P0—P3均为0。[验收记录](bugs/BUG-002-acceptance-report.md)。[F11并发治理设计](features/F11/design.md)已按最新确认调整为全局/Agent两层，内部重试持有原名额，[测试方案](features/F11/test-plan.md)已单独确认，已接入，真实验收阻塞；模型管理与路由尚未开始完整需求讨论，不提前实施。基线F1—F10的验收状态保持如下。
+ 
+-用户另已确认[公共功能共用用例、Mock与真实分别执行、特殊故障受控复现](test-plan.md#已确认的共用验收原则2026-11-03)；ENV与Provider/测试范围独立。BUG-002据此补充最小公共API验收层的推荐范围，连同当前修复及9组测试已获用户最新整体确认；BUG-002已完成；用户随后确认F11两层调整，当前等待更新后的本项测试方案确认，后续两项均尚未实施。
++用户另已确认[公共功能共用用例、Mock与真实分别执行、特殊故障受控复现](test-plan.md#已确认的共用验收原则2026-11-03)；ENV与Provider/测试范围独立。BUG-002据此补充最小公共API验收层的推荐范围，连同当前修复及9组测试已获用户最新整体确认；BUG-002已完成；用户随后确认F11两层调整，更新后的本项测试方案已单独确认，F11实施中，模型管理与路由尚未实施。
+ 
+ 2026-11-02用户确认推进规则：保留README既有Feature内容和顺序；先给完整推荐方案和必要备选，设计/测试分别确认，仅对关键歧义继续讨论。独立且已确认的任务可并行，公共接线统一集成、按序交付；故障测试串行。方案/提交前各一次自检，新证据或实质变更才重评影响部分；独立审查三维与累计最多三轮规则保留；用户现已确认使用全新上下文Agent，Claude Code可选。今天1.6/1.7均为单实例单worker；Chat Completions/Responses保持上游协议选择，不新增对应对外入口。F5-O2已验收：完整1330/修正相关严格41及真实两条通过，累计第2轮全新Agent独审APPROVED，无P0–P3。
+ 
+@@ -33,7 +33,7 @@
+ | F8-O1 默认 Mock 模拟用量 | 验收通过 | [设计](features/F8/optimizations/O1/design.md)及[测试方案](features/F8/optimizations/O1/test-plan.md) |
+ | F9 用量与计费 | 验收通过 | 最终2010通过含真实16；用户重审后的[F9-B1修复及独审](bugs/F9-B1.md)关闭剩余阻断项。 |
+ | F10 总验收 | 验收通过 | [测试与证据](features/F10/test-plan.md)：全量2039通过，含真实28例；[报告](features/F10/acceptance-report.md)记录16935笔容量请求及20并发600秒结果；首轮全新Agent独审APPROVED，两项P3文案已闭环。 |
+-| F11 并发治理 | 待测试方案确认 | [完整设计](features/F11/design.md)已于2026-11-03按用户确认调整：仅全局/单Agent请求上限，首次满额立即拒绝；内部重试/退避/fallback持有原名额，无上游组组件；[23组测试方案](features/F11/test-plan.md)待单独确认。源码/测试尚未修改，本项Red、实现及验证未开始。 |
++| F11 并发治理 | 阻塞：真实上游不可用 | [完整设计](features/F11/design.md)已于2026-11-03按用户确认调整：仅全局/单Agent请求上限，首次满额立即拒绝；内部重试/退避/fallback持有原名额，无上游组组件；[23组测试方案](features/F11/test-plan.md)已单独确认，首轮完整2153通过/5个真实节点失败；全部非live2124通过，旁路上游503；未验收通过。 |
+ 
+ F1 与 F1-O1 已验收；F2 的需求、设计和完整资产已确认，本项测试方案确认后已开始实施并完成本地验证，本地 223 个测试及 Claude Code 第 1 轮独立审查通过，F2 已验收。每个功能先确认设计和对应测试方案，再按 TDD 最小实现；功能边界独立、能力递增。Feature 在 `docs/features/<编号>/` 保存设计和测试方案，Bug 在 `docs/bugs/` 建记录，均由本文件追踪；不以 Git 分支或提交作为前提。验收通过后报告结论，之后发现问题走 Bug 工作流。
+ 
+--- baseline/src/api/dependencies.py
++++ candidate/src/api/dependencies.py
+@@ -6,4 +6,5 @@
+ def get_gateway(request: Request) -> GatewayService:
+     state = request.app.state
+     return GatewayService(state.providers, state.traces, state.prompt_registry, state.model_registry,
+-                          state.token_budget, storage=state.storage, defer=state.defer_persistence)
++                          state.token_budget, storage=state.storage, defer=state.defer_persistence,
++                          limiter=state.concurrency_limiter)
+--- baseline/src/api/routes.py
++++ candidate/src/api/routes.py
+@@ -48,6 +48,7 @@
+                          '完整关键字、引用和资源规则见项目 docs/response-schema.md；不提供规则查询接口。', responses={
+     status: {"model": ErrorResponse} for status in (
+         http_status.HTTP_400_BAD_REQUEST, http_status.HTTP_422_UNPROCESSABLE_CONTENT,
++        http_status.HTTP_429_TOO_MANY_REQUESTS,
+         http_status.HTTP_500_INTERNAL_SERVER_ERROR, http_status.HTTP_502_BAD_GATEWAY,
+         http_status.HTTP_503_SERVICE_UNAVAILABLE, http_status.HTTP_504_GATEWAY_TIMEOUT,
+     )
+@@ -85,6 +86,7 @@
+                        **{code: {'model': ErrorResponse} for code in (
+                            http_status.HTTP_400_BAD_REQUEST, http_status.HTTP_404_NOT_FOUND,
+                            http_status.HTTP_422_UNPROCESSABLE_CONTENT,
++                           http_status.HTTP_429_TOO_MANY_REQUESTS,
+                            http_status.HTTP_500_INTERNAL_SERVER_ERROR, http_status.HTTP_503_SERVICE_UNAVAILABLE)}},
+             description='从after_seq之后读取已提交事件；省略为0。断开订阅不取消生成。')
+ async def stream_events(request: Request, request_id: Annotated[str, Depends(owned_stream_id)]) -> Response:
+@@ -126,6 +128,7 @@
+ @router.post("/v1/models/{model}/health", response_model=ProbeResponse, responses={
+     status: {"model": ErrorResponse} for status in (
+         http_status.HTTP_400_BAD_REQUEST, http_status.HTTP_422_UNPROCESSABLE_CONTENT,
++        http_status.HTTP_429_TOO_MANY_REQUESTS,
+         http_status.HTTP_500_INTERNAL_SERVER_ERROR, http_status.HTTP_502_BAD_GATEWAY,
+         http_status.HTTP_503_SERVICE_UNAVAILABLE, http_status.HTTP_504_GATEWAY_TIMEOUT,
+     )
+--- baseline/src/main.py
++++ candidate/src/main.py
+@@ -18,6 +18,7 @@
+ from services.prompts import DEFAULT_TEMPLATES, PromptRegistry
+ from services.token_budget import TokenBudget
+ from services.trace import TraceStore
++from services.concurrency import ConcurrencyLimiter
+ from services.streaming_manager import StreamingManager
+ from settings import Settings, load_settings
+ from persistence.database import Database, StorageUnavailable, load_database_config
+@@ -134,8 +135,10 @@
+ 
+     app = FastAPI(title="LLM Gateway", redirect_slashes=False, lifespan=lifespan)
+     traces = TraceStore()
++    limiter = ConcurrencyLimiter(model_registry.concurrency)
+     manager = StreamingManager(storage, traces, model_registry, token_budget, clients.instances, defer, generations,
+-                               awaiting_persistence=awaiting_persistence)
++                               awaiting_persistence=awaiting_persistence, limiter=limiter)
++    app.state.concurrency_limiter = limiter
+     app.state.streaming_manager = manager
+     app.state.settings = settings
+     app.state.providers = clients.instances
+--- baseline/src/services/concurrency.py
++++ candidate/src/services/concurrency.py
+@@ -0,0 +1,85 @@
++"""Single-worker request permits, held across all Provider attempts and cleanup."""
++import logging
++
++from starlette import status as http_status
++
++from errors import GatewayError
++
++
++class RequestPermit:
++    def __init__(self, limiter, agent_id, request_id):
++        self._limiter, self._agent_id, self._request_id = limiter, agent_id, request_id
++        self._released = False
++        self._pending = set()
++
++    def release(self):
++        if self._released:
++            return
++        if self._pending:
++            raise RuntimeError('Request cleanup is still active')
++        self._limiter._release(self)
++        self._released = True
++
++    def release_when_done(self, tasks):
++        if self._released:
++            return
++        for task in set(tasks):
++            if task.done():
++                if not task.cancelled():
++                    task.exception()
++            elif task not in self._pending:
++                self._pending.add(task)
++                task.add_done_callback(self._task_done)
++        if not self._pending:
++            self.release()
++
++    def _task_done(self, task):
++        if not task.cancelled():
++            task.exception()
++        self._pending.discard(task)
++        if not self._pending:
++            self.release()
++
++
++class ConcurrencyLimiter:
++    def __init__(self, policy):
++        self._max_requests = policy.max_requests
++        self._max_per_agent = policy.max_requests_per_agent
++        self._requests = {}
++        self._agents = {}
++
++    def acquire(self, agent_id, request_id):
++        # No suspension between checks and mutations: one worker's event loop
++        # cannot admit two owners against the same last available slot.
++        if request_id in self._requests:
++            raise RuntimeError('Request already owns a concurrency permit')
++        if len(self._requests) >= self._max_requests:
++            self._reject('global', self._max_requests, len(self._requests), request_id)
++        agent_count = self._agents.get(agent_id, 0)
++        if agent_count >= self._max_per_agent:
++            self._reject('agent', self._max_per_agent, agent_count, request_id)
++        permit = RequestPermit(self, agent_id, request_id)
++        self._requests[request_id] = permit
++        self._agents[agent_id] = agent_count + 1
++        return permit
++
++    @staticmethod
++    def _reject(scope, limit, in_use, request_id):
++        logging.getLogger(__name__).warning(
++            'Concurrency rejected request_id=%s scope=%s limit=%s in_use=%s',
++            request_id, scope, limit, in_use)
++        raise GatewayError('concurrency_limited', '当前模型调用并发已满，请稍后重试',
++                           http_status.HTTP_429_TOO_MANY_REQUESTS)
++
++    def _release(self, permit):
++        if self._requests.get(permit._request_id) is not permit:
++            raise RuntimeError('Concurrency permit owner does not match')
++        del self._requests[permit._request_id]
++        count = self._agents[permit._agent_id] - 1
++        if count:
++            self._agents[permit._agent_id] = count
++        else:
++            del self._agents[permit._agent_id]
++
++    def snapshot(self):
++        return {'active_requests': len(self._requests), 'agents': dict(self._agents)}
+--- baseline/src/services/gateway.py
++++ candidate/src/services/gateway.py
+@@ -30,13 +30,14 @@
+ class GatewayService:
+     def __init__(self, providers: Mapping[str, Provider], traces: TraceStore,
+                  prompt_registry: PromptRegistry, model_registry: ModelRegistry, token_budget: TokenBudget,
+-                 storage=None, defer=None):
++                 storage=None, defer=None, *, limiter):
+         self.providers = providers
+         self.traces = traces
+         self.prompt_registry = prompt_registry
+         self.model_registry = model_registry
+         self.token_budget = token_budget
+         self.storage, self.defer = storage, defer
++        self.limiter = limiter
+ 
+     async def complete(self, request: LLMRequest, trace: RequestTrace) -> LLMData | StructuredLLMData:
+         data, _ = await self._recorded_completion(request, trace)
+@@ -234,6 +235,11 @@
+         deadline = asyncio.get_running_loop().time() + timeout
+         trace._deadline = deadline
+         try:
++            permit = self.limiter.acquire(trace.agent_id, trace.request_id)
++        except GatewayError:
++            trace.error_stage = 'admission'
++            raise
++        try:
+             async with asyncio.timeout_at(deadline):
+                 if persist:
+                     with _storage_write(trace, 'prepare'):
+@@ -246,6 +252,8 @@
+             if attempt is not None and attempt.status == 'running':
+                 attempt.status, attempt.error_code = 'failed', error.code
+             raise error from None
++        finally:
++            permit.release()
+ 
+     async def _ordinary_attempts(self, candidates, state, prepared, trace, persist, deadline, count_options):
+         trace.recovery_wait_ms = 0.0
+--- baseline/src/services/models.py
++++ candidate/src/services/models.py
+@@ -27,6 +27,17 @@
+         if isinstance(value, str) and not value.strip():
+             raise ValueError('配置文本不能为空')
+         return value
++
++
++class ConcurrencyPolicy(Definition):
++    max_requests: int = Field(gt=0)
++    max_requests_per_agent: int = Field(gt=0)
++
++    @model_validator(mode='after')
++    def limits(self):
++        if self.max_requests_per_agent > self.max_requests:
++            raise ValueError('Agent并发上限超过全局上限')
++        return self
+ 
+ 
+ class RecoveryPolicy(Definition):
+@@ -105,6 +116,7 @@
+ class ModelRegistry:
+     models: Mapping[str, ModelConfig]
+     providers: Mapping[str, ProviderConfig]
++    concurrency: ConcurrencyPolicy
+     recovery: RecoveryPolicy = field(default_factory=RecoveryPolicy)
+ 
+     def __post_init__(self):
+@@ -119,6 +131,8 @@
+                 raise ValueError
+             if any(model.provider not in providers for model in models.values()):
+                 raise ValueError
++            concurrency = (self.concurrency if isinstance(self.concurrency, ConcurrencyPolicy)
++                           else ConcurrencyPolicy.model_validate(self.concurrency))
+             recovery = (self.recovery if isinstance(self.recovery, RecoveryPolicy)
+                         else RecoveryPolicy.model_validate(self.recovery))
+             for name, model in models.items():
+@@ -142,6 +156,7 @@
+         object.__setattr__(self, 'models', MappingProxyType(models))
+         object.__setattr__(self, 'providers', MappingProxyType(providers))
+         object.__setattr__(self, 'recovery', recovery)
++        object.__setattr__(self, 'concurrency', concurrency)
+ 
+     def candidates(self, name: str) -> tuple[str, ...]:
+         return (name, *self.get(name).fallback_models)
+@@ -183,6 +198,6 @@
+ 
+ def load_registry(config_dir: Path = DEFAULT_CONFIG_DIR) -> ModelRegistry:
+     data = read_yaml(config_dir / 'gateway.yaml')
+-    if not {'models', 'providers'} <= set(data) or set(data) - {'models', 'providers', 'database', 'recovery'}:
+-        raise ConfigurationError('gateway.yaml 必须包含 models、providers，可包含 database、recovery，不能包含其他顶层字段')
+-    return ModelRegistry(models=data['models'], providers=data['providers'], recovery=data.get('recovery', {}))
++    if not {'models', 'providers', 'concurrency'} <= set(data) or set(data) - {'models', 'providers', 'database', 'recovery', 'concurrency'}:
++        raise ConfigurationError('gateway.yaml 必须包含 models、providers、concurrency，可包含 database、recovery，不能包含其他顶层字段')
++    return ModelRegistry(models=data['models'], providers=data['providers'], concurrency=data['concurrency'], recovery=data.get('recovery', {}))
+--- baseline/src/services/streaming_manager.py
++++ candidate/src/services/streaming_manager.py
+@@ -31,7 +31,7 @@
+ 
+ 
+ class StreamingManager:
+-    def __init__(self, storage, traces, registry, token_budget, providers, defer, active, *, awaiting_persistence):
++    def __init__(self, storage, traces, registry, token_budget, providers, defer, active, *, awaiting_persistence, limiter):
+         self.storage, self.traces, self.registry = storage, traces, registry
+         self.token_budget, self.providers, self.defer = token_budget, providers, defer
+         self.active = active
+@@ -44,6 +44,8 @@
+         self.subscriptions = set()
+         self.cancellations = {}
+         self.cleanup_tasks = set()
++        self.limiter = limiter
++        self.permits = {}
+ 
+     @asynccontextmanager
+     async def _claim_lock(self, request_id):
+@@ -78,6 +80,8 @@
+             if self.closing:
+                 raise GatewayError('execution_interrupted', '服务正在停止', 503)
+             if row['status'] == 'pending':
++                permit = self.limiter.acquire(row['agent_id'], request_id)
++                self.permits[request_id] = permit
+                 started = monotonic()
+                 loop_start = asyncio.get_running_loop().time()
+                 timestamp = datetime.now(timezone.utc)
+@@ -88,6 +92,7 @@
+                     claimed = await self.storage.claim_stream(request_id, timestamp,
+                         timestamp + timedelta(seconds=timeout), deadline=deadline)
+                 except BaseException as exc:
++                    self._release_permit(request_id)
+                     if isinstance(exc, StorageUnavailable):
+                         log_storage_failure(request_id, 'claim_stream')
+                     self.orphans.add(request_id)
+@@ -108,6 +113,7 @@
+                         task.add_done_callback(lambda done: self._task_done(request_id, trace, done))
+                     except BaseException:
+                         coroutine.close()
++                        self._release_permit(request_id)
+                         self.active.discard(request_id)
+                         self.orphans.add(request_id)
+                         raise
+@@ -115,6 +121,7 @@
+                     row = dict(row, status='running', started_at=timestamp,
+                                deadline_at=timestamp + timedelta(seconds=timeout))
+                 else:
++                    self._release_permit(request_id)
+                     row = await self._read_stream(request_id)
+             if (row['status'] in {'running', 'canceling'} and request_id not in self.tasks
+                     and request_id not in self.cancellations
+@@ -333,6 +340,7 @@
+                     if not task.done():
+                         self.cleanup_tasks.add(task)
+                         task.add_done_callback(self.cleanup_tasks.discard)
++            self._release_permit(request_id, execution, asyncio.current_task())
+             self.tasks.pop(request_id, None)
+             self.active.discard(request_id)
+             if not getattr(trace, '_cancel_requested', False):
+@@ -340,6 +348,7 @@
+                                        if a.request_id == request_id), None))
+ 
+     def _task_done(self, request_id, trace, task):
++        self._release_permit(request_id)
+         if not task.cancelled():
+             task.exception()
+         if self.tasks.get(request_id) is task:
+@@ -348,6 +357,15 @@
+             if not getattr(trace, '_cancel_requested', False):
+                 trace.error_code = trace.error_code or 'internal_error'
+                 self.defer(trace)
++
++    def _release_permit(self, request_id, execution=None, task=None):
++        permit = self.permits.pop(request_id, None)
++        if permit is None:
++            return
++        tasks = set(execution.cleanup_tasks) if execution is not None else set()
++        if task is not None:
++            tasks.add(task)
++        permit.release_when_done(tasks)
+ 
+     async def reconcile(self):
+         for request_id, operation in list(self.cancellations.items()):
+--- baseline/tests/bug002_cases.py
++++ candidate/tests/bug002_cases.py
+@@ -9,6 +9,7 @@
+     data = {
+         'providers': {name: provider.model_dump(exclude_none=True) for name, provider in models.providers.items()},
+         'models': {name: model.model_dump(mode='json') for name, model in models.models.items()},
++        'concurrency': models.concurrency.model_dump(),
+         'recovery': models.recovery.model_dump(),
+     }
+     if real:
+--- baseline/tests/conftest.py
++++ candidate/tests/conftest.py
+@@ -140,7 +140,7 @@
+ @pytest.fixture(autouse=True)
+ def explicit_database_for_historical_tests(request, monkeypatch):
+     """Keep existing fixtures independent from the maintainer's password/YAML."""
+-    if any(name in request.path.name for name in ('f5o1', 'f5o2', 'f6', 'f7', 'f8', 'f9', 'f10', 'bug002_common')):
++    if any(name in request.path.name for name in ('f5o1', 'f5o2', 'f6', 'f7', 'f8', 'f9', 'f10', 'f11', 'bug002_common')):
+         yield
+         return
+     import main
+@@ -178,7 +178,7 @@
+ @pytest.fixture(autouse=True)
+ def authenticated_historical_gateway_clients(request, monkeypatch):
+     """Old HTTP scenarios now use a funded account; F9 tests set credentials explicitly."""
+-    if any(k in request.path.name for k in ('f9','f10','bug002_common')) or 'postgres' in request.path.parts:
++    if any(k in request.path.name for k in ('f9','f10','f11','bug002_common')) or 'postgres' in request.path.parts:
+         return
+     import httpx
+     from alembic import command
+--- baseline/tests/f10_support.py
++++ candidate/tests/f10_support.py
+@@ -101,8 +101,10 @@
+             async def snapshot():
+                 while True:
+                     manager=app.state.streaming_manager
++                    concurrency=app.state.concurrency_limiter.snapshot()
+                     values=dict(observation_errors=len(OBSERVATION_ERRORS),snapshot_at=datetime.now(timezone.utc).isoformat(), active_generations=len(manager.tasks), subscriptions=len(manager.subscriptions),
+                                 cleanup_tasks=len(manager.cleanup_tasks), cancellations=len(manager.cancellations),
++                                active_requests=concurrency['active_requests'], agent_requests=concurrency['agents'],
+                                 trace_requests=len(app.state.traces.requests), trace_attempts=len(app.state.traces.attempts))
+                     staging=ROOT/'observed.tmp'
+                     staging.write_text(json.dumps(values))
+@@ -276,9 +278,11 @@
+ 
+ 
+ class Environment:
+-    def __init__(self, pg, name, directory, *, backend='real'):
++    def __init__(self, pg, name, directory, *, backend='real', concurrency=None):
+         assert backend in {'real', 'mock'}
+         self.backend = backend
++        self.concurrency = dict(concurrency) if concurrency is not None else {
++            'max_requests':64, 'max_requests_per_agent':64}
+         self.pg, self.name, self.directory = pg,name,directory
+         self.config = directory/'config'
+         self.process = self.client = self.listener = self.log = None
+@@ -294,6 +298,11 @@
+         return result.stdout.strip()
+ 
+     async def start(self):
++        import yaml
++        path = self.config / 'gateway.yaml'
++        document = yaml.safe_load(path.read_text())
++        document['concurrency'] = self.concurrency
++        path.write_text(yaml.safe_dump(document))
+         self.listener=socket.socket()
+         self.listener.bind(('127.0.0.1',0))
+         self.listener.listen()
+@@ -521,6 +530,7 @@
+                     logical_cpus=os.cpu_count(),physical_memory_bytes=memory,python=sys.version,
+                     dependencies={name:version(name) for name in ('fastapi','starlette','sqlalchemy','psycopg','uvicorn')},
+                     upstream_wire_observation=True,workers=1,output_limit=128,request_timeout_seconds=30,
++                    concurrency=self.concurrency,
+                     recovery=real_registry().recovery.model_dump(),
+                     models={k:v.model_dump(mode='json') for k,v in real_registry().models.items()},
+                     provider_host='api.deepseek.com',actual_configured_model='deepseek-flash',
+--- baseline/tests/f11_scenarios.py
++++ candidate/tests/f11_scenarios.py
+@@ -0,0 +1,199 @@
++"""Shared F11 public scenarios: the same assertions on scripted Mock and real adapters."""
++import asyncio
++
++from bug002_scenarios import committed, evidence, request_state, cancel_until_terminal
++from f10_support import CredentialHeaders, payload, frames
++from f11_support import counts, held_request, provider_records, release
++
++
++def arm(env):
++    (env.directory/'f11-arm').touch()
++
++
++def rejected(response):
++    assert response.status_code == 429, response.text
++    value = response.json()
++    assert set(value) == {'success','code','data','message'}
++    assert value['success'] is False and value['code'] == 'concurrency_limited'
++    assert value['data'] is None
++    assert response.headers.get('x-request-id')
++    return response.headers['x-request-id']
++
++
++async def no_attempt(env, rid, *, headers=None):
++    response = await env.client.get('/v1/traces/'+rid, headers=headers)
++    assert response.status_code == 200
++    trace = response.json()['data']
++    assert trace['status'] == 'failed' and trace['error_code'] == 'concurrency_limited'
++    assert trace['error_stage'] == 'admission'
++    assert trace['attempts'] == []
++    assert provider_records(env, rid) == []
++    saved = await request_state(env, rid)
++    assert saved['attempts'] == saved['bills'] == saved['events'] == 0
++
++
++async def verify_completion(env, result, model):
++    assert result['status'] == 'completed', result
++    trace = await committed(env, result['request_id'])
++    env.assert_provider_contract(trace)
++    assert trace['requested_model'] == model
++    assert trace['usage']['unknown_attempts'] == []
++    checked = await env.verify(result['request_id'], expected_agent='a')
++    assert checked['attempts'] == 1
++    return checked
++
++
++async def global_admission_and_pending(env, model, record_property):
++    arm(env)
++    task = asyncio.create_task(env.call(model, 'text'))
++    rid = None
++    try:
++        rid = await held_request(env)
++        assert provider_records(env, rid) == ['complete_entered','complete_result']
++        failed = await env.client.post('/v1/llm', json=payload(model), headers=env.other_headers)
++        denied_id = rejected(failed)
++        await counts(env, {'active_requests':1, 'agents':{'a':1}})
++        await no_attempt(env, denied_id, headers=env.other_headers)
++        # Creation, read-only/control paths work even at the global ceiling.
++        created = await env.client.post('/v1/llm/stream', json=payload(model))
++        assert created.status_code == 202
++        pending = created.json()['data']['request_id']
++        before = await request_state(env, pending)
++        assert before == {'status':'pending','attempts':0,'bills':0,'events':0}
++        response = await env.client.get(f'/v1/llm/stream/{pending}/events')
++        rejected(response)
++        assert await request_state(env, pending) == before
++        assert provider_records(env, pending) == []
++        def pending_times():
++            with env.pg.connect(env.name) as sql:
++                return sql.execute('SELECT started_at,deadline_at,error_code FROM tb_llm_request WHERE request_id=%s', (pending,)).fetchone()
++        assert await asyncio.to_thread(pending_times) == (None,None,None)
++        assert (await env.client.get('/healthz')).status_code == 200
++        assert (await env.client.get('/v1/traces/'+rid)).status_code == 200
++        assert (await env.client.get('/v1/billing/summary')).status_code == 200
++        rejected(await env.client.post(f'/v1/models/{model}/health'))
++        assert await cancel_until_terminal(env, pending) == 'canceled'
++        assert provider_records(env, pending) == []
++        # A separate pending request rejected now must be startable later using the same ID.
++        retry_pending = (await env.client.post('/v1/llm/stream', json=payload(model))).json()['data']['request_id']
++        retry_url = f'/v1/llm/stream/{retry_pending}/events'
++        retry_before = await request_state(env, retry_pending)
++        rejected(await env.client.get(retry_url))
++        assert await request_state(env, retry_pending) == retry_before
++        await counts(env, {'active_requests':1, 'agents':{'a':1}})
++        release(env, rid)
++        result = await task
++        checked = await verify_completion(env, result, model)
++        await counts(env, {'active_requests':0, 'agents':{}})
++        retry_events = []
++        async with env.client.stream('GET', retry_url) as response:
++            assert response.status_code == 200
++            async for event in frames(response):
++                if event[1] != 'response.heartbeat': retry_events.append(event)
++        assert retry_events[-1][1] == 'response.completed'
++        assert (await env.verify(retry_pending, expected_agent='a'))['attempts'] == 1
++        retry_trace = await committed(env, retry_pending)
++        assert retry_trace['error_code'] is None
++        await counts(env, {'active_requests':0, 'agents':{}})
++        # Capacity is reusable by a later actual model call.
++        subsequent = await env.call(model, 'text')
++        await verify_completion(env, subsequent, model)
++        await env.assert_balances()
++        evidence(record_property, backend=env.backend, model=model, held_request_id=rid,
++                 rejected_request_id=denied_id, pending_id=pending, observation=checked)
++    finally:
++        if rid: release(env, rid)
++        if not task.done(): task.cancel()
++        await asyncio.gather(task, return_exceptions=True)
++
++
++async def agent_credential_and_model_isolation(env, model, record_property):
++    alternate = 'general-backup' if model == 'general-primary' else 'general-primary'
++    extra = CredentialHeaders(Authorization='Bearer '+await env.cli('issue','a'))
++    arm(env)
++    task = asyncio.create_task(env.call(model, 'text'))
++    rid = None
++    try:
++        rid = await held_request(env)
++        await counts(env, {'active_requests':1, 'agents':{'a':1}})
++        # The second credential and another model cannot mint extra Agent capacity.
++        response = await env.client.post('/v1/llm', json=payload(alternate), headers=extra)
++        denied = rejected(response)
++        await no_attempt(env, denied)
++        independent = await env.call(alternate, 'text', headers=env.other_headers)
++        assert independent['status'] == 'completed'
++        checked_other = await env.verify(independent['request_id'], expected_agent='b')
++        env.assert_provider_contract(await committed_other(env, independent['request_id']))
++        assert checked_other['attempts'] == 1
++        assert (await env.client.get('/v1/traces/'+rid, headers=env.other_headers)).status_code == 404
++        await counts(env, {'active_requests':1, 'agents':{'a':1}})
++        release(env, rid)
++        checked = await verify_completion(env, await task, model)
++        await counts(env, {'active_requests':0, 'agents':{}})
++        later = await env.call(alternate, 'text')
++        await verify_completion(env, later, alternate)
++        await env.assert_balances()
++        evidence(record_property, backend=env.backend, model=model, held_request_id=rid,
++                 rejected_request_id=denied, independent_request_id=independent['request_id'], observation=checked)
++    finally:
++        if rid: release(env, rid)
++        if not task.done(): task.cancel()
++        await asyncio.gather(task, return_exceptions=True)
++
++
++async def committed_other(env, rid):
++    response = await env.client.get('/v1/traces/'+rid, headers=env.other_headers)
++    assert response.status_code == 200
++    return response.json()['data']
++
++
++async def stream_disconnect_retains_capacity(env, model, record_property):
++    arm(env)
++    created = await env.client.post('/v1/llm/stream', json=payload(model))
++    assert created.status_code == 202
++    rid = created.json()['data']['request_id']
++    url = f'/v1/llm/stream/{rid}/events'
++    first = None
++    try:
++        async with env.client.stream('GET', url) as response:
++            assert response.status_code == 200
++            async for event in frames(response):
++                if event[1] == 'response.delta':
++                    first = event
++                    break
++        assert first is not None
++        assert await held_request(env) == rid
++        await counts(env, {'active_requests':1, 'agents':{'a':1}})
++        denied = rejected(await env.client.post('/v1/llm', json=payload(model)))
++        await no_attempt(env, denied)
++        # Re-subscribe while still full: reading the existing first frame is allowed.
++        async with env.client.stream('GET', url) as response:
++            assert response.status_code == 200
++            async for event in frames(response):
++                if event[1] == 'response.delta':
++                    assert event == first
++                    break
++        await counts(env, {'active_requests':1, 'agents':{'a':1}})
++        release(env, rid)
++        resumed = []
++        async with env.client.stream('GET', url, params={'after_seq':first[0]}) as response:
++            assert response.status_code == 200
++            async for event in frames(response):
++                if event[1] != 'response.heartbeat': resumed.append(event)
++        assert resumed[-1][1] == 'response.completed'
++        assert [e[0] for e in resumed] == list(range(first[0]+1, resumed[-1][0]+1))
++        answer = first[2]['delta']+''.join(e[2]['delta'] for e in resumed if e[1]=='response.delta')
++        upstream, _ = await env.upstream_answer(rid, model, 'streaming')
++        assert answer == upstream and 'A123' in answer and '充电器' in answer
++        trace = await committed(env, rid)
++        env.assert_provider_contract(trace)
++        checked = await env.verify(rid, expected_agent='a')
++        assert checked['attempts'] == 1
++        assert provider_records(env, rid) == ['stream_entered','stream_closed']
++        await counts(env, {'active_requests':0, 'agents':{}})
++        assert (await env.client.get(url, params={'after_seq':resumed[-1][0]})).status_code == 204
++        await env.assert_balances()
++        evidence(record_property, backend=env.backend, model=model, request_id=rid,
++                 rejected_request_id=denied, observation=checked)
++    finally:
++        release(env, rid)
+--- baseline/tests/f11_support.py
++++ candidate/tests/f11_support.py
+@@ -0,0 +1,174 @@
++"""Owned-process F11 fixtures; gates observe real typed Provider resource ownership."""
++import asyncio
++from contextlib import asynccontextmanager
++import json
++
++import pytest_asyncio
++import yaml
++
++from f10_support import (Environment, CredentialHeaders, BOOTSTRAP, MOCK_BOOTSTRAP,
++                         DEFAULT_CONFIG_DIR, real_registry)
++from f4_cases import registry
++from postgres_support import PostgresServer, write_config, migrate
++
++
++GATED_BOOTSTRAP = '''
++base_create_app = create_app
++from contextvars import ContextVar
++import asyncio, json
++from contextlib import asynccontextmanager
++current_f11 = ContextVar('f11_request', default=None)
++def create_app():
++    app = base_create_app()
++    begin = app.state.storage.begin_attempt
++    async def observed_begin(trace, attempt, **kwargs):
++        await begin(trace, attempt, **kwargs)
++        current_f11.set(trace.request_id)
++    app.state.storage.begin_attempt = observed_begin
++    def save(path, value):
++        staging = path.with_suffix('.tmp')
++        staging.write_text(json.dumps(value))
++        staging.replace(path)
++    def observed(rid, event):
++        if rid is None: raise AssertionError('missing request association')
++        path = ROOT / ('f11-provider-' + rid + '.json')
++        values = json.loads(path.read_text()) if path.exists() else []
++        values.append(event)
++        save(path, values)
++    def claim_gate():
++        path = ROOT / 'f11-arm'
++        if path.exists():
++            path.unlink()
++            return True
++        return False
++    async def hold(rid):
++        save(ROOT / ('f11-held-' + rid + '.json'), {'request_id': rid})
++        while not (ROOT / ('f11-release-' + rid)).exists():
++            await asyncio.sleep(.01)
++    def wrap(provider):
++        complete = provider.complete
++        stream = provider.stream
++        async def gated_complete(*args, **kwargs):
++            rid = current_f11.get()
++            gate = claim_gate()
++            observed(rid, 'complete_entered')
++            result = await complete(*args, **kwargs)
++            observed(rid, 'complete_result')
++            if gate: await hold(rid)
++            return result
++        async def gated_stream(*args, **kwargs):
++            rid = current_f11.get()
++            gate = claim_gate()
++            observed(rid, 'stream_entered')
++            iterator = stream(*args, **kwargs)
++            try:
++                async for event in iterator:
++                    yield event
++                    if gate and event.delta:
++                        gate = False
++                        await hold(rid)
++            finally:
++                await iterator.aclose()
++                observed(rid, 'stream_closed')
++        provider.complete = gated_complete
++        provider.stream = gated_stream
++    original = app.router.lifespan_context
++    @asynccontextmanager
++    async def lifespan(app):
++        async with original(app):
++            for provider in {id(p): p for p in app.state.providers.values()}.values():
++                wrap(provider)
++            async def snapshots():
++                while True:
++                    limiter = getattr(app.state, 'concurrency_limiter', None)
++                    save(ROOT / 'f11-counts.json', limiter.snapshot() if limiter else None)
++                    await asyncio.sleep(.01)
++            task = asyncio.create_task(snapshots())
++            try: yield
++            finally:
++                task.cancel()
++                await asyncio.gather(task, return_exceptions=True)
++    app.router.lifespan_context = lifespan
++    return app
++'''
++
++
++async def wait_file(path):
++    async with asyncio.timeout(40):
++        while not path.exists():
++            await asyncio.sleep(.01)
++    return json.loads(path.read_text())
++
++
++async def counts(env, expected):
++    async with asyncio.timeout(5):
++        while True:
++            value = json.loads((env.directory/'f11-counts.json').read_text())
++            if value == expected:
++                return value
++            await asyncio.sleep(.01)
++
++
++def provider_records(env, rid):
++    path = env.directory/('f11-provider-'+rid+'.json')
++    return json.loads(path.read_text()) if path.exists() else []
++
++
++async def held_request(env):
++    async with asyncio.timeout(40):
++        while True:
++            files = list(env.directory.glob('f11-held-*.json'))
++            if files:
++                return json.loads(files[-1].read_text())['request_id']
++            await asyncio.sleep(.01)
++
++
++def release(env, rid):
++    (env.directory/('f11-release-'+rid)).touch()
++
++
++@asynccontextmanager
++async def environment(tmp_path, *, backend, limits):
++    pg = await asyncio.to_thread(lambda: PostgresServer().start())
++    name = pg.create_database()
++    env = Environment(pg, name, tmp_path, backend=backend, concurrency=limits)
++    try:
++        write_config(env.config, pg, name, real_registry() if backend == 'real' else registry())
++        document = yaml.safe_load((env.config/'gateway.yaml').read_text())
++        document['concurrency'] = limits
++        (env.config/'gateway.yaml').write_text(yaml.safe_dump(document))
++        if backend == 'real':
++            (env.config/'credentials.yaml').symlink_to(DEFAULT_CONFIG_DIR/'credentials.yaml')
++            (env.config/'prices.yaml').symlink_to(DEFAULT_CONFIG_DIR/'prices.yaml')
++        (tmp_path/'f10_bootstrap.py').write_text((BOOTSTRAP if backend == 'real' else MOCK_BOOTSTRAP)+GATED_BOOTSTRAP)
++        await asyncio.to_thread(migrate, env.config)
++        for agent in ('a', 'b'):
++            await env.cli('create-agent', agent, 'F11 '+agent)
++            token = await env.cli('issue', agent)
++            headers = CredentialHeaders(Authorization='Bearer '+token)
++            if agent == 'a': env.headers = headers
++            else: env.other_headers = headers
++            await env.cli('deposit', agent, '10000', '--operation-id', 'initial-'+agent)
++        await env.start()
++        await wait_file(tmp_path/'f11-counts.json')
++        yield env
++    finally:
++        # Release every owned gate even when an assertion fails.
++        for path in tmp_path.glob('f11-held-*.json'):
++            release(env, json.loads(path.read_text())['request_id'])
++        await env.stop()
++        await asyncio.to_thread(pg.drop_database, name)
++        await asyncio.to_thread(pg.close)
++
++
++@pytest_asyncio.fixture
++async def f11_mock_environment(request, tmp_path):
++    async with environment(tmp_path, backend='mock', limits=request.param) as env:
++        yield env
++
++
++@pytest_asyncio.fixture
++async def f11_real_environment(request, tmp_path):
++    assert request.config.getoption('--run-live')
++    async with environment(tmp_path, backend='real', limits=request.param) as env:
++        yield env
+--- baseline/tests/f3_cases.py
++++ candidate/tests/f3_cases.py
+@@ -1,3 +1,4 @@
++from services.models import ConcurrencyPolicy
+ from copy import deepcopy
+ 
+ from main import create_app
+@@ -23,7 +24,7 @@
+         values["provider"] = provider
+         values.update((changes or {}).get(name, {}))
+         definitions[name] = ModelConfig(**values)
+-    return ModelRegistry(definitions, {name: ProviderConfig(adapter="mock", api_protocol="chat_completions") for name in ("mock-main", "mock-backup")}, recovery=RecoveryPolicy(max_attempts=1, max_attempts_per_model=1))
++    return ModelRegistry(definitions, {name: ProviderConfig(adapter="mock", api_protocol="chat_completions") for name in ("mock-main", "mock-backup")}, recovery=RecoveryPolicy(max_attempts=1, max_attempts_per_model=1), concurrency=ConcurrencyPolicy(max_requests=64, max_requests_per_agent=64))
+ 
+ 
+ def make_app(*, primary=None, backup=None, changes=None, counter=None):
+--- baseline/tests/f4_cases.py
++++ candidate/tests/f4_cases.py
+@@ -1,4 +1,5 @@
+ """Fixed business fixtures; no dependence on runtime YAML or real credentials."""
++from services.models import ConcurrencyPolicy
+ from copy import deepcopy
+ import json
+ 
+@@ -47,7 +48,7 @@
+     return ModelRegistry(models, {
+         'mock-main':ProviderConfig(adapter='mock',api_protocol='chat_completions'),
+         'mock-backup':ProviderConfig(adapter='mock',api_protocol='responses'),
+-    }, recovery=RecoveryPolicy(max_attempts=1, max_attempts_per_model=1))
++    }, recovery=RecoveryPolicy(max_attempts=1, max_attempts_per_model=1), concurrency=ConcurrencyPolicy(max_requests=64, max_requests_per_agent=64))
+ 
+ 
+ def make_app(provider=None, *, changes=None, budget=None):
+--- baseline/tests/f7_cases.py
++++ candidate/tests/f7_cases.py
+@@ -1,4 +1,5 @@
+ """F7 test-owned input/scripts; HTTP, recovery and PostgreSQL remain product code."""
++from services.models import ConcurrencyPolicy
+ from contextlib import asynccontextmanager
+ from copy import deepcopy
+ import httpx
+@@ -26,7 +27,7 @@
+     base=previous_registry(changes)
+     models=dict(base.models)
+     models['general-primary']=models['general-primary'].model_copy(update={'fallback_models':('general-backup',)})
+-    return ModelRegistry(models,base.providers,recovery=policy or RecoveryPolicy(base_delay_seconds=0.0,max_delay_seconds=0.0))
++    return ModelRegistry(models,base.providers,recovery=policy or RecoveryPolicy(base_delay_seconds=0.0,max_delay_seconds=0.0), concurrency=ConcurrencyPolicy(max_requests=64, max_requests_per_agent=64))
+ 
+ 
+ class SequenceProvider(MockProvider):
+--- baseline/tests/f7_stream_cases.py
++++ candidate/tests/f7_stream_cases.py
+@@ -1,4 +1,5 @@
+ """F7 script controls only the Provider; real Gateway/PG owns recovery and cancellation."""
++from services.models import ConcurrencyPolicy
+ import asyncio
+ from contextlib import asynccontextmanager
+ import httpx
+@@ -42,7 +43,7 @@
+ @asynccontextmanager
+ async def application(config, primary, backup=None, **policy):
+     base=registry({'general-primary': {'fallback_models':['general-backup']}})
+-    models=ModelRegistry(base.models,base.providers,recovery=RecoveryPolicy(base_delay_seconds=0.,max_delay_seconds=0.,**policy))
++    models=ModelRegistry(base.models,base.providers,recovery=RecoveryPolicy(base_delay_seconds=0.,max_delay_seconds=0.,**policy), concurrency=ConcurrencyPolicy(max_requests=64, max_requests_per_agent=64))
+     app=create_app(settings=Settings(env='test',_env_file=None),config_dir=config,model_registry=models,
+                    providers={'mock-main':primary,'mock-backup':backup or ScriptedStream([success()])})
+     async with app.router.lifespan_context(app):
+--- baseline/tests/integration/test_f11_lifecycle.py
++++ candidate/tests/integration/test_f11_lifecycle.py
+@@ -0,0 +1,212 @@
++"""F11 ownership under recovery, cancellation, storage and task-registration races."""
++import asyncio
++from contextlib import asynccontextmanager
++from dataclasses import replace
++
++import httpx
++import pytest
++
++from f6_cases import server, case, body, observe, frames, until, poll
++from f4_cases import registry
++from legacy_identity import HEADERS, provision
++from main import create_app
++from providers.mock import MockProvider
++from errors import ProviderCallError
++from persistence.database import StorageUnavailable
++from settings import Settings
++
++
++def models():
++    from services.models import ConcurrencyPolicy, RecoveryPolicy
++    return replace(registry({'general-primary': {'fallback_models': ['general-backup']}}),
++        concurrency=ConcurrencyPolicy(max_requests=1, max_requests_per_agent=1),
++        recovery=RecoveryPolicy(base_delay_seconds=0.0, max_delay_seconds=0.0))
++
++
++@asynccontextmanager
++async def application(config, provider):
++    provision(config)
++    app = create_app(settings=Settings(env='test', _env_file=None), config_dir=config,
++                     model_registry=models(), provider=provider)
++    async with app.router.lifespan_context(app):
++        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app, raise_app_exceptions=False),
++                                     base_url='http://test', headers=HEADERS) as client:
++            yield app, client
++
++
++def occupied(app):
++    return app.state.concurrency_limiter.snapshot()['active_requests']
++
++
++async def pending(client):
++    response = await client.post('/v1/llm/stream', json=body())
++    assert response.status_code == 202, response.text
++    return response.json()['data']['request_id']
++
++
++class RetryOrdinary(MockProvider):
++    async def complete(self, model, messages, **options):
++        if not self.calls:
++            self.calls.append((model, messages))
++            raise ProviderCallError(code='provider_rate_limited', retry_after_seconds=.01)
++        return await super().complete(model, messages, **options)
++
++
++async def test_ordinary_retry_survives_full_capacity_without_readmission(server, case, monkeypatch):
++    from services.trace import RequestTrace
++    name, config = case
++    entered, release = asyncio.Event(), asyncio.Event()
++    original = RequestTrace.wait_for_recovery
++
++    async def wait(trace, seconds):
++        entered.set()
++        await release.wait()
++        await original(trace, seconds)
++
++    monkeypatch.setattr(RequestTrace, 'wait_for_recovery', wait)
++    provider = RetryOrdinary()
++    async with application(config, provider) as (app, client):
++        first = asyncio.create_task(client.post('/v1/llm', json=body()))
++        try:
++            await asyncio.wait_for(entered.wait(), 3)
++            rejected = await client.post('/v1/llm', json=body())
++            assert rejected.status_code == 429, rejected.text
++            assert rejected.json()['code'] == 'concurrency_limited'
++            assert len(provider.calls) == 1 and occupied(app) == 1
++            rejected_id = rejected.headers['x-request-id']
++            row, attempts, _ = observe(server, name, rejected_id)
++            assert row['error_code'] == 'concurrency_limited' and attempts == []
++            release.set()
++            result = await first
++            assert result.status_code == 200, result.text
++            row, attempts, _ = observe(server, name, result.headers['x-request-id'])
++            assert row['status'] == 'completed' and len(attempts) == 2
++            assert len(provider.calls) == 2 and occupied(app) == 0
++        finally:
++            release.set()
++            await asyncio.gather(first, return_exceptions=True)
++
++
++async def test_stream_retry_holds_one_request_and_pending_rejection_is_read_only(server, case, monkeypatch):
++    from f7_stream_cases import ScriptedStream, success, failure
++    from services.trace import RequestTrace
++    name, config = case
++    entered, release = asyncio.Event(), asyncio.Event()
++    original = RequestTrace.wait_for_recovery
++
++    async def wait(trace, seconds):
++        entered.set()
++        await release.wait()
++        await original(trace, seconds)
++
++    monkeypatch.setattr(RequestTrace, 'wait_for_recovery', wait)
++    provider = ScriptedStream([[failure('provider_rate_limited', retry_after_seconds=.01)], success()])
++    async with application(config, provider) as (app, client):
++        rid, other = await pending(client), await pending(client)
++        before = observe(server, name, other)
++        first = asyncio.create_task(client.get(f'/v1/llm/stream/{rid}/events'))
++        try:
++            await asyncio.wait_for(entered.wait(), 3)
++            rejected = await client.get(f'/v1/llm/stream/{other}/events')
++            assert rejected.status_code == 429, rejected.text
++            assert observe(server, name, other) == before
++            assert occupied(app) == 1 and len(provider.stream_calls) == 1
++            release.set()
++            response = await first
++            assert frames(response.text)[-1][1] == 'response.completed'
++            await until(lambda: occupied(app) == 0)
++            assert len(provider.stream_calls) == 2
++            await poll(client, other)
++        finally:
++            release.set()
++            await asyncio.gather(first, return_exceptions=True)
++
++
++@pytest.mark.parametrize('point', ['claim-before', 'claim-after', 'create-task', 'before-first-bytecode'])
++async def test_claim_or_task_failure_never_leaks_admission(server, case, monkeypatch, point):
++    name, config = case
++    provider = MockProvider()
++    async with application(config, provider) as (app, client):
++        rid = await pending(client)
++        manager = app.state.streaming_manager
++        original_claim = app.state.storage.claim_stream
++        original_task = asyncio.create_task
++
++        async def claim(*args, **kwargs):
++            if point == 'claim-after':
++                await original_claim(*args, **kwargs)
++            raise StorageUnavailable()
++
++        def create_task(coroutine, *args, **kwargs):
++            if getattr(coroutine, 'cr_code', None) is not None and coroutine.cr_code.co_name == '_generate':
++                if point == 'create-task':
++                    raise RuntimeError('controlled task registration failure')
++                task = original_task(coroutine, *args, **kwargs)
++                task.cancel()
++                return task
++            return original_task(coroutine, *args, **kwargs)
++
++        with monkeypatch.context() as patch:
++            if point.startswith('claim-'):
++                patch.setattr(app.state.storage, 'claim_stream', claim)
++            else:
++                patch.setattr(asyncio, 'create_task', create_task)
++            try:
++                await manager.subscribe(rid, 0)
++            except (StorageUnavailable, RuntimeError):
++                pass
++        await until(lambda: occupied(app) == 0)
++        assert provider.stream_calls == []
++        assert rid not in manager.tasks
++        # A later normal request may take the entire configured capacity.
++        response = await client.post('/v1/llm', json=body())
++        assert response.status_code == 200, response.text
++        await manager.reconcile()
++        await until(lambda: observe(server, name, rid)[0]['status'] in {'pending', 'failed'})
++        assert observe(server, name, rid)[0]['status'] in {'pending', 'failed'}
++
++
++@pytest.mark.parametrize('stop', ['cancel', 'timeout'])
++async def test_active_cleanup_holds_capacity_until_actual_exit(server, case, monkeypatch, stop):
++    import services.streaming as streaming
++    from f7_stream_cases import ClosingFailureProvider
++    # The iterator deliberately ignores task cancellation during its close.
++    name, config = case
++    provider = ClosingFailureProvider('swallow')
++    monkeypatch.setattr(streaming, 'STREAM_CLEANUP_TIMEOUT_SECONDS', .03)
++    async with application(config, provider) as (app, client):
++        rid = await pending(client)
++        manager = app.state.streaming_manager
++        try:
++            await manager.subscribe(rid, 0)
++            await asyncio.wait_for(provider.closing.wait(), 3)
++            if stop == 'cancel':
++                await client.post(f'/v1/llm/stream/{rid}/cancel')
++            await until(lambda: rid not in manager.tasks)
++            # Cancellation can leave both the attempt-close and outer cleanup
++            # waiting on this deliberately non-cooperative iterator.
++            assert provider.active_closes > 0 and occupied(app) == 1
++            rejected = await client.post('/v1/llm', json=body())
++            assert rejected.status_code == 429, rejected.text
++            provider.release.set()
++            await until(lambda: provider.active_closes == 0 and occupied(app) == 0)
++            assert (await client.post('/v1/llm', json=body())).status_code == 200
++        finally:
++            provider.release.set()
++            await until(lambda: not manager.cleanup_tasks)
++
++
++@pytest.mark.parametrize('method', ['prepare', 'begin_attempt', 'finish'])
++async def test_storage_failure_releases_stopped_request(server, case, monkeypatch, method):
++    name, config = case
++    provider = MockProvider()
++    async with application(config, provider) as (app, client):
++        async def fail(*args, **kwargs):
++            raise StorageUnavailable()
++        with monkeypatch.context() as patch:
++            patch.setattr(app.state.storage, method, fail)
++            response = await client.post('/v1/llm', json=body())
++            assert response.status_code == 503, response.text
++        assert occupied(app) == 0
++        assert len(provider.calls) == int(method == 'finish')
++        assert (await client.post('/v1/llm', json=body())).status_code == 200
+--- baseline/tests/integration/test_f11_public_acceptance.py
++++ candidate/tests/integration/test_f11_public_acceptance.py
+@@ -0,0 +1,26 @@
++"""Two-layer acceptance on a real Gateway process and explicit scripted Mock."""
++import pytest
++
++from f11_support import f11_mock_environment
++from f11_scenarios import (global_admission_and_pending, agent_credential_and_model_isolation,
++                           stream_disconnect_retains_capacity)
++
++MODELS = ['general-primary', 'general-backup']
++
++
++@pytest.mark.parametrize('f11_mock_environment', [{'max_requests':1,'max_requests_per_agent':1}], indirect=True)
++@pytest.mark.parametrize('model', MODELS)
++async def test_global_admission_and_pending(f11_mock_environment, model, record_property):
++    await global_admission_and_pending(f11_mock_environment, model, record_property)
++
++
++@pytest.mark.parametrize('f11_mock_environment', [{'max_requests':2,'max_requests_per_agent':1}], indirect=True)
++@pytest.mark.parametrize('model', MODELS)
++async def test_agent_credential_and_model_isolation(f11_mock_environment, model, record_property):
++    await agent_credential_and_model_isolation(f11_mock_environment, model, record_property)
++
++
++@pytest.mark.parametrize('f11_mock_environment', [{'max_requests':1,'max_requests_per_agent':1}], indirect=True)
++@pytest.mark.parametrize('model', MODELS)
++async def test_stream_disconnect_retains_capacity(f11_mock_environment, model, record_property):
++    await stream_disconnect_retains_capacity(f11_mock_environment, model, record_property)
+--- baseline/tests/integration/test_f3o1_dispatch.py
++++ candidate/tests/integration/test_f3o1_dispatch.py
+@@ -1,4 +1,5 @@
+ """Same-provider/different-counter and cross-provider/shared-counter behavior."""
++from services.models import ConcurrencyPolicy
+ import asyncio
+ from dataclasses import dataclass, field
+ 
+@@ -36,7 +37,7 @@
+     for name,model_id,provider,counter in [('a','fixture-a','p1','c1'),('b','fixture-b','p1' if shared_provider else 'p2','c1' if shared_counter else 'c2')]:
+         definitions[name]=ModelConfig(**dict(MODEL_VALUES, model_id=model_id, provider=provider, token_counter=counter,
+             context_window_tokens=window, default_output_tokens=16,max_output_tokens=32,safety_margin_tokens=8))
+-    registry=ModelRegistry(definitions,{key:ProviderConfig(adapter='mock', api_protocol='chat_completions') for key in clients})
++    registry=ModelRegistry(definitions,{key:ProviderConfig(adapter='mock', api_protocol='chat_completions') for key in clients}, concurrency=ConcurrencyPolicy(max_requests=64, max_requests_per_agent=64))
+     budget=TokenBudget({'c1':first,'c2':second})
+     app=create_app(settings=Settings(env='test',_env_file=None),model_registry=registry,providers=clients,token_budget=budget)
+     return app,clients,first,second
+--- baseline/tests/integration/test_f5o2_replay.py
++++ candidate/tests/integration/test_f5o2_replay.py
+@@ -1,4 +1,5 @@
+ """Snapshot reuse and O1-compatible history through real PG and public SSE."""
++from services.models import ConcurrencyPolicy
+ from uuid import uuid4
+ 
+ import httpx
+@@ -40,7 +41,7 @@
+             if resource=='provider':
+                 models=registry()
+                 manager.registry=ModelRegistry(models.models,dict(models.providers)|{'mock-main':ProviderConfig(
+-                    adapter='deepseek',api_protocol='chat_completions',base_url='https://example.invalid',credential_ref='test-reference')})
++                    adapter='deepseek',api_protocol='chat_completions',base_url='https://example.invalid',credential_ref='test-reference')}, concurrency=ConcurrencyPolicy(max_requests=64, max_requests_per_agent=64))
+             else:
+                 counter=manager.token_budget.counter_for(manager.registry.models['general-primary'])
+                 monkeypatch.setattr(counter,'version','controlled-new-counter-version')
+@@ -54,7 +55,7 @@
+     state=app.state
+     trace=state.traces.start_request(rid,operation='streaming')
+     trace.agent_id = 'legacy-test'  # Owned history with O1 event and snapshot format.
+-    gateway=GatewayService(state.providers,state.traces,state.prompt_registry,state.model_registry,state.token_budget)
++    gateway=GatewayService(state.providers,state.traces,state.prompt_registry,state.model_registry,state.token_budget, limiter=state.concurrency_limiter)
+     execution=gateway.prepare_stream(StreamRequest.model_validate(body()),trace)
+     # O1's real Store path, before pending/two-stage creation existed.
+     await state.storage.prepare(trace,execution.snapshot)
+--- baseline/tests/integration/test_f6_protocol.py
++++ candidate/tests/integration/test_f6_protocol.py
+@@ -1,4 +1,5 @@
+ """Cancel real adapters through the Gateway against a loopback SSE server."""
++from services.models import ConcurrencyPolicy
+ import asyncio
+ from contextlib import contextmanager
+ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+@@ -88,7 +89,7 @@
+         base=registry({name: {'structured_output_mode': 'none'} for name in ('general-primary','general-backup')})
+         definitions={key:ProviderConfig(adapter=adapter,api_protocol=protocol,
+             base_url=wire.url,credential_ref='fake-local') for key in base.providers}
+-        models=ModelRegistry(base.models,definitions)
++        models=ModelRegistry(base.models,definitions, concurrency=ConcurrencyPolicy(max_requests=64, max_requests_per_agent=64))
+         app=create_app(settings=Settings(env='test',_env_file=None),model_registry=models,
+                        config_dir=config,provider=provider)
+         try:
+--- baseline/tests/integration/test_f7_protocol.py
++++ candidate/tests/integration/test_f7_protocol.py
+@@ -1,4 +1,5 @@
+ """Safe recovery hints cross real adapter/SDK boundaries without hidden retries."""
++from services.models import ConcurrencyPolicy
+ from contextlib import contextmanager
+ from datetime import datetime, timezone
+ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+@@ -195,7 +196,7 @@
+         candidates['general-primary']=candidates['general-primary'].model_copy(update={'structured_output_mode':structured_mode})
+         definitions=dict(base.providers)
+         definitions['mock-main']=ProviderConfig(adapter=adapter,api_protocol=protocol,base_url=url,credential_ref='fake-local-key-ref')
+-        models=ModelRegistry(candidates,definitions,recovery=base.recovery)
++        models=ModelRegistry(candidates,definitions,recovery=base.recovery, concurrency=ConcurrencyPolicy(max_requests=64, max_requests_per_agent=64))
+         provider=(DeepSeekProvider if adapter=='deepseek' else OpenAICompatibleProvider)(url,'fake-local-key')
+         try:
+             async with application(config,provider,models=models) as (_,client):
+--- baseline/tests/integration/test_f7_review_legacy_pending.py
++++ candidate/tests/integration/test_f7_review_legacy_pending.py
+@@ -1,4 +1,5 @@
+ """R1 P2#3: actual stored F6 snapshot shapes survive an unchanged F7 registry."""
++from services.models import ConcurrencyPolicy
+ from contextlib import asynccontextmanager
+ import httpx
+ import pytest
+@@ -14,7 +15,7 @@
+ @asynccontextmanager
+ async def application(config,provider):
+     base=registry()
+-    models=ModelRegistry(base.models,base.providers,recovery=RecoveryPolicy(base_delay_seconds=0.,max_delay_seconds=0.))
++    models=ModelRegistry(base.models,base.providers,recovery=RecoveryPolicy(base_delay_seconds=0.,max_delay_seconds=0.), concurrency=ConcurrencyPolicy(max_requests=64, max_requests_per_agent=64))
+     app=create_app(settings=Settings(env='test',_env_file=None),config_dir=config,model_registry=models,provider=provider)
+     async with app.router.lifespan_context(app):
+         async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app,raise_app_exceptions=False),base_url='http://test') as client:
+@@ -87,7 +88,7 @@
+         manager=app.state.streaming_manager;old=manager.registry
+         models=dict(old.models)
+         models['general-primary']=models['general-primary'].model_copy(update=change)
+-        manager.registry=ModelRegistry(models,old.providers,recovery=old.recovery)
++        manager.registry=ModelRegistry(models,old.providers,recovery=old.recovery, concurrency=ConcurrencyPolicy(max_requests=64, max_requests_per_agent=64))
+         result=await client.get(f'/v1/llm/stream/{rid}/events')
+         row,attempts,events=observe(server,name,rid)
+         assert row['status']=='failed' and row['error_code']=='execution_configuration_changed'
+--- baseline/tests/integration/test_f7_streaming_integration.py
++++ candidate/tests/integration/test_f7_streaming_integration.py
+@@ -1,4 +1,5 @@
+ """F7 recovery observed through committed PG and HTTP replay."""
++from services.models import ConcurrencyPolicy
+ import asyncio
+ import pytest
+ from f7_stream_cases import (server,case,application,ScriptedStream,success,failure,create,observe,frames,until)
+@@ -139,11 +140,11 @@
+         rid=await create(client)
+         manager=app.state.streaming_manager;old=manager.registry
+         if changed=='policy':
+-            manager.registry=ModelRegistry(old.models,old.providers,recovery=RecoveryPolicy(max_attempts=1,max_attempts_per_model=1))
++            manager.registry=ModelRegistry(old.models,old.providers,recovery=RecoveryPolicy(max_attempts=1,max_attempts_per_model=1), concurrency=ConcurrencyPolicy(max_requests=64, max_requests_per_agent=64))
+         elif changed=='backup_model':
+             models=dict(old.models)
+             models['general-backup']=models['general-backup'].model_copy(update={'model_id':'changed'})
+-            manager.registry=ModelRegistry(models,old.providers,recovery=old.recovery)
++            manager.registry=ModelRegistry(models,old.providers,recovery=old.recovery, concurrency=ConcurrencyPolicy(max_requests=64, max_requests_per_agent=64))
+         else:
+             original=manager.token_budget.counter_for
+             class Changed:
+--- baseline/tests/integration/test_f9_paid_flow.py
++++ candidate/tests/integration/test_f9_paid_flow.py
+@@ -1,4 +1,5 @@
+ """Test-owned provider HTTP servers, real Gateway/SDK/PG, fixed fixture prices."""
++from services.models import ConcurrencyPolicy
+ from contextlib import asynccontextmanager
+ from datetime import datetime, timedelta, timezone
+ from decimal import Decimal
+@@ -37,7 +38,7 @@
+     models = {name: ModelConfig(**(MODEL_VALUES | {'provider': provider, 'fallback_models': fallback}))
+               for name, provider, fallback in [('general-primary', 'chat', ('general-backup',)),
+                                                 ('general-backup', 'response', ())]}
+-    registry = ModelRegistry(models, definitions, recovery=RecoveryPolicy(max_attempts=2, max_attempts_per_model=1))
++    registry = ModelRegistry(models, definitions, recovery=RecoveryPolicy(max_attempts=2, max_attempts_per_model=1), concurrency=ConcurrencyPolicy(max_requests=64, max_requests_per_agent=64))
+     app = create_app(settings=Settings(env='test', _env_file=None), model_registry=registry,
+                      config_dir=config, token_budget=CountingFixture(250).as_budget())
+     async with app.router.lifespan_context(app):
+--- baseline/tests/integration/test_f9_stream_budget.py
++++ candidate/tests/integration/test_f9_stream_budget.py
+@@ -1,4 +1,5 @@
+ """One funded account, many subscribers, and independently observed provider entries."""
++from services.models import ConcurrencyPolicy
+ import asyncio
+ from decimal import Decimal
+ 
+@@ -25,7 +26,7 @@
+   peak: {hit: '0', miss: '0', output: '1000'}
+   off_peak: {hit: '0', miss: '0', output: '1000'}
+ """)
+-    return ModelRegistry(models.models,providers,models.recovery)
++    return ModelRegistry(models.models,providers,recovery=models.recovery, concurrency=ConcurrencyPolicy(max_requests=64, max_requests_per_agent=64))
+ 
+ 
+ @pytest.mark.parametrize('end',['cancel','finish'])
+--- baseline/tests/live/test_f10_capacity.py
++++ candidate/tests/live/test_f10_capacity.py
+@@ -13,7 +13,7 @@
+ pytestmark = pytest.mark.live
+ KINDS = [('general-primary', 'text'), ('general-primary', 'streaming'),
+          ('general-backup', 'text'), ('general-backup', 'streaming')]
+-ACTIVE = ('active_generations', 'subscriptions', 'cleanup_tasks', 'cancellations')
++ACTIVE = ('active_generations', 'subscriptions', 'cleanup_tasks', 'cancellations', 'active_requests')
+ 
+ 
+ async def drained_sample(env):
+@@ -25,6 +25,7 @@
+             fresh = captured is not None and datetime.fromisoformat(captured) >= after
+             assert sample.get('observation_errors',0)==0, 'test observation failed'
+             if fresh and all(key in sample and sample[key] == 0 for key in ACTIVE):
++                assert sample['agent_requests'] == {}, 'Agent concurrency permits were not returned'
+                 assert sample['connections'] <= 6, 'database pool failed to return to configured ceiling'
+                 return sample
+             await asyncio.sleep(.25)
+@@ -55,7 +56,10 @@
+ 
+     async def monitor():
+         while not stop.is_set():
+-            samples.append(await env.sample())
++            sample = await env.sample()
++            assert sample['active_requests'] <= env.concurrency['max_requests']
++            assert all(count <= env.concurrency['max_requests_per_agent'] for count in sample['agent_requests'].values())
++            samples.append(sample)
+             try:
+                 await asyncio.wait_for(stop.wait(), 5)
+             except TimeoutError:
+--- baseline/tests/live/test_f11_real_acceptance.py
++++ candidate/tests/live/test_f11_real_acceptance.py
+@@ -0,0 +1,28 @@
++"""Two-layer acceptance on a real Gateway process and explicit real Provider."""
++import pytest
++
++from f11_support import f11_real_environment
++from f11_scenarios import (global_admission_and_pending, agent_credential_and_model_isolation,
++                           stream_disconnect_retains_capacity)
++
++pytestmark = pytest.mark.live
++
++MODELS = ['general-primary', 'general-backup']
++
++
++@pytest.mark.parametrize('f11_real_environment', [{'max_requests':1,'max_requests_per_agent':1}], indirect=True)
++@pytest.mark.parametrize('model', MODELS)
++async def test_global_admission_and_pending(f11_real_environment, model, record_property):
++    await global_admission_and_pending(f11_real_environment, model, record_property)
++
++
++@pytest.mark.parametrize('f11_real_environment', [{'max_requests':2,'max_requests_per_agent':1}], indirect=True)
++@pytest.mark.parametrize('model', MODELS)
++async def test_agent_credential_and_model_isolation(f11_real_environment, model, record_property):
++    await agent_credential_and_model_isolation(f11_real_environment, model, record_property)
++
++
++@pytest.mark.parametrize('f11_real_environment', [{'max_requests':1,'max_requests_per_agent':1}], indirect=True)
++@pytest.mark.parametrize('model', MODELS)
++async def test_stream_disconnect_retains_capacity(f11_real_environment, model, record_property):
++    await stream_disconnect_retains_capacity(f11_real_environment, model, record_property)
+--- baseline/tests/live/test_real_providers.py
++++ candidate/tests/live/test_real_providers.py
+@@ -1,4 +1,5 @@
+ """Real calls only after explicit --run-live; no credentials read at import/collection."""
++from services.models import ConcurrencyPolicy
+ import asyncio
+ from copy import deepcopy
+ from hashlib import sha256
+@@ -32,7 +33,7 @@
+         values = baseline.get(name).model_dump()
+         values["provider"] = provider
+         models[name] = ModelConfig.model_validate(values)
+-    return ModelRegistry(models, providers)
++    return ModelRegistry(models, providers, concurrency=ConcurrencyPolicy(max_requests=64, max_requests_per_agent=64))
+ 
+ 
+ @pytest_asyncio.fixture
+--- baseline/tests/postgres_support.py
++++ candidate/tests/postgres_support.py
+@@ -109,6 +109,7 @@
+         'providers': {key: value.model_dump(exclude_none=True) for key, value in registry.providers.items()},
+         'models': {key: value.model_dump() for key, value in registry.models.items()},
+         'database': server.config(name),
++        'concurrency': registry.concurrency.model_dump(),
+         'recovery': registry.recovery.model_dump(),
+     }
+     (directory / 'gateway.yaml').write_text(yaml.safe_dump(document), encoding='utf-8')
+--- baseline/tests/protocol/test_f3_gateway_probe.py
++++ candidate/tests/protocol/test_f3_gateway_probe.py
+@@ -1,4 +1,5 @@
+ """Gateway-to-real-adapter integration; only the external HTTP service is a fixture."""
++from services.models import ConcurrencyPolicy
+ from copy import deepcopy
+ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+ import json
+@@ -21,7 +22,7 @@
+     values = dict(MODEL_VALUES, provider='wire')
+     registry = ModelRegistry({'general-primary': ModelConfig(**values)}, {
+         'wire': ProviderConfig(adapter=kind, api_protocol='chat_completions' if kind=='deepseek' else 'responses', base_url=state.url, credential_ref='fixture-key'),
+-    })
++    }, concurrency=ConcurrencyPolicy(max_requests=64, max_requests_per_agent=64))
+     app = create_app(settings=Settings(env='test', _env_file=None), model_registry=registry,
+                      providers={'wire': adapter})
+     return app, adapter, kind
+--- baseline/tests/smoke/test_f10_fault_chain.py
++++ candidate/tests/smoke/test_f10_fault_chain.py
+@@ -1,4 +1,5 @@
+ """CLI disposition closes an observable failed-primary/successful-backup request."""
++from services.models import ConcurrencyPolicy
+ from decimal import Decimal
+ import json
+ 
+@@ -37,7 +38,7 @@
+     # Fixed input estimate makes the test's reserve independently hand-computable.
+     from f3_cases import CountingFixture
+     app=create_app(settings=Settings(env='test',_env_file=None),config_dir=config,
+-        model_registry=ModelRegistry(models,definitions,RecoveryPolicy(max_attempts=2,max_attempts_per_model=1)),
++        model_registry=ModelRegistry(models,definitions,recovery=RecoveryPolicy(max_attempts=2,max_attempts_per_model=1), concurrency=ConcurrencyPolicy(max_requests=64, max_requests_per_agent=64)),
+         token_budget=CountingFixture(250).as_budget())
+     async with app.router.lifespan_context(app):
+         async with app.state.storage.database.transaction() as session:
+--- baseline/tests/smoke/test_f9_paid_restart.py
++++ candidate/tests/smoke/test_f9_paid_restart.py
+@@ -1,4 +1,5 @@
+ """SIGKILL a test-owned Gateway on either side of its first upstream call."""
++from services.models import ConcurrencyPolicy
+ from concurrent.futures import ThreadPoolExecutor
+ from decimal import Decimal
+ from pathlib import Path
+@@ -42,7 +43,7 @@
+     model = ModelConfig(**(MODEL_VALUES | {'provider':'wire'}))
+     definition = ProviderConfig(adapter='deepseek',api_protocol='chat_completions',base_url=wire.url,
+                                 credential_ref='fixture')
+-    config = write_config(tmp_path/'config',process_pg,name,ModelRegistry({'general-primary':model},{'wire':definition}))
++    config = write_config(tmp_path/'config',process_pg,name,ModelRegistry({'general-primary':model},{'wire':definition}, concurrency=ConcurrencyPolicy(max_requests=64, max_requests_per_agent=64)))
+     try:
+         migrate(config)
+         provision(config)
+--- baseline/tests/unit/test_core.py
++++ candidate/tests/unit/test_core.py
+@@ -1,3 +1,4 @@
++from services.concurrency import ConcurrencyLimiter
+ import re
+ from pathlib import Path
+ 
+@@ -40,11 +41,12 @@
+     provider = MockProvider(text="chosen answer")
+     store = TraceStore()
+     trace = store.start_request("unit-request")
++    trace.agent_id = 'unit-agent'
+     from services.prompts import PromptRegistry, DEFAULT_TEMPLATES
+     from services.token_budget import TokenBudget
+     registry = mock_registry()
+     result = await GatewayService({name: provider for name in registry.providers}, store,
+-                                  PromptRegistry(DEFAULT_TEMPLATES), registry, TokenBudget.from_models(registry.models.values())).complete(LLMRequest.model_validate(payload), trace)
++                                  PromptRegistry(DEFAULT_TEMPLATES), registry, TokenBudget.from_models(registry.models.values()), limiter=ConcurrencyLimiter((registry).concurrency)).complete(LLMRequest.model_validate(payload), trace)
+     assert result.text == "chosen answer"
+     assert trace.requested_model == "general-primary"
+     assert store.attempts[0].actual_model is None
+--- baseline/tests/unit/test_f11_concurrency.py
++++ candidate/tests/unit/test_f11_concurrency.py
+@@ -0,0 +1,210 @@
++from types import SimpleNamespace
++
++import pytest
++
++from errors import GatewayError
++from services.concurrency import ConcurrencyLimiter
++
++
++def limiter(total=2, per_agent=1):
++    return ConcurrencyLimiter(SimpleNamespace(max_requests=total, max_requests_per_agent=per_agent))
++
++
++def test_global_limit_rejects_next_request():
++    subject = limiter()
++    subject.acquire('a', 'request-a')
++    subject.acquire('b', 'request-b')
++    with pytest.raises(GatewayError) as rejected:
++        subject.acquire('c', 'request-c')
++    assert rejected.value.code == 'concurrency_limited'
++    assert rejected.value.status_code == 429
++
++
++def test_agent_rejection_leaves_other_agent_and_global_capacity_unchanged(caplog):
++    subject = limiter(3, 1)
++    subject.acquire('a', 'request-a')
++    before = subject.snapshot()
++    with pytest.raises(GatewayError):
++        subject.acquire('a', 'request-a2')
++    assert subject.snapshot() == before == {'active_requests': 1, 'agents': {'a': 1}}
++    subject.acquire('b', 'request-b')
++    subject.acquire('c', 'request-c')
++    assert 'scope=agent' in caplog.text
++    assert 'request_id=request-a2' in caplog.text
++    assert 'limit=1 in_use=1' in caplog.text
++
++
++def test_global_rejection_is_reported_before_agent_rejection(caplog):
++    subject = limiter(1, 1)
++    subject.acquire('a', 'request-a')
++    with pytest.raises(GatewayError):
++        subject.acquire('a', 'request-b')
++    assert 'scope=global' in caplog.text
++    assert 'scope=agent' not in caplog.text
++
++
++def test_release_returns_both_counts_once_and_never_releases_another_request():
++    subject = limiter(3, 2)
++    first = subject.acquire('a', 'request-a')
++    second = subject.acquire('a', 'request-b')
++    third = subject.acquire('b', 'request-c')
++    assert subject.snapshot() == {'active_requests': 3, 'agents': {'a': 2, 'b': 1}}
++    first.release()
++    first.release()
++    assert subject.snapshot() == {'active_requests': 2, 'agents': {'a': 1, 'b': 1}}
++    replacement = subject.acquire('a', 'request-d')
++    second.release()
++    third.release()
++    replacement.release()
++    assert subject.snapshot() == {'active_requests': 0, 'agents': {}}
++
++
++@pytest.mark.parametrize('agent', ['a', 'b'])
++def test_duplicate_request_cannot_replace_its_owner(agent):
++    subject = limiter(3, 2)
++    permit = subject.acquire('a', 'request-a')
++    with pytest.raises(RuntimeError):
++        subject.acquire(agent, 'request-a')
++    assert subject.snapshot() == {'active_requests': 1, 'agents': {'a': 1}}
++    permit.release()
++    assert subject.snapshot() == {'active_requests': 0, 'agents': {}}
++
++
++def test_snapshot_is_a_copy_and_policy_is_fixed_at_creation():
++    policy = SimpleNamespace(max_requests=1, max_requests_per_agent=1)
++    subject = ConcurrencyLimiter(policy)
++    subject.acquire('a', 'request-a')
++    snapshot = subject.snapshot()
++    snapshot['agents'].clear()
++    snapshot['active_requests'] = 0
++    policy.max_requests = policy.max_requests_per_agent = 3
++    assert subject.snapshot() == {'active_requests': 1, 'agents': {'a': 1}}
++    with pytest.raises(GatewayError):
++        subject.acquire('b', 'request-b')
++
++
++@pytest.mark.parametrize('scope', ['global', 'agent'])
++async def test_simultaneous_contenders_never_exceed_last_slot(scope):
++    import asyncio
++    for iteration in range(10):
++        subject = limiter(2 if scope == 'global' else 100, 2)
++        first = subject.acquire('a', 'request-first')
++        go = asyncio.Event()
++        permits = []
++        rejected = []
++        snapshots = []
++
++        async def contender(index):
++            await go.wait()
++            try:
++                permits.append(subject.acquire('a' if scope == 'agent' else str(index), str(index)))
++            except GatewayError as error:
++                rejected.append(error.code)
++            snapshots.append(subject.snapshot())
++
++        tasks = [asyncio.create_task(contender(i)) for i in range(32)]
++        go.set()
++        await asyncio.gather(*tasks)
++        assert len(permits) == 1
++        assert rejected == ['concurrency_limited'] * 31
++        assert max(s['active_requests'] for s in snapshots) == 2
++        for permit in [first, *permits]:
++            permit.release()
++        assert subject.snapshot() == {'active_requests': 0, 'agents': {}}
++
++
++async def test_deferred_release_waits_for_every_task_after_cancellation():
++    import asyncio
++    subject = limiter(1, 1)
++    permit = subject.acquire('a', 'request-a')
++    cleaning = asyncio.Event()
++    finish = asyncio.Event()
++
++    async def stubborn_cleanup():
++        try:
++            await asyncio.Future()
++        except asyncio.CancelledError:
++            cleaning.set()
++            await finish.wait()
++
++    cleanup = asyncio.create_task(stubborn_cleanup())
++    await asyncio.sleep(0)
++    cleanup.cancel()
++    await cleaning.wait()
++    other = asyncio.create_task(finish.wait())
++    permit.release_when_done([cleanup, other, cleanup])
++    with pytest.raises(RuntimeError):
++        permit.release()
++    assert subject.snapshot() == {'active_requests': 1, 'agents': {'a': 1}}
++    with pytest.raises(GatewayError):
++        subject.acquire('b', 'request-b')
++    finish.set()
++    await asyncio.gather(cleanup, other)
++    await asyncio.sleep(0)
++    assert subject.snapshot() == {'active_requests': 0, 'agents': {}}
++    permit.release()
++    replacement = subject.acquire('b', 'request-b')
++    replacement.release()
++
++
++async def test_deferred_release_handles_finished_cancelled_and_failed_tasks():
++    import asyncio
++    subject = limiter(2, 1)
++    permit = subject.acquire('a', 'request-a')
++
++    async def fail():
++        raise ValueError('cleanup failed')
++
++    failed = asyncio.create_task(fail())
++    cancelled = asyncio.create_task(asyncio.sleep(100))
++    cancelled.cancel()
++    with pytest.raises(ValueError, match='cleanup failed'):
++        await failed
++    with pytest.raises(asyncio.CancelledError):
++        await cancelled
++    permit.release_when_done([failed, cancelled])
++    assert subject.snapshot() == {'active_requests': 0, 'agents': {}}
++    permit.release_when_done([])
++
++
++async def test_deferred_release_can_extend_the_set_before_all_tasks_stop():
++    import asyncio
++    subject = limiter(1, 1)
++    permit = subject.acquire('a', 'request-a')
++    first, second = asyncio.Event(), asyncio.Event()
++    a = asyncio.create_task(first.wait())
++    b = asyncio.create_task(second.wait())
++    permit.release_when_done([a])
++    permit.release_when_done([a, b])
++    first.set()
++    await a
++    await asyncio.sleep(0)
++    assert subject.snapshot()['active_requests'] == 1
++    second.set()
++    await b
++    await asyncio.sleep(0)
++    assert subject.snapshot() == {'active_requests': 0, 'agents': {}}
++
++
++async def test_cleanup_callback_observes_failure_without_changing_task_outcome():
++    import asyncio
++    observed = []
++
++    class ObservedTask(asyncio.Task):
++        def exception(self):
++            observed.append(True)
++            return super().exception()
++
++    async def fail():
++        raise ValueError('cleanup failed')
++
++    subject = limiter(1, 1)
++    permit = subject.acquire('a', 'request-a')
++    cleanup = ObservedTask(fail())
++    permit.release_when_done([cleanup])
++    await asyncio.sleep(0)
++    await asyncio.sleep(0)
++    assert observed, 'a failed detached cleanup task must have its exception observed'
++    assert subject.snapshot() == {'active_requests': 0, 'agents': {}}
++    with pytest.raises(ValueError, match='cleanup failed'):
++        await cleanup
+--- baseline/tests/unit/test_f11_config.py
++++ candidate/tests/unit/test_f11_config.py
+@@ -0,0 +1,69 @@
++"""Two request limits are explicit, strict startup configuration."""
++from copy import deepcopy
++
++import pytest
++import yaml
++
++from bug002_cases import write_registry
++from services.models import ConfigurationError, load_registry
++
++
++def test_yaml_requires_concurrency(tmp_path):
++    path = write_registry(tmp_path)
++    data = yaml.safe_load(path.read_text())
++    data.pop('concurrency', None)
++    path.write_text(yaml.safe_dump(data))
++    with pytest.raises(ConfigurationError):
++        load_registry(tmp_path)
++
++
++@pytest.mark.parametrize('limits', [
++    {'max_requests': 20, 'max_requests_per_agent': 5},
++    {'max_requests': 2, 'max_requests_per_agent': 2},
++])
++def test_valid_limits_do_not_change_providers(tmp_path, limits):
++    path = write_registry(tmp_path)
++    data = yaml.safe_load(path.read_text())
++    providers = deepcopy(data['providers'])
++    data['concurrency'] = limits
++    path.write_text(yaml.safe_dump(data))
++    loaded = load_registry(tmp_path)
++    assert loaded.concurrency.model_dump() == limits
++    assert {key:value.model_dump(exclude_none=True) for key,value in loaded.providers.items()} == providers
++
++
++@pytest.mark.parametrize('field', ['max_requests', 'max_requests_per_agent'])
++@pytest.mark.parametrize('value', [0, -1, True, '2', 1.5, None])
++def test_invalid_limit_types_and_values_fail(tmp_path, field, value):
++    path = write_registry(tmp_path)
++    data = yaml.safe_load(path.read_text())
++    data['concurrency'] = {'max_requests':20, 'max_requests_per_agent':5, field:value}
++    path.write_text(yaml.safe_dump(data))
++    with pytest.raises(ConfigurationError):
++        load_registry(tmp_path)
++
++
++@pytest.mark.parametrize('limits', [None, [], {}, {'max_requests':2},
++    {'max_requests_per_agent':1}, {'max_requests':1,'max_requests_per_agent':2},
++    {'max_requests':2,'max_requests_per_agent':1,'PRIVATE_UNKNOWN':1}])
++def test_incomplete_or_unknown_configuration_fails(tmp_path, limits):
++    path = write_registry(tmp_path)
++    data = yaml.safe_load(path.read_text())
++    data['concurrency'] = limits
++    path.write_text(yaml.safe_dump(data))
++    with pytest.raises(ConfigurationError) as exc:
++        load_registry(tmp_path)
++    assert 'PRIVATE_UNKNOWN' not in str(exc.value)
++
++
++@pytest.mark.parametrize('duplicate', ['block', 'limit'])
++def test_duplicate_concurrency_limit_is_rejected(tmp_path, duplicate):
++    path = write_registry(tmp_path)
++    data = yaml.safe_load(path.read_text())
++    if duplicate == 'limit':
++        data.pop('concurrency')
++    path.write_text(yaml.safe_dump(data))
++    with path.open('a') as stream:
++        stream.write('\nconcurrency: {max_requests: 2, max_requests: 3, max_requests_per_agent: 1}\n')
++    with pytest.raises(ConfigurationError):
++        load_registry(tmp_path)
+--- baseline/tests/unit/test_f11_ordinary_lifecycle.py
++++ candidate/tests/unit/test_f11_ordinary_lifecycle.py
+@@ -0,0 +1,116 @@
++"""Recovery uses one real permit; validation and errors cannot leak it."""
++import asyncio
++from dataclasses import replace
++from types import SimpleNamespace
++from uuid import uuid4
++
++import pytest
++
++from contracts import LLMRequest
++from errors import GatewayError, ProviderCallError
++from f7_cases import registry, body, SequenceProvider, SCHEMA, VALID
++from providers.base import ProviderResult
++from services.concurrency import ConcurrencyLimiter
++from services.gateway import GatewayService
++from services.models import ConcurrencyPolicy, RecoveryPolicy
++from services.prompts import PromptRegistry, DEFAULT_TEMPLATES
++from services.token_budget import TokenBudget
++from services.trace import TraceStore
++
++
++class CountedLimiter(ConcurrencyLimiter):
++    def __init__(self, policy):
++        super().__init__(policy)
++        self.acquisitions = []
++
++    def acquire(self, agent_id, request_id):
++        self.acquisitions.append((agent_id, request_id))
++        return super().acquire(agent_id, request_id)
++
++
++def service(primary, policy=None):
++    reg = replace(registry(policy=policy),
++                  concurrency=ConcurrencyPolicy(max_requests=1, max_requests_per_agent=1))
++    traces = TraceStore()
++    limiter = CountedLimiter(reg.concurrency)
++    gateway = GatewayService({'mock-main': primary, 'mock-backup': primary}, traces,
++        PromptRegistry(DEFAULT_TEMPLATES), reg, TokenBudget.from_models(reg.models.values()), limiter=limiter)
++    trace = traces.start_request(str(uuid4()))
++    trace.agent_id = 'unit-agent'
++    return gateway, trace, limiter
++
++
++@pytest.mark.parametrize('kind', ['connection', 'rate-limit', 'format-repair', 'output-growth', 'fallback'])
++async def test_recovery_acquires_once_for_every_attempt(kind):
++    success = ProviderResult(text='A123 充电器')
++    first = ProviderCallError(code='provider_connection_error')
++    changes, policy = {}, None
++    if kind == 'rate-limit':
++        first = ProviderCallError(code='provider_rate_limited', retry_after_seconds=.001)
++    elif kind == 'format-repair':
++        first, success = ProviderResult(text='not JSON'), ProviderResult(text=VALID)
++        changes['response_schema'] = SCHEMA
++    elif kind == 'output-growth':
++        first = ProviderResult(text='partial', finish_reason='length')
++        changes.update(initial_output_tokens=32, max_output_tokens=128)
++    elif kind == 'fallback':
++        policy = RecoveryPolicy(max_attempts=2, max_attempts_per_model=1,
++                                base_delay_seconds=0.0, max_delay_seconds=0.0)
++    observations = []
++    provider = SequenceProvider([first, success], before=lambda: observations.append(limiter.snapshot()))
++    gateway, trace, limiter = service(provider, policy=policy)
++    result, attempt = await gateway._complete(LLMRequest.model_validate(body(**changes)), trace)
++    assert len(limiter.acquisitions) == 1 and len(provider.calls) == 2
++    assert observations == [{'active_requests': 1, 'agents': {'unit-agent': 1}}] * 2
++    assert limiter.snapshot() == {'active_requests': 0, 'agents': {}}
++    assert result.text == success.text
++    assert attempt.model == ('general-backup' if kind == 'fallback' else 'general-primary')
++
++
++@pytest.mark.parametrize('failure', ['provider', 'unexpected', 'cancel'])
++async def test_unrecoverable_call_exit_releases_capacity(failure):
++    exc = {'provider': ProviderCallError(code='provider_auth_error'),
++           'unexpected': RuntimeError('private-test-failure'),
++           'cancel': asyncio.CancelledError()}[failure]
++    provider = SequenceProvider([exc])
++    gateway, trace, limiter = service(provider)
++    with pytest.raises(type(exc)):
++        await gateway._complete(LLMRequest.model_validate(body()), trace)
++    assert len(provider.calls) == 1
++    assert limiter.snapshot() == {'active_requests': 0, 'agents': {}}
++
++
++@pytest.mark.parametrize('invalid', ['model', 'schema', 'budget'])
++async def test_deterministic_validation_precedes_full_capacity(invalid):
++    provider = SequenceProvider([])
++    gateway, trace, limiter = service(provider)
++    occupied = limiter.acquire('other-agent', 'other-request')
++    changes = {'model': 'missing-model'} if invalid == 'model' else (
++        {'response_schema': {'type': 'array'}} if invalid == 'schema' else {'max_output_tokens': 1000000})
++    try:
++        with pytest.raises(GatewayError) as caught:
++            await gateway._complete(LLMRequest.model_validate(body(**changes)), trace)
++        assert caught.value.code != 'concurrency_limited'
++        assert provider.calls == [] and len(limiter.acquisitions) == 1
++        assert limiter.snapshot()['active_requests'] == 1
++    finally:
++        occupied.release()
++
++
++def test_factory_shares_limiter_across_services_but_not_applications():
++    from main import create_app
++    from api.dependencies import get_gateway
++    from settings import Settings
++    reg = replace(registry(), concurrency=ConcurrencyPolicy(max_requests=2, max_requests_per_agent=1))
++    first = create_app(settings=Settings(env='test', _env_file=None), model_registry=reg, database=object())
++    second = create_app(settings=Settings(env='test', _env_file=None), model_registry=reg, database=object())
++    a = get_gateway(SimpleNamespace(app=first))
++    b = get_gateway(SimpleNamespace(app=first))
++    assert a.limiter is b.limiter is first.state.streaming_manager.limiter
++    permit = a.limiter.acquire('a', 'request-a')
++    try:
++        assert second.state.concurrency_limiter.snapshot()['active_requests'] == 0
++        with pytest.raises(GatewayError):
++            b.limiter.acquire('a', 'request-b')
++    finally:
++        permit.release()
+--- baseline/tests/unit/test_f3_config.py
++++ candidate/tests/unit/test_f3_config.py
+@@ -1,3 +1,4 @@
++from services.models import ConcurrencyPolicy
+ from pathlib import Path
+ 
+ import pytest
+@@ -37,7 +38,7 @@
+ 
+ 
+ def test_unknown_model_is_gateway_error():
+-    registry=ModelRegistry({'test':make_model()}, {'mock-main':ProviderConfig(adapter='mock', api_protocol='chat_completions')})
++    registry=ModelRegistry({'test':make_model()}, {'mock-main':ProviderConfig(adapter='mock', api_protocol='chat_completions')}, concurrency=ConcurrencyPolicy(max_requests=64, max_requests_per_agent=64))
+     with pytest.raises(GatewayError) as e: registry.get('PRIVATE_INPUT_MARKER')
+     assert e.value.code=='unknown_model'
+     assert 'PRIVATE_INPUT_MARKER' not in str(e.value)
+@@ -68,16 +69,16 @@
+ 
+ @pytest.mark.parametrize('models,providers', [({},{}),({'x':make_model()},{}),({'x':make_model(provider='absent')},{'mock-main':ProviderConfig(adapter='mock', api_protocol='chat_completions')}),({' ':make_model()},{'mock-main':ProviderConfig(adapter='mock', api_protocol='chat_completions')})])
+ def test_registry_rejects_invalid_references(models,providers):
+-    with pytest.raises(ValueError):ModelRegistry(models,providers)
++    with pytest.raises(ValueError):ModelRegistry(models,providers, concurrency=ConcurrencyPolicy(max_requests=64, max_requests_per_agent=64))
+ 
+ 
+ def test_registry_does_not_share_mutable_containers():
+     m={'x':make_model()};p={'mock-main':ProviderConfig(adapter='mock', api_protocol='chat_completions')}
+-    registry=ModelRegistry(m,p);m.clear();p.clear()
++    registry=ModelRegistry(m,p, concurrency=ConcurrencyPolicy(max_requests=64, max_requests_per_agent=64));m.clear();p.clear()
+     assert set(registry.models)=={'x'}
+     with pytest.raises(TypeError): registry.models['new']=make_model()
+     with pytest.raises((ValidationError,AttributeError)): registry.models['x'].max_output_tokens=9
+-    other=ModelRegistry({'x':make_model(max_output_tokens=2048)},{'mock-main':ProviderConfig(adapter='mock', api_protocol='chat_completions')})
++    other=ModelRegistry({'x':make_model(max_output_tokens=2048)},{'mock-main':ProviderConfig(adapter='mock', api_protocol='chat_completions')}, concurrency=ConcurrencyPolicy(max_requests=64, max_requests_per_agent=64))
+     assert other.models['x'].max_output_tokens==2048
+     assert registry.models['x'].max_output_tokens==4096
+ 
+--- baseline/tests/unit/test_f3_config_boundaries.py
++++ candidate/tests/unit/test_f3_config_boundaries.py
+@@ -1,3 +1,4 @@
++from services.models import ConcurrencyPolicy
+ import pytest
+ import yaml
+ 
+@@ -15,7 +16,7 @@
+ ])
+ def test_registry_bad_containers_are_safe(models, providers):
+     with pytest.raises(ConfigurationError) as exc:
+-        ModelRegistry(models, providers)
++        ModelRegistry(models, providers, concurrency=ConcurrencyPolicy(max_requests=64, max_requests_per_agent=64))
+     assert "PRIVATE" not in str(exc.value)
+ 
+ 
+--- baseline/tests/unit/test_f4_contracts.py
++++ candidate/tests/unit/test_f4_contracts.py
+@@ -1,3 +1,4 @@
++from services.models import ConcurrencyPolicy
+ from copy import deepcopy
+ 
+ import pytest
+@@ -41,7 +42,7 @@
+     connection = {} if adapter == 'mock' else dict(base_url='https://example.invalid', credential_ref='fixture')
+     provider = ProviderConfig(adapter=adapter, api_protocol=protocol, **connection)
+     model = ModelConfig(**dict(MODEL_VALUES, structured_output_mode=mode))
+-    registry = ModelRegistry({'model': model}, {'mock-main': provider})
++    registry = ModelRegistry({'model': model}, {'mock-main': provider}, concurrency=ConcurrencyPolicy(max_requests=64, max_requests_per_agent=64))
+     assert registry.models['model'].structured_output_mode == mode
+ 
+ 
+@@ -56,4 +57,4 @@
+     with pytest.raises(ValueError):
+         provider = ProviderConfig(adapter=adapter, api_protocol=protocol, **connection)
+         model = ModelConfig(**dict(MODEL_VALUES, structured_output_mode=mode))
+-        ModelRegistry({'model': model}, {'mock-main': provider})
++        ModelRegistry({'model': model}, {'mock-main': provider}, concurrency=ConcurrencyPolicy(max_requests=64, max_requests_per_agent=64))
+--- baseline/tests/unit/test_f5_execution.py
++++ candidate/tests/unit/test_f5_execution.py
+@@ -53,7 +53,7 @@
+     state = app.state
+     trace = state.traces.start_request('unit-request', operation='streaming')
+     gateway = GatewayService(state.providers, state.traces, state.prompt_registry,
+-                             state.model_registry, state.token_budget)
++                             state.model_registry, state.token_budget, limiter=state.concurrency_limiter)
+     request = StreamRequest.model_validate({
+         'model': 'general-primary', 'prompt': {'name': 'basic_text', 'version': '1.0.0'},
+         'messages': [{'role': 'user', 'content': 'A123'}],
+--- baseline/tests/unit/test_f5o1_configuration.py
++++ candidate/tests/unit/test_f5o1_configuration.py
+@@ -10,6 +10,7 @@
+     document = {
+         'providers': {name: value.model_dump(exclude_none=True) for name, value in baseline.providers.items()},
+         'models': {name: value.model_dump() for name, value in baseline.models.items()},
++        'concurrency': baseline.concurrency.model_dump(),
+         'database': {
+             'host': '127.0.0.1', 'port': 15432, 'name': 'gateway_test',
+             'username': 'gateway_test', 'password_file': 'postgres.password',
+--- baseline/tests/unit/test_f7_acceptance_edges.py
++++ candidate/tests/unit/test_f7_acceptance_edges.py
+@@ -125,6 +125,7 @@
+     try:
+         await asyncio.wait_for(first_failed.wait(),1)
+         trace_b=traces.start_request('00000000-0000-0000-0000-000000000088')
++        trace_b.agent_id='unit-agent'
+         data_b,_=await svc._complete(b,trace_b)
+         assert data_b.text=='订单B456'
+         assert not task.done(), 'B inherited A retry wait instead of proceeding independently'
+--- baseline/tests/unit/test_f7_budget_and_repair.py
++++ candidate/tests/unit/test_f7_budget_and_repair.py
+@@ -1,4 +1,6 @@
+ """F7 A/J/G: service boundaries and actual Provider calls."""
++from services.models import ConcurrencyPolicy
++from services.concurrency import ConcurrencyLimiter
+ import pytest
+ from pydantic import ValidationError
+ from contracts import LLMRequest, StreamRequest
+@@ -43,8 +45,10 @@
+     reg=reg or replace(registry(), recovery=RecoveryPolicy())
+     traces=TraceStore()
+     svc=GatewayService({'mock-main':provider,'mock-backup':provider}, traces,
+-                       PromptRegistry(DEFAULT_TEMPLATES),reg,TokenBudget.from_models(reg.models.values()))
+-    return svc,traces,traces.start_request('00000000-0000-0000-0000-000000000007')
++                       PromptRegistry(DEFAULT_TEMPLATES),reg,TokenBudget.from_models(reg.models.values()), limiter=ConcurrencyLimiter((reg).concurrency))
++    trace = traces.start_request('00000000-0000-0000-0000-000000000007')
++    trace.agent_id = 'unit-agent'
++    return svc,traces,trace
+ 
+ 
+ async def test_f7_connection_failure_retries_same_input_then_success():
+@@ -107,7 +111,7 @@
+     models['general-primary']=models['general-primary'].model_copy(update={'fallback_models':('general-backup',)})
+     models['general-backup']=models['general-backup'].model_copy(update={'fallback_models':('third',)})
+     models['third']=models['general-backup'].model_copy(update={'fallback_models':()})
+-    reg=ModelRegistry(models,base.providers,recovery=RecoveryPolicy(max_attempts=3,max_attempts_per_model=1,base_delay_seconds=0,max_delay_seconds=0))
++    reg=ModelRegistry(models,base.providers,recovery=RecoveryPolicy(max_attempts=3,max_attempts_per_model=1,base_delay_seconds=0,max_delay_seconds=0), concurrency=ConcurrencyPolicy(max_requests=64, max_requests_per_agent=64))
+     p=Sequence(ProviderCallError(code='provider_connection_error'),ProviderCallError(code='provider_connection_error'),ProviderResult(text='must not run'))
+     svc,traces,trace=service(p,reg)
+     with pytest.raises(ProviderCallError):await svc._complete(LLMRequest.model_validate(body()),trace)
+--- baseline/tests/unit/test_f7_ordinary_edges.py
++++ candidate/tests/unit/test_f7_ordinary_edges.py
+@@ -1,4 +1,6 @@
+ """F7 service edge evidence. Real PromptRegistry/TokenBudget; no PG or paid API."""
++from services.models import ConcurrencyPolicy
++from services.concurrency import ConcurrencyLimiter
+ import asyncio
+ from copy import deepcopy
+ from decimal import Decimal
+@@ -39,11 +41,12 @@
+     changes=deepcopy(changes or {})
+     changes.setdefault('general-primary',{}).setdefault('fallback_models',['general-backup'])
+     r=registry(changes)
+-    r=ModelRegistry(r.models,providers or r.providers,recovery=policy or RecoveryPolicy(base_delay_seconds=0,max_delay_seconds=0))
++    r=ModelRegistry(r.models,providers or r.providers,recovery=policy or RecoveryPolicy(base_delay_seconds=0,max_delay_seconds=0), concurrency=ConcurrencyPolicy(max_requests=64, max_requests_per_agent=64))
+     traces=TraceStore(); budget=TokenBudget.from_models(r.models.values())
+     svc=GatewayService({'mock-main':primary,'mock-backup':backup or SequenceProvider()},traces,
+-        PromptRegistry(DEFAULT_TEMPLATES),r,budget)
++        PromptRegistry(DEFAULT_TEMPLATES),r,budget, limiter=ConcurrencyLimiter((r).concurrency))
+     trace=traces.start_request('00000000-0000-0000-0000-000000000077')
++    trace.agent_id = 'unit-agent'
+     return svc,traces,trace
+ 
+ 
+@@ -324,9 +327,10 @@
+     # default protocol pairing before accepting provider overrides.
+     base=registry();items={k:v.model_copy(update=changes[k]) for k,v in base.models.items()}
+     items['general-primary']=items['general-primary'].model_copy(update={'fallback_models':('general-backup',)})
+-    r=ModelRegistry(items,definitions,recovery=RecoveryPolicy(base_delay_seconds=0,max_delay_seconds=0))
+-    traces=TraceStore();svc=GatewayService({'mock-main':a,'mock-backup':b},traces,PromptRegistry(DEFAULT_TEMPLATES),r,TokenBudget.from_models(r.models.values()))
++    r=ModelRegistry(items,definitions,recovery=RecoveryPolicy(base_delay_seconds=0,max_delay_seconds=0), concurrency=ConcurrencyPolicy(max_requests=64, max_requests_per_agent=64))
++    traces=TraceStore();svc=GatewayService({'mock-main':a,'mock-backup':b},traces,PromptRegistry(DEFAULT_TEMPLATES),r,TokenBudget.from_models(r.models.values()), limiter=ConcurrencyLimiter((r).concurrency))
+     tr=traces.start_request('00000000-0000-0000-0000-000000000078')
++    tr.agent_id = 'unit-agent'
+     data,_=await svc._complete(LLMRequest.model_validate(payload()),tr)
+     assert data.parsed==PARSED and len(a.calls)==2 and len(b.calls)==1
+     assert '"schema":' not in a.calls[0][2][-1].content and '"schema":' in b.calls[0][2][-1].content
+--- baseline/tests/unit/test_f7_recovery.py
++++ candidate/tests/unit/test_f7_recovery.py
+@@ -1,4 +1,5 @@
+ """F7 K/R/T policy tests: no upstream calls or database."""
++from services.models import ConcurrencyPolicy
+ from importlib.util import find_spec
+ from types import SimpleNamespace
+ import pytest
+@@ -24,7 +25,7 @@
+ 
+ def registry(links=None,**kw):
+     return models.ModelRegistry({k:dict(MODEL_VALUES,fallback_models=v) for k,v in (links or {'a':[],'b':[]}).items()},
+-        {'mock-main':dict(adapter='mock',api_protocol='chat_completions')},**kw)
++        {'mock-main':dict(adapter='mock',api_protocol='chat_completions')},**kw, concurrency=ConcurrencyPolicy(max_requests=64, max_requests_per_agent=64))
+ 
+ 
+ def test_policy_registry_defaults():
+@@ -61,7 +62,7 @@
+ def test_yaml_recovery(tmp_path):
+     r=registry({'a':['b'],'b':[]})
+     values=dict(models={k:v.model_dump(mode='json') for k,v in r.models.items()},
+-        providers={k:v.model_dump() for k,v in r.providers.items()},recovery=dict(max_attempts=1,max_attempts_per_model=1))
++        providers={k:v.model_dump() for k,v in r.providers.items()},concurrency=r.concurrency.model_dump(),recovery=dict(max_attempts=1,max_attempts_per_model=1))
+     (tmp_path/'gateway.yaml').write_text(yaml.safe_dump(values))
+     result=models.load_registry(tmp_path)
+     assert result.recovery.max_attempts==1 and result.candidates('a')==('a','b')

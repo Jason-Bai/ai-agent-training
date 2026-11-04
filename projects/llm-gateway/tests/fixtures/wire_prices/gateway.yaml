@@ -1,0 +1,9 @@
+pricing:
+  bindings: {wire: loopback, mock-main: loopback, mock-backup: loopback}
+  versions:
+    - supplier: loopback
+      model: deepseek-flash
+      version: fixture-v1
+      effective_from: '2020-01-01T00:00:00Z'
+      peak: {hit: '0.4', miss: '2', output: '8'}
+      off_peak: {hit: '0.4', miss: '2', output: '8'}

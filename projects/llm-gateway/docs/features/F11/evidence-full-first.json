@@ -1,0 +1,36 @@
+{
+  "command": "uv run --python 3.12 python -W error -m pytest --run-live -o junit_family=xunit1 --junitxml=/tmp/llmgw-f11-final.xml -ra -q",
+  "exit_code": 1,
+  "total": 2158,
+  "passed": 2153,
+  "failed": 5,
+  "live_nodes": 34,
+  "skipped": 0,
+  "duration_seconds": 1114.69,
+  "original_nodes_retained": 2086,
+  "new_nodes": 72,
+  "source_drift_during_full": [],
+  "capacity": {
+    "phases_executed": [
+      1
+    ],
+    "phase_requests": 34,
+    "phase_successes": 33,
+    "failures": {
+      "request_timeout": 1
+    },
+    "unexecuted": "5/10/20 concurrency phases and 600-second sustained run; stopped by first-phase acceptance gate"
+  },
+  "later_real_recheck": {
+    "total": 8,
+    "passed": 0,
+    "failed": 8,
+    "duration_seconds": 39.19
+  },
+  "direct_diagnostic": {
+    "diagnostic": "direct Provider HTTP; Gateway bypassed, not acceptance",
+    "upstream_status": 503,
+    "elapsed_seconds": 0.28558404196519405
+  },
+  "acceptance": "not_passed; external upstream availability blocks required live validation"
+}

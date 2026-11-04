@@ -1,0 +1,36 @@
+FF                                                                       [100%]
+=================================== FAILURES ===================================
+__________ test_qwen_strategy_is_registered_and_explicitly_estimated ___________
+
+    def test_qwen_strategy_is_registered_and_explicitly_estimated():
+>       result=counter()
+               ^^^^^^^^^
+
+tests/unit/test_f13_estimation.py:22: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/unit/test_f13_estimation.py:18: in counter
+    return build_counters([model()])['qwen_text_estimate_v1']
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+models = [namespace(model_id='qwen3.8-flash', thinking_mode='disabled', token_counter='qwen_text_estimate_v1')]
+
+    def build_counters(models: Iterable[ModelConfig]) -> dict[str, TokenCounter]:
+        identifiers = dict.fromkeys(model.token_counter for model in models)
+        if any(identifier not in COUNTER_FACTORIES for identifier in identifiers):
+>           raise ConfigurationError("计数策略未注册")
+E           services.models.ConfigurationError: 计数策略未注册
+
+src/services/token_counters/__init__.py:14: ConfigurationError
+______ test_legacy_token_count_positional_construction_defaults_to_exact _______
+
+    def test_legacy_token_count_positional_construction_defaults_to_exact():
+>       assert TokenCount(24,'existing-counter').kind=='exact'
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'TokenCount' object has no attribute 'kind'
+
+tests/unit/test_f13_estimation.py:29: AttributeError
+=========================== short test summary info ============================
+FAILED tests/unit/test_f13_estimation.py::test_qwen_strategy_is_registered_and_explicitly_estimated
+FAILED tests/unit/test_f13_estimation.py::test_legacy_token_count_positional_construction_defaults_to_exact
+2 failed, 20 deselected in 0.19s

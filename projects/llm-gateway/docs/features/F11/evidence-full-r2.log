@@ -1,0 +1,1328 @@
+........................................................................ [  3%]
+........................................................................ [  6%]
+........................................................................ [  9%]
+........................................................................ [ 12%]
+........................................................................ [ 15%]
+........................................................................ [ 19%]
+........................................................................ [ 22%]
+........................................................................ [ 25%]
+........................................................................ [ 28%]
+........................................................................ [ 31%]
+........................................................................ [ 34%]
+...........FFFFFFFFFFFFFFFFFFFFFFF...................................... [ 38%]
+........................................................................ [ 41%]
+........................................................................ [ 44%]
+........................................................................ [ 47%]
+........................................................................ [ 50%]
+........................................................................ [ 54%]
+........................................................................ [ 57%]
+........................................................................ [ 60%]
+........................................................................ [ 63%]
+........................................................................ [ 66%]
+........................................................................ [ 69%]
+........................................................................ [ 73%]
+........................................................................ [ 76%]
+........................................................................ [ 79%]
+........................................................................ [ 82%]
+........................................................................ [ 85%]
+........................................................................ [ 89%]
+........................................................................ [ 92%]
+........................................................................ [ 95%]
+........................................................................ [ 98%]
+.................................                                        [100%]
+=================================== FAILURES ===================================
+_________________ test_real_capacity_and_ten_minute_sustained __________________
+
+f10_environment = <f10_support.Environment object at 0x111b88e00>
+record_property = <function record_property.<locals>.append_property at 0x11137b600>
+
+    async def test_real_capacity_and_ten_minute_sustained(f10_environment, record_property):
+        env = f10_environment
+        report = {'scope': 'single Gateway worker; true DeepSeek Chat and Responses',
+                  'environment': env.metadata(), 'phase_seconds': 60, 'sustained_seconds': 600, 'phases': [], 'sustained': None}
+        try:
+            for concurrency in (1, 5, 10, 20):
+                result = {}
+                report['phases'].append(result)
+                await phase(env, concurrency, 60, result)
+                (env.directory/'f10-capacity-progress.json').write_text(json.dumps(report, ensure_ascii=False))
+                # A one-slot business baseline is required, even if higher tiers
+                # reach a measured provider or local resource boundary.
+                if concurrency == 1:
+                    validate_sustained(result)
+            stable = [item['concurrency'] for item in report['phases'] if sustained_supported(item)]
+            assert stable, 'no stable tier available for sustained run'
+            report['selected_concurrency'] = max(stable)
+            report['sustained'] = {}
+            await phase(env, max(stable), 600, report['sustained'])
+>           validate_sustained(report['sustained'])
+
+tests/live/test_f10_capacity.py:121: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+report = {'concurrency': 1, 'started_at': '2026-11-03T10:09:36.910464+00:00', 'records': [{'request_id': 'ed3f332f-a188-450c-b3...s': 0, 'snapshot_at': '2026-11-03T10:10:02.591872+00:00', 'active_generations': 1, 'subscriptions': 1, ...}, ...], ...}
+
+    def validate_sustained(report):
+>       assert sustained_supported(report), 'unverified upstream failure or Gateway failure'
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: unverified upstream failure or Gateway failure
+
+tests/f10_metrics.py:83: AssertionError
+___ test_global_admission_and_pending[general-primary-f11_real_environment0] ___
+
+env = <f10_support.Environment object at 0x110ad2f90>
+
+    async def held_request(env):
+        async with asyncio.timeout(40):
+            while True:
+                files = list(env.directory.glob('f11-held-*.json'))
+                if files:
+                    return json.loads(files[-1].read_text())['request_id']
+>               await asyncio.sleep(.01)
+
+tests/f11_support.py:123: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+delay = 0.01, result = None
+
+    async def sleep(delay, result=None):
+        """Coroutine that completes after a given time (in seconds)."""
+        if delay <= 0:
+            await __sleep0()
+            return result
+    
+        loop = events.get_running_loop()
+        future = loop.create_future()
+        h = loop.call_later(delay,
+                            futures._set_result_unless_cancelled,
+                            future, result)
+        try:
+>           return await future
+                   ^^^^^^^^^^^^
+E           asyncio.exceptions.CancelledError
+
+/Users/baiyu/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/asyncio/tasks.py:665: CancelledError
+
+The above exception was the direct cause of the following exception:
+
+f11_real_environment = <f10_support.Environment object at 0x110ad2f90>
+model = 'general-primary'
+record_property = <function record_property.<locals>.append_property at 0x1125c8680>
+
+    @pytest.mark.parametrize('f11_real_environment', [{'max_requests':1,'max_requests_per_agent':1}], indirect=True)
+    @pytest.mark.parametrize('model', MODELS)
+    async def test_global_admission_and_pending(f11_real_environment, model, record_property):
+>       await global_admission_and_pending(f11_real_environment, model, record_property)
+
+tests/live/test_f11_real_acceptance.py:16: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/f11_scenarios.py:51: in global_admission_and_pending
+    rid = await held_request(env)
+          ^^^^^^^^^^^^^^^^^^^^^^^
+tests/f11_support.py:118: in held_request
+    async with asyncio.timeout(40):
+               ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <Timeout [expired]>
+exc_type = <class 'asyncio.exceptions.CancelledError'>
+exc_val = CancelledError(), exc_tb = <traceback object at 0x112748580>
+
+    async def __aexit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_val: Optional[BaseException],
+        exc_tb: Optional[TracebackType],
+    ) -> Optional[bool]:
+        assert self._state in (_State.ENTERED, _State.EXPIRING)
+    
+        if self._timeout_handler is not None:
+            self._timeout_handler.cancel()
+            self._timeout_handler = None
+    
+        if self._state is _State.EXPIRING:
+            self._state = _State.EXPIRED
+    
+            if self._task.uncancel() <= self._cancelling and exc_type is exceptions.CancelledError:
+                # Since there are no new cancel requests, we're
+                # handling this.
+>               raise TimeoutError from exc_val
+E               TimeoutError
+
+/Users/baiyu/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/asyncio/timeouts.py:115: TimeoutError
+___ test_global_admission_and_pending[general-backup-f11_real_environment0] ____
+
+env = <f10_support.Environment object at 0x1123b95b0>
+
+    async def held_request(env):
+        async with asyncio.timeout(40):
+            while True:
+                files = list(env.directory.glob('f11-held-*.json'))
+                if files:
+                    return json.loads(files[-1].read_text())['request_id']
+>               await asyncio.sleep(.01)
+
+tests/f11_support.py:123: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+delay = 0.01, result = None
+
+    async def sleep(delay, result=None):
+        """Coroutine that completes after a given time (in seconds)."""
+        if delay <= 0:
+            await __sleep0()
+            return result
+    
+        loop = events.get_running_loop()
+        future = loop.create_future()
+        h = loop.call_later(delay,
+                            futures._set_result_unless_cancelled,
+                            future, result)
+        try:
+>           return await future
+                   ^^^^^^^^^^^^
+E           asyncio.exceptions.CancelledError
+
+/Users/baiyu/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/asyncio/tasks.py:665: CancelledError
+
+The above exception was the direct cause of the following exception:
+
+f11_real_environment = <f10_support.Environment object at 0x1123b95b0>
+model = 'general-backup'
+record_property = <function record_property.<locals>.append_property at 0x111e814e0>
+
+    @pytest.mark.parametrize('f11_real_environment', [{'max_requests':1,'max_requests_per_agent':1}], indirect=True)
+    @pytest.mark.parametrize('model', MODELS)
+    async def test_global_admission_and_pending(f11_real_environment, model, record_property):
+>       await global_admission_and_pending(f11_real_environment, model, record_property)
+
+tests/live/test_f11_real_acceptance.py:16: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/f11_scenarios.py:51: in global_admission_and_pending
+    rid = await held_request(env)
+          ^^^^^^^^^^^^^^^^^^^^^^^
+tests/f11_support.py:118: in held_request
+    async with asyncio.timeout(40):
+               ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <Timeout [expired]>
+exc_type = <class 'asyncio.exceptions.CancelledError'>
+exc_val = CancelledError(), exc_tb = <traceback object at 0x1118ac780>
+
+    async def __aexit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_val: Optional[BaseException],
+        exc_tb: Optional[TracebackType],
+    ) -> Optional[bool]:
+        assert self._state in (_State.ENTERED, _State.EXPIRING)
+    
+        if self._timeout_handler is not None:
+            self._timeout_handler.cancel()
+            self._timeout_handler = None
+    
+        if self._state is _State.EXPIRING:
+            self._state = _State.EXPIRED
+    
+            if self._task.uncancel() <= self._cancelling and exc_type is exceptions.CancelledError:
+                # Since there are no new cancel requests, we're
+                # handling this.
+>               raise TimeoutError from exc_val
+E               TimeoutError
+
+/Users/baiyu/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/asyncio/timeouts.py:115: TimeoutError
+_ test_agent_credential_and_model_isolation[general-primary-f11_real_environment0] _
+
+env = <f10_support.Environment object at 0x1110688f0>
+
+    async def held_request(env):
+        async with asyncio.timeout(40):
+            while True:
+                files = list(env.directory.glob('f11-held-*.json'))
+                if files:
+                    return json.loads(files[-1].read_text())['request_id']
+>               await asyncio.sleep(.01)
+
+tests/f11_support.py:123: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+delay = 0.01, result = None
+
+    async def sleep(delay, result=None):
+        """Coroutine that completes after a given time (in seconds)."""
+        if delay <= 0:
+            await __sleep0()
+            return result
+    
+        loop = events.get_running_loop()
+        future = loop.create_future()
+        h = loop.call_later(delay,
+                            futures._set_result_unless_cancelled,
+                            future, result)
+        try:
+>           return await future
+                   ^^^^^^^^^^^^
+E           asyncio.exceptions.CancelledError
+
+/Users/baiyu/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/asyncio/tasks.py:665: CancelledError
+
+The above exception was the direct cause of the following exception:
+
+f11_real_environment = <f10_support.Environment object at 0x1110688f0>
+model = 'general-primary'
+record_property = <function record_property.<locals>.append_property at 0x111deb380>
+
+    @pytest.mark.parametrize('f11_real_environment', [{'max_requests':2,'max_requests_per_agent':1}], indirect=True)
+    @pytest.mark.parametrize('model', MODELS)
+    async def test_agent_credential_and_model_isolation(f11_real_environment, model, record_property):
+>       await agent_credential_and_model_isolation(f11_real_environment, model, record_property)
+
+tests/live/test_f11_real_acceptance.py:22: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/f11_scenarios.py:117: in agent_credential_and_model_isolation
+    rid = await held_request(env)
+          ^^^^^^^^^^^^^^^^^^^^^^^
+tests/f11_support.py:118: in held_request
+    async with asyncio.timeout(40):
+               ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <Timeout [expired]>
+exc_type = <class 'asyncio.exceptions.CancelledError'>
+exc_val = CancelledError(), exc_tb = <traceback object at 0x1129a6cc0>
+
+    async def __aexit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_val: Optional[BaseException],
+        exc_tb: Optional[TracebackType],
+    ) -> Optional[bool]:
+        assert self._state in (_State.ENTERED, _State.EXPIRING)
+    
+        if self._timeout_handler is not None:
+            self._timeout_handler.cancel()
+            self._timeout_handler = None
+    
+        if self._state is _State.EXPIRING:
+            self._state = _State.EXPIRED
+    
+            if self._task.uncancel() <= self._cancelling and exc_type is exceptions.CancelledError:
+                # Since there are no new cancel requests, we're
+                # handling this.
+>               raise TimeoutError from exc_val
+E               TimeoutError
+
+/Users/baiyu/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/asyncio/timeouts.py:115: TimeoutError
+_ test_agent_credential_and_model_isolation[general-backup-f11_real_environment0] _
+
+f11_real_environment = <f10_support.Environment object at 0x111e896d0>
+model = 'general-backup'
+record_property = <function record_property.<locals>.append_property at 0x11289e160>
+
+    @pytest.mark.parametrize('f11_real_environment', [{'max_requests':2,'max_requests_per_agent':1}], indirect=True)
+    @pytest.mark.parametrize('model', MODELS)
+    async def test_agent_credential_and_model_isolation(f11_real_environment, model, record_property):
+>       await agent_credential_and_model_isolation(f11_real_environment, model, record_property)
+
+tests/live/test_f11_real_acceptance.py:22: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+env = <f10_support.Environment object at 0x111e896d0>, model = 'general-backup'
+record_property = <function record_property.<locals>.append_property at 0x11289e160>
+
+    async def agent_credential_and_model_isolation(env, model, record_property):
+        alternate = 'general-backup' if model == 'general-primary' else 'general-primary'
+        extra = CredentialHeaders(Authorization='Bearer '+await env.cli('issue','a'))
+        arm(env)
+        task = asyncio.create_task(env.call(model, 'text'))
+        rid = None
+        try:
+            rid = await held_request(env)
+            await counts(env, {'active_requests':1, 'agents':{'a':1}})
+            # The second credential and another model cannot mint extra Agent capacity.
+            response = await env.client.post('/v1/llm', json=payload(alternate), headers=extra)
+            denied = rejected(response)
+            await no_attempt(env, denied)
+            independent = await env.call(alternate, 'text', headers=env.other_headers)
+>           assert independent['status'] == 'completed'
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AssertionError
+
+tests/f11_scenarios.py:124: AssertionError
+_ test_stream_disconnect_retains_capacity[general-primary-f11_real_environment0] _
+
+f11_real_environment = <f10_support.Environment object at 0x111cfb290>
+model = 'general-primary'
+record_property = <function record_property.<locals>.append_property at 0x111a056c0>
+
+    @pytest.mark.parametrize('f11_real_environment', [{'max_requests':1,'max_requests_per_agent':1}], indirect=True)
+    @pytest.mark.parametrize('model', MODELS)
+    async def test_stream_disconnect_retains_capacity(f11_real_environment, model, record_property):
+>       await stream_disconnect_retains_capacity(f11_real_environment, model, record_property)
+
+tests/live/test_f11_real_acceptance.py:28: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+env = <f10_support.Environment object at 0x111cfb290>, model = 'general-primary'
+record_property = <function record_property.<locals>.append_property at 0x111a056c0>
+
+    async def stream_disconnect_retains_capacity(env, model, record_property):
+        arm(env)
+        created = await env.client.post('/v1/llm/stream', json=payload(model))
+        assert created.status_code == 202
+        rid = created.json()['data']['request_id']
+        url = f'/v1/llm/stream/{rid}/events'
+        first = None
+        try:
+            async with env.client.stream('GET', url) as response:
+                assert response.status_code == 200
+                async for event in frames(response):
+                    if event[1] == 'response.delta':
+                        first = event
+                        break
+>           assert first is not None
+                   ^^^^^^^^^^^^^^^^^
+E           AssertionError
+
+tests/f11_scenarios.py:164: AssertionError
+_ test_stream_disconnect_retains_capacity[general-backup-f11_real_environment0] _
+
+f11_real_environment = <f10_support.Environment object at 0x11243bad0>
+model = 'general-backup'
+record_property = <function record_property.<locals>.append_property at 0x111620540>
+
+    @pytest.mark.parametrize('f11_real_environment', [{'max_requests':1,'max_requests_per_agent':1}], indirect=True)
+    @pytest.mark.parametrize('model', MODELS)
+    async def test_stream_disconnect_retains_capacity(f11_real_environment, model, record_property):
+>       await stream_disconnect_retains_capacity(f11_real_environment, model, record_property)
+
+tests/live/test_f11_real_acceptance.py:28: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+env = <f10_support.Environment object at 0x11243bad0>, model = 'general-backup'
+record_property = <function record_property.<locals>.append_property at 0x111620540>
+
+    async def stream_disconnect_retains_capacity(env, model, record_property):
+        arm(env)
+        created = await env.client.post('/v1/llm/stream', json=payload(model))
+        assert created.status_code == 202
+        rid = created.json()['data']['request_id']
+        url = f'/v1/llm/stream/{rid}/events'
+        first = None
+        try:
+            async with env.client.stream('GET', url) as response:
+                assert response.status_code == 200
+                async for event in frames(response):
+                    if event[1] == 'response.delta':
+                        first = event
+                        break
+>           assert first is not None
+                   ^^^^^^^^^^^^^^^^^
+E           AssertionError
+
+tests/f11_scenarios.py:164: AssertionError
+__________________ test_real_streaming[F5-L01-primary-stream] __________________
+
+live_server = (<fastapi.applications.FastAPI object at 0x11113a540>, <httpx2.AsyncClient object at 0x11221aea0>)
+model = 'general-primary', adapter = 'deepseek', protocol = 'chat_completions'
+record_property = <function record_property.<locals>.append_property at 0x112847c40>
+
+    @pytest.mark.parametrize('model,adapter,protocol',[
+        pytest.param('general-primary','deepseek','chat_completions',id='F5-L01-primary-stream'),
+        pytest.param('general-backup','openai_compatible','responses',id='F5-L02-backup-stream'),
+    ])
+    async def test_real_streaming(live_server,model,adapter,protocol,record_property):
+        app,client=live_server
+        payload={
+            'model':model,
+            'prompt':{'name':'context_answer','version':'1.1.0',
+                      'variables':{'context':'订单 A123 的商品为充电器。'}},
+            'messages':[{'role':'user','content':'订单 A123 的商品是什么？请简短回答。'}],
+            'max_output_tokens':128,'timeout_seconds':30,
+        }
+        names=[];texts=[];frame=[];sequences=[];usage=None;first_delta_at=None;started=monotonic()
+        created=await client.post('/v1/llm/stream',json=payload)
+        assert created.status_code==202
+        request_id=created.json()['data']['request_id']
+        assert created.json()['data']['status']=='pending'
+        assert created.headers['x-request-id']==request_id
+        async with client.stream('GET',f'/v1/llm/stream/{request_id}/events') as response:
+            assert response.status_code==200
+            assert response.headers['content-type'].startswith('text/event-stream')
+            assert response.headers['x-request-id']==request_id
+            async for line in response.aiter_lines():
+                if line:
+                    frame.append(line)
+                    continue
+                if not frame:
+                    continue
+                event_line=next(line for line in frame if line.startswith('event: '))
+                data_line=next(line for line in frame if line.startswith('data: '))
+                ids=[line[4:] for line in frame if line.startswith('id: ')]
+                name=event_line[7:];data=json.loads(data_line[6:]);frame=[]
+                if name=='response.heartbeat':
+                    assert ids==[]
+                else:
+                    assert len(ids)==1
+                    sequences.append(int(ids[0]))
+                assert data['request_id']==request_id
+                assert not names or names[-1] not in {'response.completed','response.failed'}
+                names.append(name)
+                if name=='response.delta':
+                    assert set(data)=={'request_id','delta'}
+                    assert isinstance(data['delta'],str) and data['delta']!=''
+                    texts.append(data['delta'])
+                    if first_delta_at is None:first_delta_at=monotonic()
+                elif name=='response.heartbeat':
+                    assert set(data)=={'request_id'}
+                elif name=='response.completed':
+                    assert set(data)=={'request_id','usage'}
+                    usage=data['usage']
+                else:
+                    # Preserve the platform classification without printing model output.
+                    record_property('failure_code',data.get('code'))
+>                   pytest.fail('真实流未正常完成；失败分类见JUnit元信息')
+E                   Failed: 真实流未正常完成；失败分类见JUnit元信息
+
+tests/live/test_f5_streaming.py:68: Failed
+__________________ test_real_streaming[F5-L02-backup-stream] ___________________
+
+live_server = (<fastapi.applications.FastAPI object at 0x111070ec0>, <httpx2.AsyncClient object at 0x111b4b0b0>)
+model = 'general-backup', adapter = 'openai_compatible', protocol = 'responses'
+record_property = <function record_property.<locals>.append_property at 0x11293fd80>
+
+    @pytest.mark.parametrize('model,adapter,protocol',[
+        pytest.param('general-primary','deepseek','chat_completions',id='F5-L01-primary-stream'),
+        pytest.param('general-backup','openai_compatible','responses',id='F5-L02-backup-stream'),
+    ])
+    async def test_real_streaming(live_server,model,adapter,protocol,record_property):
+        app,client=live_server
+        payload={
+            'model':model,
+            'prompt':{'name':'context_answer','version':'1.1.0',
+                      'variables':{'context':'订单 A123 的商品为充电器。'}},
+            'messages':[{'role':'user','content':'订单 A123 的商品是什么？请简短回答。'}],
+            'max_output_tokens':128,'timeout_seconds':30,
+        }
+        names=[];texts=[];frame=[];sequences=[];usage=None;first_delta_at=None;started=monotonic()
+        created=await client.post('/v1/llm/stream',json=payload)
+        assert created.status_code==202
+        request_id=created.json()['data']['request_id']
+        assert created.json()['data']['status']=='pending'
+        assert created.headers['x-request-id']==request_id
+        async with client.stream('GET',f'/v1/llm/stream/{request_id}/events') as response:
+            assert response.status_code==200
+            assert response.headers['content-type'].startswith('text/event-stream')
+            assert response.headers['x-request-id']==request_id
+            async for line in response.aiter_lines():
+                if line:
+                    frame.append(line)
+                    continue
+                if not frame:
+                    continue
+                event_line=next(line for line in frame if line.startswith('event: '))
+                data_line=next(line for line in frame if line.startswith('data: '))
+                ids=[line[4:] for line in frame if line.startswith('id: ')]
+                name=event_line[7:];data=json.loads(data_line[6:]);frame=[]
+                if name=='response.heartbeat':
+                    assert ids==[]
+                else:
+                    assert len(ids)==1
+                    sequences.append(int(ids[0]))
+                assert data['request_id']==request_id
+                assert not names or names[-1] not in {'response.completed','response.failed'}
+                names.append(name)
+                if name=='response.delta':
+                    assert set(data)=={'request_id','delta'}
+                    assert isinstance(data['delta'],str) and data['delta']!=''
+                    texts.append(data['delta'])
+                    if first_delta_at is None:first_delta_at=monotonic()
+                elif name=='response.heartbeat':
+                    assert set(data)=={'request_id'}
+                elif name=='response.completed':
+                    assert set(data)=={'request_id','usage'}
+                    usage=data['usage']
+                else:
+                    # Preserve the platform classification without printing model output.
+                    record_property('failure_code',data.get('code'))
+>                   pytest.fail('真实流未正常完成；失败分类见JUnit元信息')
+E                   Failed: 真实流未正常完成；失败分类见JUnit元信息
+
+tests/live/test_f5_streaming.py:68: Failed
+_ test_real_call_and_committed_records[text-general-primary-deepseek-chat_completions] _
+
+accepted_server = (<fastapi.applications.FastAPI object at 0x110e59af0>, <httpx2.AsyncClient object at 0x111ad5c10>, <postgres_support.PostgresServer object at 0x111ab2420>, 'case_91ac26babc524e48af9ebcc9c9481e53')
+model = 'general-primary', adapter = 'deepseek', protocol = 'chat_completions'
+mode = 'text'
+record_property = <function record_property.<locals>.append_property at 0x11197b240>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x111e23b30>
+
+    @pytest.mark.parametrize('model,adapter,protocol', [
+        ('general-primary', 'deepseek', 'chat_completions'),
+        ('general-backup', 'openai_compatible', 'responses'),
+    ])
+    @pytest.mark.parametrize('mode', ['text', 'structured', 'streaming'])
+    async def test_real_call_and_committed_records(accepted_server, model, adapter, protocol, mode, record_property, monkeypatch):
+        from providers import base, streaming
+        # Observe only upstream metering, before provider-specific normalization.
+        # Never capture request headers, messages or response content.
+        wire_usage = []
+        actual_observer = base.observe_reported_metadata
+    
+        def observe(raw, observed, *, chat):
+            if raw.get('usage') is not None:
+                wire_usage.append(dict(raw['usage']))
+            return actual_observer(raw, observed, chat=chat)
+    
+        monkeypatch.setattr(base, 'observe_reported_metadata', observe)
+        monkeypatch.setattr(streaming, 'observe_reported_metadata', observe)
+        app, client, pg, name = accepted_server
+        payload = {'model': model, 'prompt': {'name': 'basic_text', 'version': '1.0.0'},
+                   'messages': [{'role': 'user', 'content': '用一句话解释 TTFT，不超过四十字。'}],
+                   'max_output_tokens': 128, 'timeout_seconds': 30}
+        if mode == 'structured':
+            payload['prompt'] = {'name': 'context_answer', 'version': '1.2.0',
+                                 'variables': {'context': '订单 A123 的商品是充电器。'}}
+            payload['messages'][0]['content'] = '提取订单号和商品。'
+            payload['response_schema'] = {'type': 'object', 'properties': {
+                'order_id': {'type': 'string'}, 'product': {'type': 'string'}},
+                'required': ['order_id', 'product'], 'additionalProperties': False}
+        path = '/v1/llm/stream' if mode == 'streaming' else '/v1/llm'
+        if mode == 'streaming':
+            received = []
+            sequences = []
+            created = await client.post(path, json=payload)
+            assert created.status_code == 202
+            request_id = created.json()['data']['request_id']
+            assert created.json()['data']['status'] == 'pending'
+            assert created.headers['x-request-id'] == request_id
+            async with client.stream('GET', path + '/' + request_id + '/events') as response:
+                assert response.status_code == 200
+                assert response.headers['x-request-id'] == request_id
+                frame = []
+                async for line in response.aiter_lines():
+                    if line:
+                        frame.append(line)
+                    elif frame:
+                        kind = next(line[7:] for line in frame if line.startswith('event: '))
+                        value = loads(next(line[6:] for line in frame if line.startswith('data: ')))
+                        ids = [line[4:] for line in frame if line.startswith('id: ')]
+                        assert value['request_id'] == request_id
+                        if kind == 'response.heartbeat':
+                            assert ids == []
+                        else:
+                            assert len(ids) == 1
+                            sequences.append(int(ids[0]))
+                        received.append((kind, value))
+                        frame = []
+            assert not frame
+            assert received[-1][0] == 'response.completed'
+            assert sequences == list(range(1, len(sequences) + 1))
+            assert any(kind == 'response.delta' and value['delta'].strip() for kind, value in received)
+        else:
+            response = await client.post(path, json=payload)
+>           assert response.status_code == 200, response.json().get('code')
+E           AssertionError: provider_unavailable
+E           assert 503 == 200
+E            +  where 503 = <Response [503 Service Unavailable]>.status_code
+
+tests/live/test_f5o1_acceptance.py:138: AssertionError
+_ test_real_call_and_committed_records[text-general-backup-openai_compatible-responses] _
+
+accepted_server = (<fastapi.applications.FastAPI object at 0x112840d70>, <httpx2.AsyncClient object at 0x110e5a4e0>, <postgres_support.PostgresServer object at 0x111ab2420>, 'case_678e8a7a3a674b22b2fb91e498b0401d')
+model = 'general-backup', adapter = 'openai_compatible', protocol = 'responses'
+mode = 'text'
+record_property = <function record_property.<locals>.append_property at 0x110f0c2c0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x110d685f0>
+
+    @pytest.mark.parametrize('model,adapter,protocol', [
+        ('general-primary', 'deepseek', 'chat_completions'),
+        ('general-backup', 'openai_compatible', 'responses'),
+    ])
+    @pytest.mark.parametrize('mode', ['text', 'structured', 'streaming'])
+    async def test_real_call_and_committed_records(accepted_server, model, adapter, protocol, mode, record_property, monkeypatch):
+        from providers import base, streaming
+        # Observe only upstream metering, before provider-specific normalization.
+        # Never capture request headers, messages or response content.
+        wire_usage = []
+        actual_observer = base.observe_reported_metadata
+    
+        def observe(raw, observed, *, chat):
+            if raw.get('usage') is not None:
+                wire_usage.append(dict(raw['usage']))
+            return actual_observer(raw, observed, chat=chat)
+    
+        monkeypatch.setattr(base, 'observe_reported_metadata', observe)
+        monkeypatch.setattr(streaming, 'observe_reported_metadata', observe)
+        app, client, pg, name = accepted_server
+        payload = {'model': model, 'prompt': {'name': 'basic_text', 'version': '1.0.0'},
+                   'messages': [{'role': 'user', 'content': '用一句话解释 TTFT，不超过四十字。'}],
+                   'max_output_tokens': 128, 'timeout_seconds': 30}
+        if mode == 'structured':
+            payload['prompt'] = {'name': 'context_answer', 'version': '1.2.0',
+                                 'variables': {'context': '订单 A123 的商品是充电器。'}}
+            payload['messages'][0]['content'] = '提取订单号和商品。'
+            payload['response_schema'] = {'type': 'object', 'properties': {
+                'order_id': {'type': 'string'}, 'product': {'type': 'string'}},
+                'required': ['order_id', 'product'], 'additionalProperties': False}
+        path = '/v1/llm/stream' if mode == 'streaming' else '/v1/llm'
+        if mode == 'streaming':
+            received = []
+            sequences = []
+            created = await client.post(path, json=payload)
+            assert created.status_code == 202
+            request_id = created.json()['data']['request_id']
+            assert created.json()['data']['status'] == 'pending'
+            assert created.headers['x-request-id'] == request_id
+            async with client.stream('GET', path + '/' + request_id + '/events') as response:
+                assert response.status_code == 200
+                assert response.headers['x-request-id'] == request_id
+                frame = []
+                async for line in response.aiter_lines():
+                    if line:
+                        frame.append(line)
+                    elif frame:
+                        kind = next(line[7:] for line in frame if line.startswith('event: '))
+                        value = loads(next(line[6:] for line in frame if line.startswith('data: ')))
+                        ids = [line[4:] for line in frame if line.startswith('id: ')]
+                        assert value['request_id'] == request_id
+                        if kind == 'response.heartbeat':
+                            assert ids == []
+                        else:
+                            assert len(ids) == 1
+                            sequences.append(int(ids[0]))
+                        received.append((kind, value))
+                        frame = []
+            assert not frame
+            assert received[-1][0] == 'response.completed'
+            assert sequences == list(range(1, len(sequences) + 1))
+            assert any(kind == 'response.delta' and value['delta'].strip() for kind, value in received)
+        else:
+            response = await client.post(path, json=payload)
+>           assert response.status_code == 200, response.json().get('code')
+E           AssertionError: provider_unavailable
+E           assert 503 == 200
+E            +  where 503 = <Response [503 Service Unavailable]>.status_code
+
+tests/live/test_f5o1_acceptance.py:138: AssertionError
+_ test_real_call_and_committed_records[structured-general-primary-deepseek-chat_completions] _
+
+accepted_server = (<fastapi.applications.FastAPI object at 0x112a460c0>, <httpx2.AsyncClient object at 0x11081e180>, <postgres_support.PostgresServer object at 0x111ab2420>, 'case_1f7137e90d874c12a154a0bddacb418f')
+model = 'general-primary', adapter = 'deepseek', protocol = 'chat_completions'
+mode = 'structured'
+record_property = <function record_property.<locals>.append_property at 0x1118214e0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x110e5be60>
+
+    @pytest.mark.parametrize('model,adapter,protocol', [
+        ('general-primary', 'deepseek', 'chat_completions'),
+        ('general-backup', 'openai_compatible', 'responses'),
+    ])
+    @pytest.mark.parametrize('mode', ['text', 'structured', 'streaming'])
+    async def test_real_call_and_committed_records(accepted_server, model, adapter, protocol, mode, record_property, monkeypatch):
+        from providers import base, streaming
+        # Observe only upstream metering, before provider-specific normalization.
+        # Never capture request headers, messages or response content.
+        wire_usage = []
+        actual_observer = base.observe_reported_metadata
+    
+        def observe(raw, observed, *, chat):
+            if raw.get('usage') is not None:
+                wire_usage.append(dict(raw['usage']))
+            return actual_observer(raw, observed, chat=chat)
+    
+        monkeypatch.setattr(base, 'observe_reported_metadata', observe)
+        monkeypatch.setattr(streaming, 'observe_reported_metadata', observe)
+        app, client, pg, name = accepted_server
+        payload = {'model': model, 'prompt': {'name': 'basic_text', 'version': '1.0.0'},
+                   'messages': [{'role': 'user', 'content': '用一句话解释 TTFT，不超过四十字。'}],
+                   'max_output_tokens': 128, 'timeout_seconds': 30}
+        if mode == 'structured':
+            payload['prompt'] = {'name': 'context_answer', 'version': '1.2.0',
+                                 'variables': {'context': '订单 A123 的商品是充电器。'}}
+            payload['messages'][0]['content'] = '提取订单号和商品。'
+            payload['response_schema'] = {'type': 'object', 'properties': {
+                'order_id': {'type': 'string'}, 'product': {'type': 'string'}},
+                'required': ['order_id', 'product'], 'additionalProperties': False}
+        path = '/v1/llm/stream' if mode == 'streaming' else '/v1/llm'
+        if mode == 'streaming':
+            received = []
+            sequences = []
+            created = await client.post(path, json=payload)
+            assert created.status_code == 202
+            request_id = created.json()['data']['request_id']
+            assert created.json()['data']['status'] == 'pending'
+            assert created.headers['x-request-id'] == request_id
+            async with client.stream('GET', path + '/' + request_id + '/events') as response:
+                assert response.status_code == 200
+                assert response.headers['x-request-id'] == request_id
+                frame = []
+                async for line in response.aiter_lines():
+                    if line:
+                        frame.append(line)
+                    elif frame:
+                        kind = next(line[7:] for line in frame if line.startswith('event: '))
+                        value = loads(next(line[6:] for line in frame if line.startswith('data: ')))
+                        ids = [line[4:] for line in frame if line.startswith('id: ')]
+                        assert value['request_id'] == request_id
+                        if kind == 'response.heartbeat':
+                            assert ids == []
+                        else:
+                            assert len(ids) == 1
+                            sequences.append(int(ids[0]))
+                        received.append((kind, value))
+                        frame = []
+            assert not frame
+            assert received[-1][0] == 'response.completed'
+            assert sequences == list(range(1, len(sequences) + 1))
+            assert any(kind == 'response.delta' and value['delta'].strip() for kind, value in received)
+        else:
+            response = await client.post(path, json=payload)
+>           assert response.status_code == 200, response.json().get('code')
+E           AssertionError: provider_unavailable
+E           assert 503 == 200
+E            +  where 503 = <Response [503 Service Unavailable]>.status_code
+
+tests/live/test_f5o1_acceptance.py:138: AssertionError
+_ test_real_call_and_committed_records[structured-general-backup-openai_compatible-responses] _
+
+accepted_server = (<fastapi.applications.FastAPI object at 0x1111c24e0>, <httpx2.AsyncClient object at 0x11081d100>, <postgres_support.PostgresServer object at 0x111ab2420>, 'case_4ee1e528bc5142a19743add7749b6020')
+model = 'general-backup', adapter = 'openai_compatible', protocol = 'responses'
+mode = 'structured'
+record_property = <function record_property.<locals>.append_property at 0x110d5e5c0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x1128a8a40>
+
+    @pytest.mark.parametrize('model,adapter,protocol', [
+        ('general-primary', 'deepseek', 'chat_completions'),
+        ('general-backup', 'openai_compatible', 'responses'),
+    ])
+    @pytest.mark.parametrize('mode', ['text', 'structured', 'streaming'])
+    async def test_real_call_and_committed_records(accepted_server, model, adapter, protocol, mode, record_property, monkeypatch):
+        from providers import base, streaming
+        # Observe only upstream metering, before provider-specific normalization.
+        # Never capture request headers, messages or response content.
+        wire_usage = []
+        actual_observer = base.observe_reported_metadata
+    
+        def observe(raw, observed, *, chat):
+            if raw.get('usage') is not None:
+                wire_usage.append(dict(raw['usage']))
+            return actual_observer(raw, observed, chat=chat)
+    
+        monkeypatch.setattr(base, 'observe_reported_metadata', observe)
+        monkeypatch.setattr(streaming, 'observe_reported_metadata', observe)
+        app, client, pg, name = accepted_server
+        payload = {'model': model, 'prompt': {'name': 'basic_text', 'version': '1.0.0'},
+                   'messages': [{'role': 'user', 'content': '用一句话解释 TTFT，不超过四十字。'}],
+                   'max_output_tokens': 128, 'timeout_seconds': 30}
+        if mode == 'structured':
+            payload['prompt'] = {'name': 'context_answer', 'version': '1.2.0',
+                                 'variables': {'context': '订单 A123 的商品是充电器。'}}
+            payload['messages'][0]['content'] = '提取订单号和商品。'
+            payload['response_schema'] = {'type': 'object', 'properties': {
+                'order_id': {'type': 'string'}, 'product': {'type': 'string'}},
+                'required': ['order_id', 'product'], 'additionalProperties': False}
+        path = '/v1/llm/stream' if mode == 'streaming' else '/v1/llm'
+        if mode == 'streaming':
+            received = []
+            sequences = []
+            created = await client.post(path, json=payload)
+            assert created.status_code == 202
+            request_id = created.json()['data']['request_id']
+            assert created.json()['data']['status'] == 'pending'
+            assert created.headers['x-request-id'] == request_id
+            async with client.stream('GET', path + '/' + request_id + '/events') as response:
+                assert response.status_code == 200
+                assert response.headers['x-request-id'] == request_id
+                frame = []
+                async for line in response.aiter_lines():
+                    if line:
+                        frame.append(line)
+                    elif frame:
+                        kind = next(line[7:] for line in frame if line.startswith('event: '))
+                        value = loads(next(line[6:] for line in frame if line.startswith('data: ')))
+                        ids = [line[4:] for line in frame if line.startswith('id: ')]
+                        assert value['request_id'] == request_id
+                        if kind == 'response.heartbeat':
+                            assert ids == []
+                        else:
+                            assert len(ids) == 1
+                            sequences.append(int(ids[0]))
+                        received.append((kind, value))
+                        frame = []
+            assert not frame
+            assert received[-1][0] == 'response.completed'
+            assert sequences == list(range(1, len(sequences) + 1))
+            assert any(kind == 'response.delta' and value['delta'].strip() for kind, value in received)
+        else:
+            response = await client.post(path, json=payload)
+>           assert response.status_code == 200, response.json().get('code')
+E           AssertionError: provider_unavailable
+E           assert 503 == 200
+E            +  where 503 = <Response [503 Service Unavailable]>.status_code
+
+tests/live/test_f5o1_acceptance.py:138: AssertionError
+_ test_real_call_and_committed_records[streaming-general-primary-deepseek-chat_completions] _
+
+accepted_server = (<fastapi.applications.FastAPI object at 0x111f46780>, <httpx2.AsyncClient object at 0x111c1f200>, <postgres_support.PostgresServer object at 0x111ab2420>, 'case_c42c489d78864cffa3790fcef1b485be')
+model = 'general-primary', adapter = 'deepseek', protocol = 'chat_completions'
+mode = 'streaming'
+record_property = <function record_property.<locals>.append_property at 0x111100fe0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x1128a8350>
+
+    @pytest.mark.parametrize('model,adapter,protocol', [
+        ('general-primary', 'deepseek', 'chat_completions'),
+        ('general-backup', 'openai_compatible', 'responses'),
+    ])
+    @pytest.mark.parametrize('mode', ['text', 'structured', 'streaming'])
+    async def test_real_call_and_committed_records(accepted_server, model, adapter, protocol, mode, record_property, monkeypatch):
+        from providers import base, streaming
+        # Observe only upstream metering, before provider-specific normalization.
+        # Never capture request headers, messages or response content.
+        wire_usage = []
+        actual_observer = base.observe_reported_metadata
+    
+        def observe(raw, observed, *, chat):
+            if raw.get('usage') is not None:
+                wire_usage.append(dict(raw['usage']))
+            return actual_observer(raw, observed, chat=chat)
+    
+        monkeypatch.setattr(base, 'observe_reported_metadata', observe)
+        monkeypatch.setattr(streaming, 'observe_reported_metadata', observe)
+        app, client, pg, name = accepted_server
+        payload = {'model': model, 'prompt': {'name': 'basic_text', 'version': '1.0.0'},
+                   'messages': [{'role': 'user', 'content': '用一句话解释 TTFT，不超过四十字。'}],
+                   'max_output_tokens': 128, 'timeout_seconds': 30}
+        if mode == 'structured':
+            payload['prompt'] = {'name': 'context_answer', 'version': '1.2.0',
+                                 'variables': {'context': '订单 A123 的商品是充电器。'}}
+            payload['messages'][0]['content'] = '提取订单号和商品。'
+            payload['response_schema'] = {'type': 'object', 'properties': {
+                'order_id': {'type': 'string'}, 'product': {'type': 'string'}},
+                'required': ['order_id', 'product'], 'additionalProperties': False}
+        path = '/v1/llm/stream' if mode == 'streaming' else '/v1/llm'
+        if mode == 'streaming':
+            received = []
+            sequences = []
+            created = await client.post(path, json=payload)
+            assert created.status_code == 202
+            request_id = created.json()['data']['request_id']
+            assert created.json()['data']['status'] == 'pending'
+            assert created.headers['x-request-id'] == request_id
+            async with client.stream('GET', path + '/' + request_id + '/events') as response:
+                assert response.status_code == 200
+                assert response.headers['x-request-id'] == request_id
+                frame = []
+                async for line in response.aiter_lines():
+                    if line:
+                        frame.append(line)
+                    elif frame:
+                        kind = next(line[7:] for line in frame if line.startswith('event: '))
+                        value = loads(next(line[6:] for line in frame if line.startswith('data: ')))
+                        ids = [line[4:] for line in frame if line.startswith('id: ')]
+                        assert value['request_id'] == request_id
+                        if kind == 'response.heartbeat':
+                            assert ids == []
+                        else:
+                            assert len(ids) == 1
+                            sequences.append(int(ids[0]))
+                        received.append((kind, value))
+                        frame = []
+            assert not frame
+>           assert received[-1][0] == 'response.completed'
+E           AssertionError: assert 'response.failed' == 'response.completed'
+E             
+E             - response.completed
+E             + response.failed
+
+tests/live/test_f5o1_acceptance.py:133: AssertionError
+_ test_real_call_and_committed_records[streaming-general-backup-openai_compatible-responses] _
+
+accepted_server = (<fastapi.applications.FastAPI object at 0x1110e3290>, <httpx2.AsyncClient object at 0x111ed8710>, <postgres_support.PostgresServer object at 0x111ab2420>, 'case_a82c13ce4ab7478c86667d1012640e58')
+model = 'general-backup', adapter = 'openai_compatible', protocol = 'responses'
+mode = 'streaming'
+record_property = <function record_property.<locals>.append_property at 0x11289c180>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x1128a8290>
+
+    @pytest.mark.parametrize('model,adapter,protocol', [
+        ('general-primary', 'deepseek', 'chat_completions'),
+        ('general-backup', 'openai_compatible', 'responses'),
+    ])
+    @pytest.mark.parametrize('mode', ['text', 'structured', 'streaming'])
+    async def test_real_call_and_committed_records(accepted_server, model, adapter, protocol, mode, record_property, monkeypatch):
+        from providers import base, streaming
+        # Observe only upstream metering, before provider-specific normalization.
+        # Never capture request headers, messages or response content.
+        wire_usage = []
+        actual_observer = base.observe_reported_metadata
+    
+        def observe(raw, observed, *, chat):
+            if raw.get('usage') is not None:
+                wire_usage.append(dict(raw['usage']))
+            return actual_observer(raw, observed, chat=chat)
+    
+        monkeypatch.setattr(base, 'observe_reported_metadata', observe)
+        monkeypatch.setattr(streaming, 'observe_reported_metadata', observe)
+        app, client, pg, name = accepted_server
+        payload = {'model': model, 'prompt': {'name': 'basic_text', 'version': '1.0.0'},
+                   'messages': [{'role': 'user', 'content': '用一句话解释 TTFT，不超过四十字。'}],
+                   'max_output_tokens': 128, 'timeout_seconds': 30}
+        if mode == 'structured':
+            payload['prompt'] = {'name': 'context_answer', 'version': '1.2.0',
+                                 'variables': {'context': '订单 A123 的商品是充电器。'}}
+            payload['messages'][0]['content'] = '提取订单号和商品。'
+            payload['response_schema'] = {'type': 'object', 'properties': {
+                'order_id': {'type': 'string'}, 'product': {'type': 'string'}},
+                'required': ['order_id', 'product'], 'additionalProperties': False}
+        path = '/v1/llm/stream' if mode == 'streaming' else '/v1/llm'
+        if mode == 'streaming':
+            received = []
+            sequences = []
+            created = await client.post(path, json=payload)
+            assert created.status_code == 202
+            request_id = created.json()['data']['request_id']
+            assert created.json()['data']['status'] == 'pending'
+            assert created.headers['x-request-id'] == request_id
+            async with client.stream('GET', path + '/' + request_id + '/events') as response:
+                assert response.status_code == 200
+                assert response.headers['x-request-id'] == request_id
+                frame = []
+                async for line in response.aiter_lines():
+                    if line:
+                        frame.append(line)
+                    elif frame:
+                        kind = next(line[7:] for line in frame if line.startswith('event: '))
+                        value = loads(next(line[6:] for line in frame if line.startswith('data: ')))
+                        ids = [line[4:] for line in frame if line.startswith('id: ')]
+                        assert value['request_id'] == request_id
+                        if kind == 'response.heartbeat':
+                            assert ids == []
+                        else:
+                            assert len(ids) == 1
+                            sequences.append(int(ids[0]))
+                        received.append((kind, value))
+                        frame = []
+            assert not frame
+>           assert received[-1][0] == 'response.completed'
+E           AssertionError: assert 'response.failed' == 'response.completed'
+E             
+E             - response.completed
+E             + response.failed
+
+tests/live/test_f5o1_acceptance.py:133: AssertionError
+_ test_real_two_stage_stream_disconnect_and_resume[general-primary-deepseek-chat_completions] _
+
+accepted_server = (<fastapi.applications.FastAPI object at 0x1123b8bc0>, <httpx2.AsyncClient object at 0x1110e11c0>, <postgres_support.PostgresServer object at 0x110fbd970>, 'case_fcff5d0c1fff4901954d9ac34b6d4beb')
+model = 'general-primary', adapter = 'deepseek', protocol = 'chat_completions'
+record_property = <function record_property.<locals>.append_property at 0x110edbe20>
+
+    @pytest.mark.parametrize('model,adapter,protocol',[
+        ('general-primary','deepseek','chat_completions'),
+        ('general-backup','openai_compatible','responses'),
+    ])
+    async def test_real_two_stage_stream_disconnect_and_resume(accepted_server,model,adapter,protocol,record_property):
+        app,client,pg,name=accepted_server
+        body={'model':model,'prompt':{'name':'basic_text','version':'1.0.0'},
+              'messages':[{'role':'user','content':'用一句话解释 TTFT，不超过四十字。'}],
+              'max_output_tokens':128,'timeout_seconds':30}
+        created=await client.post('/v1/llm/stream',json=body)
+        assert created.status_code==202,created.text
+        rid=created.json()['data']['request_id'];url=f'/v1/llm/stream/{rid}/events'
+        with pg.connect(name,row_factory=dict_row) as conn:
+            pending=conn.execute('SELECT * FROM tb_llm_request WHERE request_id=%s',(rid,)).fetchone()
+            assert pending['status']=='pending' and pending['started_at'] is None
+            assert conn.execute('SELECT count(*) FROM tb_llm_attempt WHERE request_pk=%s',(pending['id'],)).fetchone()['count']==0
+        first=None
+        async with client.stream('GET',url) as response:
+            assert response.status_code==200 and response.headers['x-request-id']==rid
+            async for item in frames(response):
+                if item[1]=='response.delta':
+                    first=item;break
+>       assert first is not None and first[0]>=1
+E       assert (None is not None)
+
+tests/live/test_f5o2_acceptance.py:44: AssertionError
+_ test_real_two_stage_stream_disconnect_and_resume[general-backup-openai_compatible-responses] _
+
+accepted_server = (<fastapi.applications.FastAPI object at 0x111934c20>, <httpx2.AsyncClient object at 0x1111ee900>, <postgres_support.PostgresServer object at 0x110fbd970>, 'case_050a89a4e3e246fe80a1a32822cba88a')
+model = 'general-backup', adapter = 'openai_compatible', protocol = 'responses'
+record_property = <function record_property.<locals>.append_property at 0x111083d80>
+
+    @pytest.mark.parametrize('model,adapter,protocol',[
+        ('general-primary','deepseek','chat_completions'),
+        ('general-backup','openai_compatible','responses'),
+    ])
+    async def test_real_two_stage_stream_disconnect_and_resume(accepted_server,model,adapter,protocol,record_property):
+        app,client,pg,name=accepted_server
+        body={'model':model,'prompt':{'name':'basic_text','version':'1.0.0'},
+              'messages':[{'role':'user','content':'用一句话解释 TTFT，不超过四十字。'}],
+              'max_output_tokens':128,'timeout_seconds':30}
+        created=await client.post('/v1/llm/stream',json=body)
+        assert created.status_code==202,created.text
+        rid=created.json()['data']['request_id'];url=f'/v1/llm/stream/{rid}/events'
+        with pg.connect(name,row_factory=dict_row) as conn:
+            pending=conn.execute('SELECT * FROM tb_llm_request WHERE request_id=%s',(rid,)).fetchone()
+            assert pending['status']=='pending' and pending['started_at'] is None
+            assert conn.execute('SELECT count(*) FROM tb_llm_attempt WHERE request_pk=%s',(pending['id'],)).fetchone()['count']==0
+        first=None
+        async with client.stream('GET',url) as response:
+            assert response.status_code==200 and response.headers['x-request-id']==rid
+            async for item in frames(response):
+                if item[1]=='response.delta':
+                    first=item;break
+>       assert first is not None and first[0]>=1
+E       assert (None is not None)
+
+tests/live/test_f5o2_acceptance.py:44: AssertionError
+______________ test_real_provider_case[F4-L01-primary-completion] ______________
+
+live_server = (<fastapi.applications.FastAPI object at 0x1111efad0>, <httpx2.AsyncClient object at 0x1129d3860>)
+model = 'general-primary', version = '1.0.0', is_probe = False
+is_structured = False
+record_property = <function record_property.<locals>.append_property at 0x1110acf40>
+
+    @pytest.mark.parametrize("model,version,is_probe,is_structured", [
+        pytest.param("general-primary", "1.0.0", False, False, id="F4-L01-primary-completion"),
+        pytest.param("general-backup", "1.1.0", False, False, id="F4-L02-backup-completion"),
+        pytest.param("general-primary", "1.2.0", False, True, id="F4-L03-primary-structured"),
+        pytest.param("general-backup", "1.2.0", False, True, id="F4-L04-backup-structured"),
+        pytest.param("general-primary", None, True, False, id="F4-L05-primary-probe"),
+        pytest.param("general-backup", None, True, False, id="F4-L06-backup-probe"),
+    ])
+    async def test_real_provider_case(live_server, model, version, is_probe, is_structured, record_property):
+        app, client = live_server
+        if is_probe:
+            response = await client.post(f"/v1/models/{model}/health")
+        else:
+            payload = {
+                "model": model,
+                "prompt": {"name": "context_answer", "version": version,
+                           "variables": {"context": CONTEXT if is_structured else "调用方提供的资料：订单 A123 的商品为充电器。"}},
+                "messages": [{"role": "user", "content": "订单 A123 的商品是什么？"}],
+                "max_output_tokens": 128 if is_structured else 64,
+                "timeout_seconds": 30,
+            }
+            if is_structured:
+                payload['response_schema'] = deepcopy(SCHEMA)
+                payload['messages'][0]['content'] = '提取订单号、商品信息和备注；备注未知时使用 null。'
+            response = await client.post("/v1/llm", json=payload)
+>       assert response.status_code == 200, response.json().get("code")
+E       AssertionError: provider_unavailable
+E       assert 503 == 200
+E        +  where 503 = <Response [503 Service Unavailable]>.status_code
+
+tests/live/test_real_providers.py:96: AssertionError
+______________ test_real_provider_case[F4-L02-backup-completion] _______________
+
+live_server = (<fastapi.applications.FastAPI object at 0x111dd9460>, <httpx2.AsyncClient object at 0x111ab18b0>)
+model = 'general-backup', version = '1.1.0', is_probe = False
+is_structured = False
+record_property = <function record_property.<locals>.append_property at 0x111d07420>
+
+    @pytest.mark.parametrize("model,version,is_probe,is_structured", [
+        pytest.param("general-primary", "1.0.0", False, False, id="F4-L01-primary-completion"),
+        pytest.param("general-backup", "1.1.0", False, False, id="F4-L02-backup-completion"),
+        pytest.param("general-primary", "1.2.0", False, True, id="F4-L03-primary-structured"),
+        pytest.param("general-backup", "1.2.0", False, True, id="F4-L04-backup-structured"),
+        pytest.param("general-primary", None, True, False, id="F4-L05-primary-probe"),
+        pytest.param("general-backup", None, True, False, id="F4-L06-backup-probe"),
+    ])
+    async def test_real_provider_case(live_server, model, version, is_probe, is_structured, record_property):
+        app, client = live_server
+        if is_probe:
+            response = await client.post(f"/v1/models/{model}/health")
+        else:
+            payload = {
+                "model": model,
+                "prompt": {"name": "context_answer", "version": version,
+                           "variables": {"context": CONTEXT if is_structured else "调用方提供的资料：订单 A123 的商品为充电器。"}},
+                "messages": [{"role": "user", "content": "订单 A123 的商品是什么？"}],
+                "max_output_tokens": 128 if is_structured else 64,
+                "timeout_seconds": 30,
+            }
+            if is_structured:
+                payload['response_schema'] = deepcopy(SCHEMA)
+                payload['messages'][0]['content'] = '提取订单号、商品信息和备注；备注未知时使用 null。'
+            response = await client.post("/v1/llm", json=payload)
+>       assert response.status_code == 200, response.json().get("code")
+E       AssertionError: provider_unavailable
+E       assert 503 == 200
+E        +  where 503 = <Response [503 Service Unavailable]>.status_code
+
+tests/live/test_real_providers.py:96: AssertionError
+______________ test_real_provider_case[F4-L03-primary-structured] ______________
+
+live_server = (<fastapi.applications.FastAPI object at 0x111e881a0>, <httpx2.AsyncClient object at 0x11276ad80>)
+model = 'general-primary', version = '1.2.0', is_probe = False
+is_structured = True
+record_property = <function record_property.<locals>.append_property at 0x111bff2e0>
+
+    @pytest.mark.parametrize("model,version,is_probe,is_structured", [
+        pytest.param("general-primary", "1.0.0", False, False, id="F4-L01-primary-completion"),
+        pytest.param("general-backup", "1.1.0", False, False, id="F4-L02-backup-completion"),
+        pytest.param("general-primary", "1.2.0", False, True, id="F4-L03-primary-structured"),
+        pytest.param("general-backup", "1.2.0", False, True, id="F4-L04-backup-structured"),
+        pytest.param("general-primary", None, True, False, id="F4-L05-primary-probe"),
+        pytest.param("general-backup", None, True, False, id="F4-L06-backup-probe"),
+    ])
+    async def test_real_provider_case(live_server, model, version, is_probe, is_structured, record_property):
+        app, client = live_server
+        if is_probe:
+            response = await client.post(f"/v1/models/{model}/health")
+        else:
+            payload = {
+                "model": model,
+                "prompt": {"name": "context_answer", "version": version,
+                           "variables": {"context": CONTEXT if is_structured else "调用方提供的资料：订单 A123 的商品为充电器。"}},
+                "messages": [{"role": "user", "content": "订单 A123 的商品是什么？"}],
+                "max_output_tokens": 128 if is_structured else 64,
+                "timeout_seconds": 30,
+            }
+            if is_structured:
+                payload['response_schema'] = deepcopy(SCHEMA)
+                payload['messages'][0]['content'] = '提取订单号、商品信息和备注；备注未知时使用 null。'
+            response = await client.post("/v1/llm", json=payload)
+>       assert response.status_code == 200, response.json().get("code")
+E       AssertionError: provider_unavailable
+E       assert 503 == 200
+E        +  where 503 = <Response [503 Service Unavailable]>.status_code
+
+tests/live/test_real_providers.py:96: AssertionError
+______________ test_real_provider_case[F4-L04-backup-structured] _______________
+
+live_server = (<fastapi.applications.FastAPI object at 0x111e89430>, <httpx2.AsyncClient object at 0x111931460>)
+model = 'general-backup', version = '1.2.0', is_probe = False
+is_structured = True
+record_property = <function record_property.<locals>.append_property at 0x112d07240>
+
+    @pytest.mark.parametrize("model,version,is_probe,is_structured", [
+        pytest.param("general-primary", "1.0.0", False, False, id="F4-L01-primary-completion"),
+        pytest.param("general-backup", "1.1.0", False, False, id="F4-L02-backup-completion"),
+        pytest.param("general-primary", "1.2.0", False, True, id="F4-L03-primary-structured"),
+        pytest.param("general-backup", "1.2.0", False, True, id="F4-L04-backup-structured"),
+        pytest.param("general-primary", None, True, False, id="F4-L05-primary-probe"),
+        pytest.param("general-backup", None, True, False, id="F4-L06-backup-probe"),
+    ])
+    async def test_real_provider_case(live_server, model, version, is_probe, is_structured, record_property):
+        app, client = live_server
+        if is_probe:
+            response = await client.post(f"/v1/models/{model}/health")
+        else:
+            payload = {
+                "model": model,
+                "prompt": {"name": "context_answer", "version": version,
+                           "variables": {"context": CONTEXT if is_structured else "调用方提供的资料：订单 A123 的商品为充电器。"}},
+                "messages": [{"role": "user", "content": "订单 A123 的商品是什么？"}],
+                "max_output_tokens": 128 if is_structured else 64,
+                "timeout_seconds": 30,
+            }
+            if is_structured:
+                payload['response_schema'] = deepcopy(SCHEMA)
+                payload['messages'][0]['content'] = '提取订单号、商品信息和备注；备注未知时使用 null。'
+            response = await client.post("/v1/llm", json=payload)
+>       assert response.status_code == 200, response.json().get("code")
+E       AssertionError: provider_unavailable
+E       assert 503 == 200
+E        +  where 503 = <Response [503 Service Unavailable]>.status_code
+
+tests/live/test_real_providers.py:96: AssertionError
+________________ test_real_provider_case[F4-L05-primary-probe] _________________
+
+live_server = (<fastapi.applications.FastAPI object at 0x1116c68d0>, <httpx2.AsyncClient object at 0x111931be0>)
+model = 'general-primary', version = None, is_probe = True
+is_structured = False
+record_property = <function record_property.<locals>.append_property at 0x112d30e00>
+
+    @pytest.mark.parametrize("model,version,is_probe,is_structured", [
+        pytest.param("general-primary", "1.0.0", False, False, id="F4-L01-primary-completion"),
+        pytest.param("general-backup", "1.1.0", False, False, id="F4-L02-backup-completion"),
+        pytest.param("general-primary", "1.2.0", False, True, id="F4-L03-primary-structured"),
+        pytest.param("general-backup", "1.2.0", False, True, id="F4-L04-backup-structured"),
+        pytest.param("general-primary", None, True, False, id="F4-L05-primary-probe"),
+        pytest.param("general-backup", None, True, False, id="F4-L06-backup-probe"),
+    ])
+    async def test_real_provider_case(live_server, model, version, is_probe, is_structured, record_property):
+        app, client = live_server
+        if is_probe:
+            response = await client.post(f"/v1/models/{model}/health")
+        else:
+            payload = {
+                "model": model,
+                "prompt": {"name": "context_answer", "version": version,
+                           "variables": {"context": CONTEXT if is_structured else "调用方提供的资料：订单 A123 的商品为充电器。"}},
+                "messages": [{"role": "user", "content": "订单 A123 的商品是什么？"}],
+                "max_output_tokens": 128 if is_structured else 64,
+                "timeout_seconds": 30,
+            }
+            if is_structured:
+                payload['response_schema'] = deepcopy(SCHEMA)
+                payload['messages'][0]['content'] = '提取订单号、商品信息和备注；备注未知时使用 null。'
+            response = await client.post("/v1/llm", json=payload)
+>       assert response.status_code == 200, response.json().get("code")
+E       AssertionError: provider_timeout
+E       assert 504 == 200
+E        +  where 504 = <Response [504 Gateway Timeout]>.status_code
+
+tests/live/test_real_providers.py:96: AssertionError
+_________________ test_real_provider_case[F4-L06-backup-probe] _________________
+
+live_server = (<fastapi.applications.FastAPI object at 0x112d4b950>, <httpx2.AsyncClient object at 0x1120fd7f0>)
+model = 'general-backup', version = None, is_probe = True, is_structured = False
+record_property = <function record_property.<locals>.append_property at 0x112d79b20>
+
+    @pytest.mark.parametrize("model,version,is_probe,is_structured", [
+        pytest.param("general-primary", "1.0.0", False, False, id="F4-L01-primary-completion"),
+        pytest.param("general-backup", "1.1.0", False, False, id="F4-L02-backup-completion"),
+        pytest.param("general-primary", "1.2.0", False, True, id="F4-L03-primary-structured"),
+        pytest.param("general-backup", "1.2.0", False, True, id="F4-L04-backup-structured"),
+        pytest.param("general-primary", None, True, False, id="F4-L05-primary-probe"),
+        pytest.param("general-backup", None, True, False, id="F4-L06-backup-probe"),
+    ])
+    async def test_real_provider_case(live_server, model, version, is_probe, is_structured, record_property):
+        app, client = live_server
+        if is_probe:
+            response = await client.post(f"/v1/models/{model}/health")
+        else:
+            payload = {
+                "model": model,
+                "prompt": {"name": "context_answer", "version": version,
+                           "variables": {"context": CONTEXT if is_structured else "调用方提供的资料：订单 A123 的商品为充电器。"}},
+                "messages": [{"role": "user", "content": "订单 A123 的商品是什么？"}],
+                "max_output_tokens": 128 if is_structured else 64,
+                "timeout_seconds": 30,
+            }
+            if is_structured:
+                payload['response_schema'] = deepcopy(SCHEMA)
+                payload['messages'][0]['content'] = '提取订单号、商品信息和备注；备注未知时使用 null。'
+            response = await client.post("/v1/llm", json=payload)
+>       assert response.status_code == 200, response.json().get("code")
+E       AssertionError: provider_unavailable
+E       assert 503 == 200
+E        +  where 503 = <Response [503 Service Unavailable]>.status_code
+
+tests/live/test_real_providers.py:96: AssertionError
+=========================== short test summary info ============================
+FAILED tests/live/test_f10_capacity.py::test_real_capacity_and_ten_minute_sustained
+FAILED tests/live/test_f11_real_acceptance.py::test_global_admission_and_pending[general-primary-f11_real_environment0]
+FAILED tests/live/test_f11_real_acceptance.py::test_global_admission_and_pending[general-backup-f11_real_environment0]
+FAILED tests/live/test_f11_real_acceptance.py::test_agent_credential_and_model_isolation[general-primary-f11_real_environment0]
+FAILED tests/live/test_f11_real_acceptance.py::test_agent_credential_and_model_isolation[general-backup-f11_real_environment0]
+FAILED tests/live/test_f11_real_acceptance.py::test_stream_disconnect_retains_capacity[general-primary-f11_real_environment0]
+FAILED tests/live/test_f11_real_acceptance.py::test_stream_disconnect_retains_capacity[general-backup-f11_real_environment0]
+FAILED tests/live/test_f5_streaming.py::test_real_streaming[F5-L01-primary-stream]
+FAILED tests/live/test_f5_streaming.py::test_real_streaming[F5-L02-backup-stream]
+FAILED tests/live/test_f5o1_acceptance.py::test_real_call_and_committed_records[text-general-primary-deepseek-chat_completions]
+FAILED tests/live/test_f5o1_acceptance.py::test_real_call_and_committed_records[text-general-backup-openai_compatible-responses]
+FAILED tests/live/test_f5o1_acceptance.py::test_real_call_and_committed_records[structured-general-primary-deepseek-chat_completions]
+FAILED tests/live/test_f5o1_acceptance.py::test_real_call_and_committed_records[structured-general-backup-openai_compatible-responses]
+FAILED tests/live/test_f5o1_acceptance.py::test_real_call_and_committed_records[streaming-general-primary-deepseek-chat_completions]
+FAILED tests/live/test_f5o1_acceptance.py::test_real_call_and_committed_records[streaming-general-backup-openai_compatible-responses]
+FAILED tests/live/test_f5o2_acceptance.py::test_real_two_stage_stream_disconnect_and_resume[general-primary-deepseek-chat_completions]
+FAILED tests/live/test_f5o2_acceptance.py::test_real_two_stage_stream_disconnect_and_resume[general-backup-openai_compatible-responses]
+FAILED tests/live/test_real_providers.py::test_real_provider_case[F4-L01-primary-completion]
+FAILED tests/live/test_real_providers.py::test_real_provider_case[F4-L02-backup-completion]
+FAILED tests/live/test_real_providers.py::test_real_provider_case[F4-L03-primary-structured]
+FAILED tests/live/test_real_providers.py::test_real_provider_case[F4-L04-backup-structured]
+FAILED tests/live/test_real_providers.py::test_real_provider_case[F4-L05-primary-probe]
+FAILED tests/live/test_real_providers.py::test_real_provider_case[F4-L06-backup-probe]
+23 failed, 2242 passed in 1953.20s (0:32:33)

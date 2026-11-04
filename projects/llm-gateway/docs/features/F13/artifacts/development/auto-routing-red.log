@@ -1,0 +1,647 @@
+FFFFFFFFFFFFFFFFFF                                                       [100%]
+=================================== FAILURES ===================================
+_________________ test_no_eligible_group_is_a_local_rejection __________________
+
+    async def test_no_eligible_group_is_a_local_rejection():
+        definitions=registry({name+'-e':{'enabled':False} for name in ('light','general','analysis')})
+        gateway,trace,provider,traces=service(definitions)
+        with pytest.raises(GatewayError) as caught:await gateway.complete(request(model='auto-general'),trace)
+>       assert caught.value.code=='no_available_group'
+E       AssertionError: assert 'unknown_model' == 'no_available_group'
+E         
+E         - no_available_group
+E         + unknown_model
+
+tests/unit/test_f13_auto_routing.py:14: AssertionError
+_______________ test_single_eligible_group_skips_classification ________________
+
+    async def test_single_eligible_group_skips_classification():
+        definitions=registry({'light-e':{'enabled':False},'analysis-e':{'enabled':False}})
+        gateway,trace,provider,traces=service(definitions,ProviderResult(text='唯一回答'))
+>       result=await gateway.complete(request(model='auto-general'),trace)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_f13_auto_routing.py:23: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/services/gateway.py:45: in complete
+    data, _ = await self._recorded_completion(request, trace)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/services/gateway.py:50: in _recorded_completion
+    data, attempt = await self._complete(request, trace)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/services/gateway.py:128: in _complete
+    plan = self.router.route(request, trace, probe=probe)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/services/routing.py:121: in route
+    group = self.registry.get_group(request.model)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = ModelRegistry(endpoints=mappingproxy({'light-e': EndpointConfig(provider='mock-main', model_id='deepseek-flash', think..._tokens=128, default_output_tokens=128, max_output_tokens=4096, default_timeout_seconds=30, max_timeout_seconds=120)}))
+name = 'auto-general'
+
+    def get_group(self, name: str) -> ModelGroupConfig:
+        try:
+            return self.model_groups[name]
+        except KeyError:
+>           raise GatewayError('unknown_model', '模型组未注册', http_status.HTTP_400_BAD_REQUEST) from None
+E           errors.GatewayError: 模型组未注册
+
+src/services/models.py:249: GatewayError
+_ test_classification_and_generation_share_request_and_continuous_numbers[light] _
+
+choice = 'light'
+
+    @pytest.mark.parametrize('choice',['light','general','analysis'])
+    async def test_classification_and_generation_share_request_and_continuous_numbers(choice):
+        gateway,trace,provider,traces=service(None,ProviderResult(text='{"group":"'+choice+'"}'),
+                                           ProviderResult(text='最终回答'))
+>       result=await gateway.complete(request(model='auto-general'),trace)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_f13_auto_routing.py:34: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/services/gateway.py:45: in complete
+    data, _ = await self._recorded_completion(request, trace)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/services/gateway.py:50: in _recorded_completion
+    data, attempt = await self._complete(request, trace)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/services/gateway.py:128: in _complete
+    plan = self.router.route(request, trace, probe=probe)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/services/routing.py:121: in route
+    group = self.registry.get_group(request.model)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = ModelRegistry(endpoints=mappingproxy({'light-e': EndpointConfig(provider='mock-main', model_id='deepseek-flash', think..._tokens=128, default_output_tokens=128, max_output_tokens=4096, default_timeout_seconds=30, max_timeout_seconds=120)}))
+name = 'auto-general'
+
+    def get_group(self, name: str) -> ModelGroupConfig:
+        try:
+            return self.model_groups[name]
+        except KeyError:
+>           raise GatewayError('unknown_model', '模型组未注册', http_status.HTTP_400_BAD_REQUEST) from None
+E           errors.GatewayError: 模型组未注册
+
+src/services/models.py:249: GatewayError
+_ test_classification_and_generation_share_request_and_continuous_numbers[general] _
+
+choice = 'general'
+
+    @pytest.mark.parametrize('choice',['light','general','analysis'])
+    async def test_classification_and_generation_share_request_and_continuous_numbers(choice):
+        gateway,trace,provider,traces=service(None,ProviderResult(text='{"group":"'+choice+'"}'),
+                                           ProviderResult(text='最终回答'))
+>       result=await gateway.complete(request(model='auto-general'),trace)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_f13_auto_routing.py:34: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/services/gateway.py:45: in complete
+    data, _ = await self._recorded_completion(request, trace)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/services/gateway.py:50: in _recorded_completion
+    data, attempt = await self._complete(request, trace)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/services/gateway.py:128: in _complete
+    plan = self.router.route(request, trace, probe=probe)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/services/routing.py:121: in route
+    group = self.registry.get_group(request.model)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = ModelRegistry(endpoints=mappingproxy({'light-e': EndpointConfig(provider='mock-main', model_id='deepseek-flash', think..._tokens=128, default_output_tokens=128, max_output_tokens=4096, default_timeout_seconds=30, max_timeout_seconds=120)}))
+name = 'auto-general'
+
+    def get_group(self, name: str) -> ModelGroupConfig:
+        try:
+            return self.model_groups[name]
+        except KeyError:
+>           raise GatewayError('unknown_model', '模型组未注册', http_status.HTTP_400_BAD_REQUEST) from None
+E           errors.GatewayError: 模型组未注册
+
+src/services/models.py:249: GatewayError
+_ test_classification_and_generation_share_request_and_continuous_numbers[analysis] _
+
+choice = 'analysis'
+
+    @pytest.mark.parametrize('choice',['light','general','analysis'])
+    async def test_classification_and_generation_share_request_and_continuous_numbers(choice):
+        gateway,trace,provider,traces=service(None,ProviderResult(text='{"group":"'+choice+'"}'),
+                                           ProviderResult(text='最终回答'))
+>       result=await gateway.complete(request(model='auto-general'),trace)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_f13_auto_routing.py:34: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/services/gateway.py:45: in complete
+    data, _ = await self._recorded_completion(request, trace)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/services/gateway.py:50: in _recorded_completion
+    data, attempt = await self._complete(request, trace)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/services/gateway.py:128: in _complete
+    plan = self.router.route(request, trace, probe=probe)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/services/routing.py:121: in route
+    group = self.registry.get_group(request.model)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = ModelRegistry(endpoints=mappingproxy({'light-e': EndpointConfig(provider='mock-main', model_id='deepseek-flash', think..._tokens=128, default_output_tokens=128, max_output_tokens=4096, default_timeout_seconds=30, max_timeout_seconds=120)}))
+name = 'auto-general'
+
+    def get_group(self, name: str) -> ModelGroupConfig:
+        try:
+            return self.model_groups[name]
+        except KeyError:
+>           raise GatewayError('unknown_model', '模型组未注册', http_status.HTTP_400_BAD_REQUEST) from None
+E           errors.GatewayError: 模型组未注册
+
+src/services/models.py:249: GatewayError
+___ test_invalid_classification_uses_checked_default_without_repair[broken] ____
+
+text = 'broken'
+
+    @pytest.mark.parametrize('text',['broken','[]','{}','{"group":"unknown"}',
+        '{"group":"auto-general"}','{"group":"general","extra":true}'])
+    async def test_invalid_classification_uses_checked_default_without_repair(text):
+        gateway,trace,provider,traces=service(None,ProviderResult(text=text),ProviderResult(text='默认回答'))
+>       result=await gateway.complete(request(model='auto-general'),trace)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_f13_auto_routing.py:50: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/services/gateway.py:45: in complete
+    data, _ = await self._recorded_completion(request, trace)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/services/gateway.py:50: in _recorded_completion
+    data, attempt = await self._complete(request, trace)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/services/gateway.py:128: in _complete
+    plan = self.router.route(request, trace, probe=probe)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/services/routing.py:121: in route
+    group = self.registry.get_group(request.model)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = ModelRegistry(endpoints=mappingproxy({'light-e': EndpointConfig(provider='mock-main', model_id='deepseek-flash', think..._tokens=128, default_output_tokens=128, max_output_tokens=4096, default_timeout_seconds=30, max_timeout_seconds=120)}))
+name = 'auto-general'
+
+    def get_group(self, name: str) -> ModelGroupConfig:
+        try:
+            return self.model_groups[name]
+        except KeyError:
+>           raise GatewayError('unknown_model', '模型组未注册', http_status.HTTP_400_BAD_REQUEST) from None
+E           errors.GatewayError: 模型组未注册
+
+src/services/models.py:249: GatewayError
+_____ test_invalid_classification_uses_checked_default_without_repair[[]] ______
+
+text = '[]'
+
+    @pytest.mark.parametrize('text',['broken','[]','{}','{"group":"unknown"}',
+        '{"group":"auto-general"}','{"group":"general","extra":true}'])
+    async def test_invalid_classification_uses_checked_default_without_repair(text):
+        gateway,trace,provider,traces=service(None,ProviderResult(text=text),ProviderResult(text='默认回答'))
+>       result=await gateway.complete(request(model='auto-general'),trace)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_f13_auto_routing.py:50: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/services/gateway.py:45: in complete
+    data, _ = await self._recorded_completion(request, trace)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/services/gateway.py:50: in _recorded_completion
+    data, attempt = await self._complete(request, trace)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/services/gateway.py:128: in _complete
+    plan = self.router.route(request, trace, probe=probe)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/services/routing.py:121: in route
+    group = self.registry.get_group(request.model)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = ModelRegistry(endpoints=mappingproxy({'light-e': EndpointConfig(provider='mock-main', model_id='deepseek-flash', think..._tokens=128, default_output_tokens=128, max_output_tokens=4096, default_timeout_seconds=30, max_timeout_seconds=120)}))
+name = 'auto-general'
+
+    def get_group(self, name: str) -> ModelGroupConfig:
+        try:
+            return self.model_groups[name]
+        except KeyError:
+>           raise GatewayError('unknown_model', '模型组未注册', http_status.HTTP_400_BAD_REQUEST) from None
+E           errors.GatewayError: 模型组未注册
+
+src/services/models.py:249: GatewayError
+_____ test_invalid_classification_uses_checked_default_without_repair[{}] ______
+
+text = '{}'
+
+    @pytest.mark.parametrize('text',['broken','[]','{}','{"group":"unknown"}',
+        '{"group":"auto-general"}','{"group":"general","extra":true}'])
+    async def test_invalid_classification_uses_checked_default_without_repair(text):
+        gateway,trace,provider,traces=service(None,ProviderResult(text=text),ProviderResult(text='默认回答'))
+>       result=await gateway.complete(request(model='auto-general'),trace)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_f13_auto_routing.py:50: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/services/gateway.py:45: in complete
+    data, _ = await self._recorded_completion(request, trace)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/services/gateway.py:50: in _recorded_completion
+    data, attempt = await self._complete(request, trace)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/services/gateway.py:128: in _complete
+    plan = self.router.route(request, trace, probe=probe)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/services/routing.py:121: in route
+    group = self.registry.get_group(request.model)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = ModelRegistry(endpoints=mappingproxy({'light-e': EndpointConfig(provider='mock-main', model_id='deepseek-flash', think..._tokens=128, default_output_tokens=128, max_output_tokens=4096, default_timeout_seconds=30, max_timeout_seconds=120)}))
+name = 'auto-general'
+
+    def get_group(self, name: str) -> ModelGroupConfig:
+        try:
+            return self.model_groups[name]
+        except KeyError:
+>           raise GatewayError('unknown_model', '模型组未注册', http_status.HTTP_400_BAD_REQUEST) from None
+E           errors.GatewayError: 模型组未注册
+
+src/services/models.py:249: GatewayError
+_ test_invalid_classification_uses_checked_default_without_repair[{"group":"unknown"}] _
+
+text = '{"group":"unknown"}'
+
+    @pytest.mark.parametrize('text',['broken','[]','{}','{"group":"unknown"}',
+        '{"group":"auto-general"}','{"group":"general","extra":true}'])
+    async def test_invalid_classification_uses_checked_default_without_repair(text):
+        gateway,trace,provider,traces=service(None,ProviderResult(text=text),ProviderResult(text='默认回答'))
+>       result=await gateway.complete(request(model='auto-general'),trace)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_f13_auto_routing.py:50: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/services/gateway.py:45: in complete
+    data, _ = await self._recorded_completion(request, trace)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/services/gateway.py:50: in _recorded_completion
+    data, attempt = await self._complete(request, trace)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/services/gateway.py:128: in _complete
+    plan = self.router.route(request, trace, probe=probe)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/services/routing.py:121: in route
+    group = self.registry.get_group(request.model)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = ModelRegistry(endpoints=mappingproxy({'light-e': EndpointConfig(provider='mock-main', model_id='deepseek-flash', think..._tokens=128, default_output_tokens=128, max_output_tokens=4096, default_timeout_seconds=30, max_timeout_seconds=120)}))
+name = 'auto-general'
+
+    def get_group(self, name: str) -> ModelGroupConfig:
+        try:
+            return self.model_groups[name]
+        except KeyError:
+>           raise GatewayError('unknown_model', '模型组未注册', http_status.HTTP_400_BAD_REQUEST) from None
+E           errors.GatewayError: 模型组未注册
+
+src/services/models.py:249: GatewayError
+_ test_invalid_classification_uses_checked_default_without_repair[{"group":"auto-general"}] _
+
+text = '{"group":"auto-general"}'
+
+    @pytest.mark.parametrize('text',['broken','[]','{}','{"group":"unknown"}',
+        '{"group":"auto-general"}','{"group":"general","extra":true}'])
+    async def test_invalid_classification_uses_checked_default_without_repair(text):
+        gateway,trace,provider,traces=service(None,ProviderResult(text=text),ProviderResult(text='默认回答'))
+>       result=await gateway.complete(request(model='auto-general'),trace)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_f13_auto_routing.py:50: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/services/gateway.py:45: in complete
+    data, _ = await self._recorded_completion(request, trace)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/services/gateway.py:50: in _recorded_completion
+    data, attempt = await self._complete(request, trace)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/services/gateway.py:128: in _complete
+    plan = self.router.route(request, trace, probe=probe)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/services/routing.py:121: in route
+    group = self.registry.get_group(request.model)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = ModelRegistry(endpoints=mappingproxy({'light-e': EndpointConfig(provider='mock-main', model_id='deepseek-flash', think..._tokens=128, default_output_tokens=128, max_output_tokens=4096, default_timeout_seconds=30, max_timeout_seconds=120)}))
+name = 'auto-general'
+
+    def get_group(self, name: str) -> ModelGroupConfig:
+        try:
+            return self.model_groups[name]
+        except KeyError:
+>           raise GatewayError('unknown_model', '模型组未注册', http_status.HTTP_400_BAD_REQUEST) from None
+E           errors.GatewayError: 模型组未注册
+
+src/services/models.py:249: GatewayError
+_ test_invalid_classification_uses_checked_default_without_repair[{"group":"general","extra":true}] _
+
+text = '{"group":"general","extra":true}'
+
+    @pytest.mark.parametrize('text',['broken','[]','{}','{"group":"unknown"}',
+        '{"group":"auto-general"}','{"group":"general","extra":true}'])
+    async def test_invalid_classification_uses_checked_default_without_repair(text):
+        gateway,trace,provider,traces=service(None,ProviderResult(text=text),ProviderResult(text='默认回答'))
+>       result=await gateway.complete(request(model='auto-general'),trace)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_f13_auto_routing.py:50: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/services/gateway.py:45: in complete
+    data, _ = await self._recorded_completion(request, trace)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/services/gateway.py:50: in _recorded_completion
+    data, attempt = await self._complete(request, trace)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/services/gateway.py:128: in _complete
+    plan = self.router.route(request, trace, probe=probe)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/services/routing.py:121: in route
+    group = self.registry.get_group(request.model)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = ModelRegistry(endpoints=mappingproxy({'light-e': EndpointConfig(provider='mock-main', model_id='deepseek-flash', think..._tokens=128, default_output_tokens=128, max_output_tokens=4096, default_timeout_seconds=30, max_timeout_seconds=120)}))
+name = 'auto-general'
+
+    def get_group(self, name: str) -> ModelGroupConfig:
+        try:
+            return self.model_groups[name]
+        except KeyError:
+>           raise GatewayError('unknown_model', '模型组未注册', http_status.HTTP_400_BAD_REQUEST) from None
+E           errors.GatewayError: 模型组未注册
+
+src/services/models.py:249: GatewayError
+_ test_recoverable_classification_failure_is_one_call_then_default[provider_unavailable] _
+
+code = 'provider_unavailable'
+
+    @pytest.mark.parametrize('code',['provider_unavailable','provider_connection_error','provider_rate_limited','provider_timeout'])
+    async def test_recoverable_classification_failure_is_one_call_then_default(code):
+        gateway,trace,provider,traces=service(None,ProviderCallError(code=code),ProviderResult(text='默认回答'))
+>       assert (await gateway.complete(request(model='auto-general'),trace)).text=='默认回答'
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_f13_auto_routing.py:60: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/services/gateway.py:45: in complete
+    data, _ = await self._recorded_completion(request, trace)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/services/gateway.py:50: in _recorded_completion
+    data, attempt = await self._complete(request, trace)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/services/gateway.py:128: in _complete
+    plan = self.router.route(request, trace, probe=probe)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/services/routing.py:121: in route
+    group = self.registry.get_group(request.model)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = ModelRegistry(endpoints=mappingproxy({'light-e': EndpointConfig(provider='mock-main', model_id='deepseek-flash', think..._tokens=128, default_output_tokens=128, max_output_tokens=4096, default_timeout_seconds=30, max_timeout_seconds=120)}))
+name = 'auto-general'
+
+    def get_group(self, name: str) -> ModelGroupConfig:
+        try:
+            return self.model_groups[name]
+        except KeyError:
+>           raise GatewayError('unknown_model', '模型组未注册', http_status.HTTP_400_BAD_REQUEST) from None
+E           errors.GatewayError: 模型组未注册
+
+src/services/models.py:249: GatewayError
+_ test_recoverable_classification_failure_is_one_call_then_default[provider_connection_error] _
+
+code = 'provider_connection_error'
+
+    @pytest.mark.parametrize('code',['provider_unavailable','provider_connection_error','provider_rate_limited','provider_timeout'])
+    async def test_recoverable_classification_failure_is_one_call_then_default(code):
+        gateway,trace,provider,traces=service(None,ProviderCallError(code=code),ProviderResult(text='默认回答'))
+>       assert (await gateway.complete(request(model='auto-general'),trace)).text=='默认回答'
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_f13_auto_routing.py:60: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/services/gateway.py:45: in complete
+    data, _ = await self._recorded_completion(request, trace)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/services/gateway.py:50: in _recorded_completion
+    data, attempt = await self._complete(request, trace)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/services/gateway.py:128: in _complete
+    plan = self.router.route(request, trace, probe=probe)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/services/routing.py:121: in route
+    group = self.registry.get_group(request.model)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = ModelRegistry(endpoints=mappingproxy({'light-e': EndpointConfig(provider='mock-main', model_id='deepseek-flash', think..._tokens=128, default_output_tokens=128, max_output_tokens=4096, default_timeout_seconds=30, max_timeout_seconds=120)}))
+name = 'auto-general'
+
+    def get_group(self, name: str) -> ModelGroupConfig:
+        try:
+            return self.model_groups[name]
+        except KeyError:
+>           raise GatewayError('unknown_model', '模型组未注册', http_status.HTTP_400_BAD_REQUEST) from None
+E           errors.GatewayError: 模型组未注册
+
+src/services/models.py:249: GatewayError
+_ test_recoverable_classification_failure_is_one_call_then_default[provider_rate_limited] _
+
+code = 'provider_rate_limited'
+
+    @pytest.mark.parametrize('code',['provider_unavailable','provider_connection_error','provider_rate_limited','provider_timeout'])
+    async def test_recoverable_classification_failure_is_one_call_then_default(code):
+        gateway,trace,provider,traces=service(None,ProviderCallError(code=code),ProviderResult(text='默认回答'))
+>       assert (await gateway.complete(request(model='auto-general'),trace)).text=='默认回答'
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_f13_auto_routing.py:60: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/services/gateway.py:45: in complete
+    data, _ = await self._recorded_completion(request, trace)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/services/gateway.py:50: in _recorded_completion
+    data, attempt = await self._complete(request, trace)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/services/gateway.py:128: in _complete
+    plan = self.router.route(request, trace, probe=probe)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/services/routing.py:121: in route
+    group = self.registry.get_group(request.model)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = ModelRegistry(endpoints=mappingproxy({'light-e': EndpointConfig(provider='mock-main', model_id='deepseek-flash', think..._tokens=128, default_output_tokens=128, max_output_tokens=4096, default_timeout_seconds=30, max_timeout_seconds=120)}))
+name = 'auto-general'
+
+    def get_group(self, name: str) -> ModelGroupConfig:
+        try:
+            return self.model_groups[name]
+        except KeyError:
+>           raise GatewayError('unknown_model', '模型组未注册', http_status.HTTP_400_BAD_REQUEST) from None
+E           errors.GatewayError: 模型组未注册
+
+src/services/models.py:249: GatewayError
+_ test_recoverable_classification_failure_is_one_call_then_default[provider_timeout] _
+
+code = 'provider_timeout'
+
+    @pytest.mark.parametrize('code',['provider_unavailable','provider_connection_error','provider_rate_limited','provider_timeout'])
+    async def test_recoverable_classification_failure_is_one_call_then_default(code):
+        gateway,trace,provider,traces=service(None,ProviderCallError(code=code),ProviderResult(text='默认回答'))
+>       assert (await gateway.complete(request(model='auto-general'),trace)).text=='默认回答'
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_f13_auto_routing.py:60: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/services/gateway.py:45: in complete
+    data, _ = await self._recorded_completion(request, trace)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/services/gateway.py:50: in _recorded_completion
+    data, attempt = await self._complete(request, trace)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/services/gateway.py:128: in _complete
+    plan = self.router.route(request, trace, probe=probe)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/services/routing.py:121: in route
+    group = self.registry.get_group(request.model)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = ModelRegistry(endpoints=mappingproxy({'light-e': EndpointConfig(provider='mock-main', model_id='deepseek-flash', think..._tokens=128, default_output_tokens=128, max_output_tokens=4096, default_timeout_seconds=30, max_timeout_seconds=120)}))
+name = 'auto-general'
+
+    def get_group(self, name: str) -> ModelGroupConfig:
+        try:
+            return self.model_groups[name]
+        except KeyError:
+>           raise GatewayError('unknown_model', '模型组未注册', http_status.HTTP_400_BAD_REQUEST) from None
+E           errors.GatewayError: 模型组未注册
+
+src/services/models.py:249: GatewayError
+________ test_auth_and_quota_never_trigger_default[provider_auth_error] ________
+
+code = 'provider_auth_error'
+
+    @pytest.mark.parametrize('code',['provider_auth_error','provider_quota_exceeded'])
+    async def test_auth_and_quota_never_trigger_default(code):
+        gateway,trace,provider,traces=service(None,ProviderCallError(code=code))
+>       with pytest.raises(ProviderCallError) as caught:await gateway.complete(request(model='auto-general'),trace)
+                                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_f13_auto_routing.py:68: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/services/gateway.py:45: in complete
+    data, _ = await self._recorded_completion(request, trace)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/services/gateway.py:50: in _recorded_completion
+    data, attempt = await self._complete(request, trace)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/services/gateway.py:128: in _complete
+    plan = self.router.route(request, trace, probe=probe)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/services/routing.py:121: in route
+    group = self.registry.get_group(request.model)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = ModelRegistry(endpoints=mappingproxy({'light-e': EndpointConfig(provider='mock-main', model_id='deepseek-flash', think..._tokens=128, default_output_tokens=128, max_output_tokens=4096, default_timeout_seconds=30, max_timeout_seconds=120)}))
+name = 'auto-general'
+
+    def get_group(self, name: str) -> ModelGroupConfig:
+        try:
+            return self.model_groups[name]
+        except KeyError:
+>           raise GatewayError('unknown_model', '模型组未注册', http_status.HTTP_400_BAD_REQUEST) from None
+E           errors.GatewayError: 模型组未注册
+
+src/services/models.py:249: GatewayError
+______ test_auth_and_quota_never_trigger_default[provider_quota_exceeded] ______
+
+code = 'provider_quota_exceeded'
+
+    @pytest.mark.parametrize('code',['provider_auth_error','provider_quota_exceeded'])
+    async def test_auth_and_quota_never_trigger_default(code):
+        gateway,trace,provider,traces=service(None,ProviderCallError(code=code))
+>       with pytest.raises(ProviderCallError) as caught:await gateway.complete(request(model='auto-general'),trace)
+                                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_f13_auto_routing.py:68: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/services/gateway.py:45: in complete
+    data, _ = await self._recorded_completion(request, trace)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/services/gateway.py:50: in _recorded_completion
+    data, attempt = await self._complete(request, trace)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/services/gateway.py:128: in _complete
+    plan = self.router.route(request, trace, probe=probe)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/services/routing.py:121: in route
+    group = self.registry.get_group(request.model)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = ModelRegistry(endpoints=mappingproxy({'light-e': EndpointConfig(provider='mock-main', model_id='deepseek-flash', think..._tokens=128, default_output_tokens=128, max_output_tokens=4096, default_timeout_seconds=30, max_timeout_seconds=120)}))
+name = 'auto-general'
+
+    def get_group(self, name: str) -> ModelGroupConfig:
+        try:
+            return self.model_groups[name]
+        except KeyError:
+>           raise GatewayError('unknown_model', '模型组未注册', http_status.HTTP_400_BAD_REQUEST) from None
+E           errors.GatewayError: 模型组未注册
+
+src/services/models.py:249: GatewayError
+_________ test_default_excluded_does_not_silently_choose_a_third_group _________
+
+    async def test_default_excluded_does_not_silently_choose_a_third_group():
+        definitions=registry({'general-e':{'enabled':False}})
+        gateway,trace,provider,traces=service(definitions,ProviderResult(text='bad'))
+        with pytest.raises(GatewayError) as caught:await gateway.complete(request(model='auto-general'),trace)
+>       assert caught.value.code=='auto_route_failed' and len(provider.calls)==1
+E       AssertionError: assert ('unknown_model' == 'auto_route_failed'
+E         
+E         - auto_route_failed
+E         + unknown_model)
+
+tests/unit/test_f13_auto_routing.py:76: AssertionError
+=========================== short test summary info ============================
+FAILED tests/unit/test_f13_auto_routing.py::test_no_eligible_group_is_a_local_rejection
+FAILED tests/unit/test_f13_auto_routing.py::test_single_eligible_group_skips_classification
+FAILED tests/unit/test_f13_auto_routing.py::test_classification_and_generation_share_request_and_continuous_numbers[light]
+FAILED tests/unit/test_f13_auto_routing.py::test_classification_and_generation_share_request_and_continuous_numbers[general]
+FAILED tests/unit/test_f13_auto_routing.py::test_classification_and_generation_share_request_and_continuous_numbers[analysis]
+FAILED tests/unit/test_f13_auto_routing.py::test_invalid_classification_uses_checked_default_without_repair[broken]
+FAILED tests/unit/test_f13_auto_routing.py::test_invalid_classification_uses_checked_default_without_repair[[]]
+FAILED tests/unit/test_f13_auto_routing.py::test_invalid_classification_uses_checked_default_without_repair[{}]
+FAILED tests/unit/test_f13_auto_routing.py::test_invalid_classification_uses_checked_default_without_repair[{"group":"unknown"}]
+FAILED tests/unit/test_f13_auto_routing.py::test_invalid_classification_uses_checked_default_without_repair[{"group":"auto-general"}]
+FAILED tests/unit/test_f13_auto_routing.py::test_invalid_classification_uses_checked_default_without_repair[{"group":"general","extra":true}]
+FAILED tests/unit/test_f13_auto_routing.py::test_recoverable_classification_failure_is_one_call_then_default[provider_unavailable]
+FAILED tests/unit/test_f13_auto_routing.py::test_recoverable_classification_failure_is_one_call_then_default[provider_connection_error]
+FAILED tests/unit/test_f13_auto_routing.py::test_recoverable_classification_failure_is_one_call_then_default[provider_rate_limited]
+FAILED tests/unit/test_f13_auto_routing.py::test_recoverable_classification_failure_is_one_call_then_default[provider_timeout]
+FAILED tests/unit/test_f13_auto_routing.py::test_auth_and_quota_never_trigger_default[provider_auth_error]
+FAILED tests/unit/test_f13_auto_routing.py::test_auth_and_quota_never_trigger_default[provider_quota_exceeded]
+FAILED tests/unit/test_f13_auto_routing.py::test_default_excluded_does_not_silently_choose_a_third_group
+18 failed in 1.70s

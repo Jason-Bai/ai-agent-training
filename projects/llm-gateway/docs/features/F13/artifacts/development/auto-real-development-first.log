@@ -1,0 +1,239 @@
+FFFF                                                                     [100%]
+=================================== FAILURES ===================================
+________________ test_real_auto_routing_public_operations[text] ________________
+
+f13_real_environment = RealEnvironment(client=<starlette.testclient.TestClient object at 0x10fed4fb0>, application=<fastapi.applications.Fast...l21tvpq00000gn/T/llmgw-f13-work-eifzl4on/pytest-auto-real-development-first/test_real_auto_routing_public_0/f13-real'))
+mode = 'text'
+record_property = <function record_property.<locals>.append_property at 0x10ffc3ce0>
+
+    @pytest.mark.parametrize('mode',['text','schema','streaming'])
+    def test_real_auto_routing_public_operations(f13_real_environment,mode,record_property):
+        env=f13_real_environment
+        case=dict(task_role='你是订单字段提取助手，仅根据明确资料提取订单号和商品，不执行任何操作。',
+            context='已确认订单A123，商品为充电器。',message='只输出订单号和商品名称，简短回答。')
+        if mode=='schema':
+            case['response_schema']={'type':'object','properties':{
+                'order_id':{'type':'string','enum':['A123']},'product':{'type':'string','enum':['充电器']}},
+                'required':['order_id','product'],'additionalProperties':False}
+        with controlled_case(env,case) as body:
+            reply=env.client.post('/v1/llm/stream' if mode=='streaming' else '/v1/llm',json=body)
+            rid=reply.headers['x-request-id']
+            if mode=='streaming':
+                assert reply.status_code==202,reply.text
+                pending=env.trace(rid);assert pending['status']=='pending' and pending['attempts']==[]
+                reply=env.client.get('/v1/llm/stream/'+rid+'/events')
+        trace=env.trace(rid)
+        record_property('f13_request_id',rid)
+        record_property('f13_trace',json.dumps(trace,ensure_ascii=False))
+        billing=env.client.get('/v1/billing/requests/'+rid).json()
+        save_evidence(env,rid,trace,billing,dict(mode=mode,response=reply.text))
+        assert reply.status_code==200,reply.text
+        if mode=='streaming':
+            events=events_from(reply.text)
+            assert [seq for _,seq,_ in events]==list(range(1,len(events)+1))
+            assert events[-1][0]=='response.completed'
+            assert sum(e in {'response.completed','response.failed','response.canceled'} for e,_,_ in events)==1
+            text=''.join(data['delta'] for event,_,data in events if event=='response.delta')
+            assert env.client.get('/v1/llm/stream/'+rid+'/events',params={'after_seq':events[-1][1]}).status_code==204
+        else:
+            data=reply.json()['data'];text=data['text']
+            if mode=='schema':assert data['parsed']=={'order_id':'A123','product':'充电器'}
+        assert 'A123' in text and '充电器' in text
+        assert '"group"' not in text and 'candidate_groups' not in text
+        assert trace['status']=='completed'
+>       assert_two_stages(trace)
+
+tests/live/test_f13_routing.py:106: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+trace = {'request_id': '1ee3f92a-ebdf-4201-b371-4bb359ca1574', 'operation': 'completion', 'status': 'completed', 'requested_model': 'auto-general', ...}
+
+    def assert_two_stages(trace):
+        assert trace['requested_model']=='auto-general'
+        attempts=trace['attempts']
+        assert len(attempts)>=2
+        assert attempts[0]['purpose']=='classification'
+        assert all(attempt['purpose']=='generation' for attempt in attempts[1:])
+>       assert attempts[0]['model']=='light'
+E       AssertionError: assert 'light-endpoint' == 'light'
+E         
+E         - light
+E         + light-endpoint
+
+tests/live/test_f13_routing.py:59: AssertionError
+_______________ test_real_auto_routing_public_operations[schema] _______________
+
+f13_real_environment = RealEnvironment(client=<starlette.testclient.TestClient object at 0x110162270>, application=<fastapi.applications.Fast...l21tvpq00000gn/T/llmgw-f13-work-eifzl4on/pytest-auto-real-development-first/test_real_auto_routing_public_1/f13-real'))
+mode = 'schema'
+record_property = <function record_property.<locals>.append_property at 0x110110040>
+
+    @pytest.mark.parametrize('mode',['text','schema','streaming'])
+    def test_real_auto_routing_public_operations(f13_real_environment,mode,record_property):
+        env=f13_real_environment
+        case=dict(task_role='你是订单字段提取助手，仅根据明确资料提取订单号和商品，不执行任何操作。',
+            context='已确认订单A123，商品为充电器。',message='只输出订单号和商品名称，简短回答。')
+        if mode=='schema':
+            case['response_schema']={'type':'object','properties':{
+                'order_id':{'type':'string','enum':['A123']},'product':{'type':'string','enum':['充电器']}},
+                'required':['order_id','product'],'additionalProperties':False}
+        with controlled_case(env,case) as body:
+            reply=env.client.post('/v1/llm/stream' if mode=='streaming' else '/v1/llm',json=body)
+            rid=reply.headers['x-request-id']
+            if mode=='streaming':
+                assert reply.status_code==202,reply.text
+                pending=env.trace(rid);assert pending['status']=='pending' and pending['attempts']==[]
+                reply=env.client.get('/v1/llm/stream/'+rid+'/events')
+        trace=env.trace(rid)
+        record_property('f13_request_id',rid)
+        record_property('f13_trace',json.dumps(trace,ensure_ascii=False))
+        billing=env.client.get('/v1/billing/requests/'+rid).json()
+        save_evidence(env,rid,trace,billing,dict(mode=mode,response=reply.text))
+        assert reply.status_code==200,reply.text
+        if mode=='streaming':
+            events=events_from(reply.text)
+            assert [seq for _,seq,_ in events]==list(range(1,len(events)+1))
+            assert events[-1][0]=='response.completed'
+            assert sum(e in {'response.completed','response.failed','response.canceled'} for e,_,_ in events)==1
+            text=''.join(data['delta'] for event,_,data in events if event=='response.delta')
+            assert env.client.get('/v1/llm/stream/'+rid+'/events',params={'after_seq':events[-1][1]}).status_code==204
+        else:
+            data=reply.json()['data'];text=data['text']
+            if mode=='schema':assert data['parsed']=={'order_id':'A123','product':'充电器'}
+        assert 'A123' in text and '充电器' in text
+        assert '"group"' not in text and 'candidate_groups' not in text
+        assert trace['status']=='completed'
+>       assert_two_stages(trace)
+
+tests/live/test_f13_routing.py:106: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+trace = {'request_id': 'd12aefde-b309-4bb0-86e0-debb26b9dc4b', 'operation': 'completion', 'status': 'completed', 'requested_model': 'auto-general', ...}
+
+    def assert_two_stages(trace):
+        assert trace['requested_model']=='auto-general'
+        attempts=trace['attempts']
+        assert len(attempts)>=2
+        assert attempts[0]['purpose']=='classification'
+        assert all(attempt['purpose']=='generation' for attempt in attempts[1:])
+>       assert attempts[0]['model']=='light'
+E       AssertionError: assert 'light-endpoint' == 'light'
+E         
+E         - light
+E         + light-endpoint
+
+tests/live/test_f13_routing.py:59: AssertionError
+_____________ test_real_auto_routing_public_operations[streaming] ______________
+
+f13_real_environment = RealEnvironment(client=<starlette.testclient.TestClient object at 0x11020deb0>, application=<fastapi.applications.Fast...l21tvpq00000gn/T/llmgw-f13-work-eifzl4on/pytest-auto-real-development-first/test_real_auto_routing_public_2/f13-real'))
+mode = 'streaming'
+record_property = <function record_property.<locals>.append_property at 0x11022fc40>
+
+    @pytest.mark.parametrize('mode',['text','schema','streaming'])
+    def test_real_auto_routing_public_operations(f13_real_environment,mode,record_property):
+        env=f13_real_environment
+        case=dict(task_role='你是订单字段提取助手，仅根据明确资料提取订单号和商品，不执行任何操作。',
+            context='已确认订单A123，商品为充电器。',message='只输出订单号和商品名称，简短回答。')
+        if mode=='schema':
+            case['response_schema']={'type':'object','properties':{
+                'order_id':{'type':'string','enum':['A123']},'product':{'type':'string','enum':['充电器']}},
+                'required':['order_id','product'],'additionalProperties':False}
+        with controlled_case(env,case) as body:
+            reply=env.client.post('/v1/llm/stream' if mode=='streaming' else '/v1/llm',json=body)
+            rid=reply.headers['x-request-id']
+            if mode=='streaming':
+                assert reply.status_code==202,reply.text
+                pending=env.trace(rid);assert pending['status']=='pending' and pending['attempts']==[]
+                reply=env.client.get('/v1/llm/stream/'+rid+'/events')
+        trace=env.trace(rid)
+        record_property('f13_request_id',rid)
+        record_property('f13_trace',json.dumps(trace,ensure_ascii=False))
+        billing=env.client.get('/v1/billing/requests/'+rid).json()
+        save_evidence(env,rid,trace,billing,dict(mode=mode,response=reply.text))
+        assert reply.status_code==200,reply.text
+        if mode=='streaming':
+            events=events_from(reply.text)
+            assert [seq for _,seq,_ in events]==list(range(1,len(events)+1))
+>           assert events[-1][0]=='response.completed'
+E           AssertionError: assert 'response.failed' == 'response.completed'
+E             
+E             - response.completed
+E             + response.failed
+
+tests/live/test_f13_routing.py:96: AssertionError
+___________________ test_real_routing_quality_development_30 ___________________
+
+f13_real_environment = RealEnvironment(client=<starlette.testclient.TestClient object at 0x1102ab350>, application=<fastapi.applications.Fast...l21tvpq00000gn/T/llmgw-f13-work-eifzl4on/pytest-auto-real-development-first/test_real_routing_quality_deve0/f13-real'))
+record_property = <function record_property.<locals>.append_property at 0x11032ad40>
+
+        assert public['state']=='released' and Decimal(public['agent_charge'])==0
+>   else:
+
+tests/live/test_f13_routing.py:170: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+env = RealEnvironment(client=<starlette.testclient.TestClient object at 0x1102ab350>, application=<fastapi.applications.Fast...l21tvpq00000gn/T/llmgw-f13-work-eifzl4on/pytest-auto-real-development-first/test_real_routing_quality_deve0/f13-real'))
+split = 'development'
+record_property = <function record_property.<locals>.append_property at 0x11032ad40>
+
+            if mode=='schema':assert data['parsed']=={'order_id':'A123','product':'充电器'}
+        assert 'A123' in text and '充电器' in text
+        assert '"group"' not in text and 'candidate_groups' not in text
+        assert trace['status']=='completed'
+        assert_two_stages(trace)
+        verified=env.verify(rid,trace)
+        save_evidence(env,rid,trace,verified,dict(mode=mode,response=reply.text))
+    
+    
+    def terminal_trace(env,rid):
+        deadline=monotonic()+10
+        trace=env.trace(rid)
+        while trace['status'] not in {'completed','failed','canceled'} and monotonic()<deadline:
+            sleep(.1)
+            trace=env.trace(rid)
+        return trace
+    
+    
+    def verify_quality_lifecycle(env,rid,trace,reply,billing_reply):
+        """Failed generation still owes a terminal state and complete ledger evidence."""
+        assert trace['status'] in {'completed','failed'},trace['status']
+        assert billing_reply.status_code==200,billing_reply.text
+        bill=billing_reply.json()['data'];attempts=trace['attempts']
+        assert all(a['status'] in {'completed','failed'} for a in attempts)
+        assert len(attempts)==len(bill['attempts'])
+        assert all(a['purpose'] in {'classification','generation'} for a in attempts)
+        for attempt in attempts:
+            group='light' if attempt['purpose']=='classification' else trace['auto_routing']['resolved_group']
+            assert attempt['model']==group+'-endpoint' and attempt['configured_model']==MODELS[group]
+            assert attempt['input_token_kind']=='estimated'
+            assert attempt['counter_version'].startswith('qwen_text_estimate_v1:')
+            if attempt['usage'] is not None:
+                assert attempt['input_token_count']>=attempt['usage']['input_tokens']
+        if reply.status_code==200:
+            assert trace['status']=='completed' and trace['error_code'] is None
+        else:
+            assert trace['status']=='failed' and trace['error_code']==reply.json()['code']
+            assert trace['error_code'] in {'output_truncated','provider_timeout','provider_connection_error',
+                'provider_rate_limited','provider_unavailable','request_timeout','provider_refused'},trace['error_code']
+        if all(a['usage'] is not None for a in attempts):
+            env.verify(rid,trace)
+            return
+        # A transport failure can leave consumption unknown. Verify those holds
+        # explicitly, and still independently price every known successful charge.
+        with env.server.connect(env.database_name) as sql:
+            pk,status=sql.execute('SELECT id,status FROM tb_llm_request WHERE request_id=%s',(rid,)).fetchone()
+            rows=sql.execute('SELECT model,status,input_tokens,output_tokens,total_tokens FROM tb_llm_attempt WHERE request_pk=%s ORDER BY attempt_no',(pk,)).fetchall()
+            charges=sql.execute('SELECT state,agent_charge,supplier_cost,quote,cached_input_tokens FROM tb_billing_attempt WHERE request_pk=%s ORDER BY attempt_no',(pk,)).fetchall()
+        assert status==trace['status'] and len(rows)==len(charges)==len(attempts)
+        total=Decimal(0)
+        for attempt,row,charge,public in zip(attempts,rows,charges,bill['attempts']):
+>           assert row[:2]==(attempt['model'],attempt['status'])
+E           AssertionError: [{'id': 'F13-D002', 'code': 'output_truncated', 'error_code': 'output_truncated'}, {'id': 'F13-D012', 'code': 'output_...', 'error_code': 'output_truncated'}, {'id': 'F13-D028', 'code': 'output_truncated', 'error_code': 'output_truncated'}]
+E           assert not [{'id': 'F13-D002', 'code': 'output_truncated', 'error_code': 'output_truncated'}, {'id': 'F13-D012', 'code': 'output_...', 'error_code': 'output_truncated'}, {'id': 'F13-D028', 'code': 'output_truncated', 'error_code': 'output_truncated'}]
+
+tests/live/test_f13_routing.py:162: AssertionError
+=========================== short test summary info ============================
+FAILED tests/live/test_f13_routing.py::test_real_auto_routing_public_operations[text]
+FAILED tests/live/test_f13_routing.py::test_real_auto_routing_public_operations[schema]
+FAILED tests/live/test_f13_routing.py::test_real_auto_routing_public_operations[streaming]
+FAILED tests/live/test_f13_routing.py::test_real_routing_quality_development_30
+4 failed, 1 deselected in 450.09s (0:07:30)

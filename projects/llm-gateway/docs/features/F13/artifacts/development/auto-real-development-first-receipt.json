@@ -1,0 +1,23 @@
+{
+  "command": [
+    ".venv/bin/python",
+    "-W",
+    "error",
+    "-m",
+    "pytest",
+    "tests/live/test_f13_routing.py",
+    "-k",
+    "not sealed",
+    "--run-live",
+    "-ra",
+    "-q",
+    "-o",
+    "junit_family=xunit1",
+    "--junitxml=/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llmgw-f13-work-eifzl4on/auto-real-development-first.xml",
+    "--basetemp=/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llmgw-f13-work-eifzl4on/pytest-auto-real-development-first"
+  ],
+  "started_at": "2026-11-03T15:30:47.631648+00:00",
+  "ended_at": "2026-11-03T15:38:18.650151+00:00",
+  "elapsed_seconds": 451.0179854169837,
+  "exit_code": 1
+}

@@ -1,0 +1,1690 @@
+{
+  "scope": "post-run evidence audit; preserves original pytest failures; not a new live run",
+  "failed_capacity_requests": 75,
+  "classified": 75,
+  "unresolved": [],
+  "rows": [
+    {
+      "request_id": "f2720e99-8245-4ddf-9845-6928e0a56390",
+      "concurrency": 1,
+      "mode": "streaming",
+      "proof": {
+        "request_id": "f2720e99-8245-4ddf-9845-6928e0a56390",
+        "attempt_no": 1,
+        "protocol": "chat_completions",
+        "error_code": "request_timeout",
+        "upstream_http_status": 200,
+        "provider_elapsed_ms": 29990.39716698462,
+        "kind": "upstream_stream_stall",
+        "raw_frame_count": 2,
+        "text_characters": 2,
+        "keepalive_observed": true
+      }
+    },
+    {
+      "request_id": "97e7de3c-c6d9-4f9a-b7f6-ef5f087a11a5",
+      "concurrency": 5,
+      "mode": "text",
+      "proof": {
+        "request_id": "97e7de3c-c6d9-4f9a-b7f6-ef5f087a11a5",
+        "kind": "manual_upstream_body_wait",
+        "operation": "completion",
+        "http_status": 200,
+        "body_bytes": 0,
+        "provider_elapsed_ms": 29993.577625020407,
+        "source": "actual saved full Trace + HTTP read cancellation + SQL/billing + phase drain"
+      }
+    },
+    {
+      "request_id": "41c0554d-7639-4817-b512-80054c90045f",
+      "concurrency": 5,
+      "mode": "streaming",
+      "proof": {
+        "request_id": "41c0554d-7639-4817-b512-80054c90045f",
+        "attempt_no": 1,
+        "protocol": "responses",
+        "error_code": "request_timeout",
+        "upstream_http_status": 200,
+        "provider_elapsed_ms": 29988.259250007104,
+        "kind": "upstream_stream_stall",
+        "raw_frame_count": 5,
+        "text_characters": 2,
+        "keepalive_observed": true
+      }
+    },
+    {
+      "request_id": "a739b8c0-c393-439e-9a63-1c328bc5205c",
+      "concurrency": 5,
+      "mode": "text",
+      "proof": {
+        "request_id": "a739b8c0-c393-439e-9a63-1c328bc5205c",
+        "kind": "manual_upstream_body_wait",
+        "operation": "completion",
+        "http_status": 200,
+        "body_bytes": 0,
+        "provider_elapsed_ms": 29990.541040955577,
+        "source": "actual saved full Trace + HTTP read cancellation + SQL/billing + phase drain"
+      }
+    },
+    {
+      "request_id": "ff8b6bd4-f91f-4a6d-8ba9-e859b54ea296",
+      "concurrency": 5,
+      "mode": "text",
+      "proof": {
+        "request_id": "ff8b6bd4-f91f-4a6d-8ba9-e859b54ea296",
+        "kind": "manual_upstream_body_wait",
+        "operation": "completion",
+        "http_status": 200,
+        "body_bytes": 0,
+        "provider_elapsed_ms": 29996.794916980434,
+        "source": "actual saved full Trace + HTTP read cancellation + SQL/billing + phase drain"
+      }
+    },
+    {
+      "request_id": "ba3aef1c-ff9f-4dae-8692-bc2d129378d9",
+      "concurrency": 5,
+      "mode": "text",
+      "proof": {
+        "request_id": "ba3aef1c-ff9f-4dae-8692-bc2d129378d9",
+        "kind": "manual_upstream_body_wait",
+        "operation": "completion",
+        "http_status": 200,
+        "body_bytes": 0,
+        "provider_elapsed_ms": 29980.43349996442,
+        "source": "actual saved full Trace + HTTP read cancellation + SQL/billing + phase drain"
+      }
+    },
+    {
+      "request_id": "72f65ac9-fc64-4bd0-a464-eb8dd076922f",
+      "concurrency": 5,
+      "mode": "text",
+      "proof": {
+        "request_id": "72f65ac9-fc64-4bd0-a464-eb8dd076922f",
+        "kind": "manual_upstream_body_wait",
+        "operation": "completion",
+        "http_status": 200,
+        "body_bytes": 0,
+        "provider_elapsed_ms": 29990.176250052173,
+        "source": "actual saved full Trace + HTTP read cancellation + SQL/billing + phase drain"
+      }
+    },
+    {
+      "request_id": "c7332875-f078-45bf-ab33-4c5932d0bc48",
+      "concurrency": 5,
+      "mode": "streaming",
+      "proof": {
+        "request_id": "c7332875-f078-45bf-ab33-4c5932d0bc48",
+        "attempt_no": 1,
+        "protocol": "chat_completions",
+        "error_code": "request_timeout",
+        "upstream_http_status": 200,
+        "provider_elapsed_ms": 29982.28829097934,
+        "kind": "upstream_stream_stall",
+        "raw_frame_count": 2,
+        "text_characters": 2,
+        "keepalive_observed": true
+      }
+    },
+    {
+      "request_id": "e3bbcdf6-8aa8-4cae-b5c0-79ecf6349e8e",
+      "concurrency": 5,
+      "mode": "text",
+      "proof": {
+        "request_id": "e3bbcdf6-8aa8-4cae-b5c0-79ecf6349e8e",
+        "kind": "manual_upstream_body_wait",
+        "operation": "completion",
+        "http_status": 200,
+        "body_bytes": 0,
+        "provider_elapsed_ms": 29994.762040965725,
+        "source": "actual saved full Trace + HTTP read cancellation + SQL/billing + phase drain"
+      }
+    },
+    {
+      "request_id": "05ec98d4-25a4-4ef6-a54c-cad88ae5022a",
+      "concurrency": 5,
+      "mode": "text",
+      "proof": {
+        "request_id": "05ec98d4-25a4-4ef6-a54c-cad88ae5022a",
+        "kind": "manual_upstream_body_wait",
+        "operation": "completion",
+        "http_status": 200,
+        "body_bytes": 0,
+        "provider_elapsed_ms": 29989.590291981585,
+        "source": "actual saved full Trace + HTTP read cancellation + SQL/billing + phase drain"
+      }
+    },
+    {
+      "request_id": "9c8fd3c3-0d49-4e4e-9ce6-4f7d7264b59a",
+      "concurrency": 5,
+      "mode": "streaming",
+      "proof": {
+        "request_id": "9c8fd3c3-0d49-4e4e-9ce6-4f7d7264b59a",
+        "attempt_no": 1,
+        "protocol": "responses",
+        "error_code": "request_timeout",
+        "upstream_http_status": 200,
+        "provider_elapsed_ms": 29985.771292005666,
+        "kind": "upstream_stream_stall",
+        "raw_frame_count": 5,
+        "text_characters": 2,
+        "keepalive_observed": true
+      }
+    },
+    {
+      "request_id": "074ae198-b5fa-4863-9683-aa625d6ee89e",
+      "concurrency": 10,
+      "mode": "streaming",
+      "proof": {
+        "request_id": "074ae198-b5fa-4863-9683-aa625d6ee89e",
+        "attempt_no": 1,
+        "protocol": "chat_completions",
+        "error_code": "request_timeout",
+        "upstream_http_status": 200,
+        "provider_elapsed_ms": 29986.074791988358,
+        "kind": "upstream_stream_stall",
+        "raw_frame_count": 2,
+        "text_characters": 2,
+        "keepalive_observed": true
+      }
+    },
+    {
+      "request_id": "2b65b01b-03bf-4aeb-b418-d41640370ba4",
+      "concurrency": 10,
+      "mode": "streaming",
+      "proof": {
+        "request_id": "2b65b01b-03bf-4aeb-b418-d41640370ba4",
+        "attempt_no": 1,
+        "protocol": "responses",
+        "error_code": "request_timeout",
+        "upstream_http_status": 200,
+        "provider_elapsed_ms": 29993.162249971647,
+        "kind": "upstream_stream_stall",
+        "raw_frame_count": 5,
+        "text_characters": 2,
+        "keepalive_observed": true
+      }
+    },
+    {
+      "request_id": "a97db443-e5d8-45a9-b86c-86f60addbc17",
+      "concurrency": 10,
+      "mode": "streaming",
+      "proof": {
+        "request_id": "a97db443-e5d8-45a9-b86c-86f60addbc17",
+        "attempt_no": 1,
+        "protocol": "responses",
+        "error_code": "request_timeout",
+        "upstream_http_status": 200,
+        "provider_elapsed_ms": 29994.153000006918,
+        "kind": "upstream_stream_stall",
+        "raw_frame_count": 5,
+        "text_characters": 2,
+        "keepalive_observed": true
+      }
+    },
+    {
+      "request_id": "bcb67483-631b-4adb-b5e9-94a6dc63a5ce",
+      "concurrency": 10,
+      "mode": "text",
+      "proof": {
+        "request_id": "bcb67483-631b-4adb-b5e9-94a6dc63a5ce",
+        "kind": "manual_upstream_body_wait",
+        "operation": "completion",
+        "http_status": 200,
+        "body_bytes": 0,
+        "provider_elapsed_ms": 29992.116416979115,
+        "source": "actual saved full Trace + HTTP read cancellation + SQL/billing + phase drain"
+      }
+    },
+    {
+      "request_id": "7f2e8eb3-4df1-4f99-97d8-aef1cd0a82e6",
+      "concurrency": 10,
+      "mode": "text",
+      "proof": {
+        "request_id": "7f2e8eb3-4df1-4f99-97d8-aef1cd0a82e6",
+        "kind": "manual_upstream_body_wait",
+        "operation": "completion",
+        "http_status": 200,
+        "body_bytes": 0,
+        "provider_elapsed_ms": 29975.79133301042,
+        "source": "actual saved full Trace + HTTP read cancellation + SQL/billing + phase drain"
+      }
+    },
+    {
+      "request_id": "efb9411c-7d7f-4f39-84f9-6dfc29032da4",
+      "concurrency": 10,
+      "mode": "streaming",
+      "proof": {
+        "request_id": "efb9411c-7d7f-4f39-84f9-6dfc29032da4",
+        "attempt_no": 1,
+        "protocol": "responses",
+        "error_code": "request_timeout",
+        "upstream_http_status": 200,
+        "provider_elapsed_ms": 29994.24979201285,
+        "kind": "upstream_stream_stall",
+        "raw_frame_count": 5,
+        "text_characters": 2,
+        "keepalive_observed": true
+      }
+    },
+    {
+      "request_id": "64aa7156-34a7-4cad-ad35-0b24f77380b0",
+      "concurrency": 10,
+      "mode": "text",
+      "proof": {
+        "request_id": "64aa7156-34a7-4cad-ad35-0b24f77380b0",
+        "kind": "manual_upstream_body_wait",
+        "operation": "completion",
+        "http_status": 200,
+        "body_bytes": 0,
+        "provider_elapsed_ms": 29987.51024994999,
+        "source": "actual saved full Trace + HTTP read cancellation + SQL/billing + phase drain"
+      }
+    },
+    {
+      "request_id": "0b74a421-e939-48f7-9ed6-e8950a12a429",
+      "concurrency": 10,
+      "mode": "streaming",
+      "proof": {
+        "request_id": "0b74a421-e939-48f7-9ed6-e8950a12a429",
+        "attempt_no": 1,
+        "protocol": "chat_completions",
+        "error_code": "request_timeout",
+        "upstream_http_status": 200,
+        "provider_elapsed_ms": 29991.72091699438,
+        "kind": "upstream_stream_stall",
+        "raw_frame_count": 2,
+        "text_characters": 2,
+        "keepalive_observed": true
+      }
+    },
+    {
+      "request_id": "9925e68c-2990-4358-a73d-767e581e96a8",
+      "concurrency": 10,
+      "mode": "text",
+      "proof": {
+        "request_id": "9925e68c-2990-4358-a73d-767e581e96a8",
+        "kind": "manual_upstream_body_wait",
+        "operation": "completion",
+        "http_status": 200,
+        "body_bytes": 0,
+        "provider_elapsed_ms": 29995.47966598766,
+        "source": "actual saved full Trace + HTTP read cancellation + SQL/billing + phase drain"
+      }
+    },
+    {
+      "request_id": "d90f4a7a-8d3a-4bc8-93ba-e0e6e374325b",
+      "concurrency": 10,
+      "mode": "text",
+      "proof": {
+        "request_id": "d90f4a7a-8d3a-4bc8-93ba-e0e6e374325b",
+        "kind": "manual_upstream_body_wait",
+        "operation": "completion",
+        "http_status": 200,
+        "body_bytes": 0,
+        "provider_elapsed_ms": 29993.98479098454,
+        "source": "actual saved full Trace + HTTP read cancellation + SQL/billing + phase drain"
+      }
+    },
+    {
+      "request_id": "2354a6ac-f074-4923-bffe-ea09dfae648a",
+      "concurrency": 10,
+      "mode": "streaming",
+      "proof": {
+        "request_id": "2354a6ac-f074-4923-bffe-ea09dfae648a",
+        "attempt_no": 1,
+        "protocol": "responses",
+        "error_code": "request_timeout",
+        "upstream_http_status": 200,
+        "provider_elapsed_ms": 29988.2770840195,
+        "kind": "upstream_stream_stall",
+        "raw_frame_count": 5,
+        "text_characters": 2,
+        "keepalive_observed": true
+      }
+    },
+    {
+      "request_id": "ce8495e2-190e-4bdc-b9aa-353cbf749e78",
+      "concurrency": 10,
+      "mode": "text",
+      "proof": {
+        "request_id": "ce8495e2-190e-4bdc-b9aa-353cbf749e78",
+        "kind": "manual_upstream_body_wait",
+        "operation": "completion",
+        "http_status": 200,
+        "body_bytes": 0,
+        "provider_elapsed_ms": 29993.829458020627,
+        "source": "actual saved full Trace + HTTP read cancellation + SQL/billing + phase drain"
+      }
+    },
+    {
+      "request_id": "89f06bc7-c1ba-4cfc-9dda-059f6ac7f815",
+      "concurrency": 10,
+      "mode": "text",
+      "proof": {
+        "request_id": "89f06bc7-c1ba-4cfc-9dda-059f6ac7f815",
+        "kind": "manual_upstream_body_wait",
+        "operation": "completion",
+        "http_status": 200,
+        "body_bytes": 0,
+        "provider_elapsed_ms": 29993.996542005334,
+        "source": "actual saved full Trace + HTTP read cancellation + SQL/billing + phase drain"
+      }
+    },
+    {
+      "request_id": "6ab4487d-2532-4efd-b727-80e9c99ab400",
+      "concurrency": 10,
+      "mode": "streaming",
+      "proof": {
+        "request_id": "6ab4487d-2532-4efd-b727-80e9c99ab400",
+        "attempt_no": 1,
+        "protocol": "responses",
+        "error_code": "request_timeout",
+        "upstream_http_status": 200,
+        "provider_elapsed_ms": 29989.671332994476,
+        "kind": "upstream_stream_stall",
+        "raw_frame_count": 5,
+        "text_characters": 2,
+        "keepalive_observed": true
+      }
+    },
+    {
+      "request_id": "1bcf94b8-8828-490a-8dd8-79b6891fa7c7",
+      "concurrency": 20,
+      "mode": "streaming",
+      "proof": {
+        "request_id": "1bcf94b8-8828-490a-8dd8-79b6891fa7c7",
+        "attempt_no": 1,
+        "protocol": "chat_completions",
+        "error_code": "request_timeout",
+        "upstream_http_status": 200,
+        "provider_elapsed_ms": 29963.11599999899,
+        "kind": "upstream_stream_stall",
+        "raw_frame_count": 2,
+        "text_characters": 2,
+        "keepalive_observed": true
+      }
+    },
+    {
+      "request_id": "d9d1f34e-0f16-455f-8cca-19983e4a4ea0",
+      "concurrency": 20,
+      "mode": "streaming",
+      "proof": {
+        "request_id": "d9d1f34e-0f16-455f-8cca-19983e4a4ea0",
+        "attempt_no": 1,
+        "protocol": "chat_completions",
+        "error_code": "request_timeout",
+        "upstream_http_status": 200,
+        "provider_elapsed_ms": 29993.91195800854,
+        "kind": "upstream_stream_stall",
+        "raw_frame_count": 2,
+        "text_characters": 2,
+        "keepalive_observed": true
+      }
+    },
+    {
+      "request_id": "7405f007-6707-4c1f-9c83-1fc0112d10b6",
+      "concurrency": 20,
+      "mode": "streaming",
+      "proof": {
+        "request_id": "7405f007-6707-4c1f-9c83-1fc0112d10b6",
+        "attempt_no": 1,
+        "protocol": "responses",
+        "error_code": "request_timeout",
+        "upstream_http_status": 200,
+        "provider_elapsed_ms": 29994.355125003494,
+        "kind": "upstream_stream_stall",
+        "raw_frame_count": 5,
+        "text_characters": 2,
+        "keepalive_observed": true
+      }
+    },
+    {
+      "request_id": "c32f5636-07ad-4a55-a20d-1f7e30e80ce8",
+      "concurrency": 20,
+      "mode": "text",
+      "proof": {
+        "request_id": "c32f5636-07ad-4a55-a20d-1f7e30e80ce8",
+        "kind": "manual_upstream_body_wait",
+        "operation": "completion",
+        "http_status": 200,
+        "body_bytes": 0,
+        "provider_elapsed_ms": 29992.45737498859,
+        "source": "actual saved full Trace + HTTP read cancellation + SQL/billing + phase drain"
+      }
+    },
+    {
+      "request_id": "4da49ce0-8a36-4457-9596-28a3b37c82aa",
+      "concurrency": 20,
+      "mode": "text",
+      "proof": {
+        "request_id": "4da49ce0-8a36-4457-9596-28a3b37c82aa",
+        "kind": "manual_upstream_body_wait",
+        "operation": "completion",
+        "http_status": 200,
+        "body_bytes": 0,
+        "provider_elapsed_ms": 29991.76649999572,
+        "source": "actual saved full Trace + HTTP read cancellation + SQL/billing + phase drain"
+      }
+    },
+    {
+      "request_id": "184b160a-4314-496c-b864-b2bea0c79359",
+      "concurrency": 20,
+      "mode": "streaming",
+      "proof": {
+        "request_id": "184b160a-4314-496c-b864-b2bea0c79359",
+        "attempt_no": 1,
+        "protocol": "responses",
+        "error_code": "request_timeout",
+        "upstream_http_status": 200,
+        "provider_elapsed_ms": 29996.025083004497,
+        "kind": "upstream_stream_stall",
+        "raw_frame_count": 5,
+        "text_characters": 2,
+        "keepalive_observed": true
+      }
+    },
+    {
+      "request_id": "d54c6b2c-c10d-4542-8cca-12f696010e20",
+      "concurrency": 20,
+      "mode": "text",
+      "proof": {
+        "request_id": "d54c6b2c-c10d-4542-8cca-12f696010e20",
+        "kind": "manual_upstream_body_wait",
+        "operation": "completion",
+        "http_status": 200,
+        "body_bytes": 0,
+        "provider_elapsed_ms": 29997.118916013278,
+        "source": "actual saved full Trace + HTTP read cancellation + SQL/billing + phase drain"
+      }
+    },
+    {
+      "request_id": "491692e4-9cf0-4892-899d-e9f9b6153dc6",
+      "concurrency": 20,
+      "mode": "text",
+      "proof": {
+        "request_id": "491692e4-9cf0-4892-899d-e9f9b6153dc6",
+        "kind": "manual_upstream_body_wait",
+        "operation": "completion",
+        "http_status": 200,
+        "body_bytes": 0,
+        "provider_elapsed_ms": 29989.762040961068,
+        "source": "actual saved full Trace + HTTP read cancellation + SQL/billing + phase drain"
+      }
+    },
+    {
+      "request_id": "fe83d0c2-d3ca-4711-ba69-22075f8d422d",
+      "concurrency": 20,
+      "mode": "text",
+      "proof": {
+        "request_id": "fe83d0c2-d3ca-4711-ba69-22075f8d422d",
+        "kind": "manual_upstream_body_wait",
+        "operation": "completion",
+        "http_status": 200,
+        "body_bytes": 0,
+        "provider_elapsed_ms": 29988.84133301908,
+        "source": "actual saved full Trace + HTTP read cancellation + SQL/billing + phase drain"
+      }
+    },
+    {
+      "request_id": "980e1dd2-e0fc-4d19-92df-aaf439591d52",
+      "concurrency": 20,
+      "mode": "streaming",
+      "proof": {
+        "request_id": "980e1dd2-e0fc-4d19-92df-aaf439591d52",
+        "attempt_no": 1,
+        "protocol": "chat_completions",
+        "error_code": "request_timeout",
+        "upstream_http_status": 200,
+        "provider_elapsed_ms": 29991.670500021428,
+        "kind": "upstream_stream_stall",
+        "raw_frame_count": 2,
+        "text_characters": 2,
+        "keepalive_observed": true
+      }
+    },
+    {
+      "request_id": "00ddae02-35bd-4c9f-96bd-2be6d5add0cb",
+      "concurrency": 20,
+      "mode": "text",
+      "proof": {
+        "request_id": "00ddae02-35bd-4c9f-96bd-2be6d5add0cb",
+        "kind": "manual_upstream_body_wait",
+        "operation": "completion",
+        "http_status": 200,
+        "body_bytes": 0,
+        "provider_elapsed_ms": 29995.169332949445,
+        "source": "actual saved full Trace + HTTP read cancellation + SQL/billing + phase drain"
+      }
+    },
+    {
+      "request_id": "213e6194-482b-4a31-ac6a-bc1555bb556c",
+      "concurrency": 20,
+      "mode": "streaming",
+      "proof": {
+        "request_id": "213e6194-482b-4a31-ac6a-bc1555bb556c",
+        "attempt_no": 1,
+        "protocol": "chat_completions",
+        "error_code": "request_timeout",
+        "upstream_http_status": 200,
+        "provider_elapsed_ms": 29993.969124974683,
+        "kind": "upstream_stream_stall",
+        "raw_frame_count": 2,
+        "text_characters": 2,
+        "keepalive_observed": true
+      }
+    },
+    {
+      "request_id": "81e040c1-9e01-48cc-86cd-0d73f62c0d9a",
+      "concurrency": 1,
+      "mode": "text",
+      "proof": {
+        "request_id": "81e040c1-9e01-48cc-86cd-0d73f62c0d9a",
+        "attempt_no": 2,
+        "protocol": "responses",
+        "error_code": "provider_unavailable",
+        "upstream_http_status": 503,
+        "provider_elapsed_ms": 93.92858302453533,
+        "kind": "upstream_http_error",
+        "attempt_count": 2,
+        "attempts": [
+          {
+            "request_id": "81e040c1-9e01-48cc-86cd-0d73f62c0d9a",
+            "attempt_no": 1,
+            "protocol": "responses",
+            "error_code": "provider_unavailable",
+            "upstream_http_status": 503,
+            "provider_elapsed_ms": 191.6715829866007,
+            "kind": "upstream_http_error",
+            "attempt_count": 1
+          },
+          {
+            "request_id": "81e040c1-9e01-48cc-86cd-0d73f62c0d9a",
+            "attempt_no": 2,
+            "protocol": "responses",
+            "error_code": "provider_unavailable",
+            "upstream_http_status": 503,
+            "provider_elapsed_ms": 93.92858302453533,
+            "kind": "upstream_http_error",
+            "attempt_count": 1
+          }
+        ]
+      }
+    },
+    {
+      "request_id": "43ef089a-7d4b-4916-ac11-9f05a9e471ed",
+      "concurrency": 1,
+      "mode": "streaming",
+      "proof": {
+        "request_id": "43ef089a-7d4b-4916-ac11-9f05a9e471ed",
+        "kind": "manual_http_retry_then_stream_stall",
+        "source": "actual HTTP/SSE and recorded independent SQL/event/billing summary",
+        "limitation": null,
+        "raw_frame_count": 2,
+        "keepalive_observed": true
+      }
+    },
+    {
+      "request_id": "46be4e03-9e9e-446d-a7bb-d5338f80a4f0",
+      "concurrency": 1,
+      "mode": "text",
+      "proof": {
+        "request_id": "46be4e03-9e9e-446d-a7bb-d5338f80a4f0",
+        "attempt_no": 2,
+        "protocol": "responses",
+        "error_code": "provider_unavailable",
+        "upstream_http_status": 503,
+        "provider_elapsed_ms": 107.89391701109707,
+        "kind": "upstream_http_error",
+        "attempt_count": 2,
+        "attempts": [
+          {
+            "request_id": "46be4e03-9e9e-446d-a7bb-d5338f80a4f0",
+            "attempt_no": 1,
+            "protocol": "responses",
+            "error_code": "provider_unavailable",
+            "upstream_http_status": 503,
+            "provider_elapsed_ms": 248.3124160207808,
+            "kind": "upstream_http_error",
+            "attempt_count": 1
+          },
+          {
+            "request_id": "46be4e03-9e9e-446d-a7bb-d5338f80a4f0",
+            "attempt_no": 2,
+            "protocol": "responses",
+            "error_code": "provider_unavailable",
+            "upstream_http_status": 503,
+            "provider_elapsed_ms": 107.89391701109707,
+            "kind": "upstream_http_error",
+            "attempt_count": 1
+          }
+        ]
+      }
+    },
+    {
+      "request_id": "07050014-41fd-443a-baec-ac3914c298fe",
+      "concurrency": 1,
+      "mode": "streaming",
+      "proof": {
+        "request_id": "07050014-41fd-443a-baec-ac3914c298fe",
+        "attempt_no": 2,
+        "protocol": "responses",
+        "error_code": "provider_unavailable",
+        "upstream_http_status": 503,
+        "provider_elapsed_ms": 116.29283300135285,
+        "kind": "upstream_http_error",
+        "attempt_count": 2,
+        "attempts": [
+          {
+            "request_id": "07050014-41fd-443a-baec-ac3914c298fe",
+            "attempt_no": 1,
+            "protocol": "responses",
+            "error_code": "provider_unavailable",
+            "upstream_http_status": 503,
+            "provider_elapsed_ms": 178.00875002285466,
+            "kind": "upstream_http_error",
+            "attempt_count": 1
+          },
+          {
+            "request_id": "07050014-41fd-443a-baec-ac3914c298fe",
+            "attempt_no": 2,
+            "protocol": "responses",
+            "error_code": "provider_unavailable",
+            "upstream_http_status": 503,
+            "provider_elapsed_ms": 116.29283300135285,
+            "kind": "upstream_http_error",
+            "attempt_count": 1
+          }
+        ]
+      }
+    },
+    {
+      "request_id": "8fdb861c-1c28-40a9-ad8a-d88d03d65ee4",
+      "concurrency": 1,
+      "mode": "streaming",
+      "proof": {
+        "request_id": "8fdb861c-1c28-40a9-ad8a-d88d03d65ee4",
+        "attempt_no": 2,
+        "protocol": "responses",
+        "error_code": "provider_unavailable",
+        "upstream_http_status": 503,
+        "provider_elapsed_ms": 131.00770802702755,
+        "kind": "upstream_http_error",
+        "attempt_count": 2,
+        "attempts": [
+          {
+            "request_id": "8fdb861c-1c28-40a9-ad8a-d88d03d65ee4",
+            "attempt_no": 1,
+            "protocol": "responses",
+            "error_code": "provider_unavailable",
+            "upstream_http_status": 503,
+            "provider_elapsed_ms": 175.47933297464624,
+            "kind": "upstream_http_error",
+            "attempt_count": 1
+          },
+          {
+            "request_id": "8fdb861c-1c28-40a9-ad8a-d88d03d65ee4",
+            "attempt_no": 2,
+            "protocol": "responses",
+            "error_code": "provider_unavailable",
+            "upstream_http_status": 503,
+            "provider_elapsed_ms": 131.00770802702755,
+            "kind": "upstream_http_error",
+            "attempt_count": 1
+          }
+        ]
+      }
+    },
+    {
+      "request_id": "17f1f98b-0389-4d2e-be47-051f7d9fdfb7",
+      "concurrency": 1,
+      "mode": "text",
+      "proof": {
+        "request_id": "17f1f98b-0389-4d2e-be47-051f7d9fdfb7",
+        "kind": "manual_upstream_body_wait",
+        "operation": "completion",
+        "http_status": 200,
+        "body_bytes": 0,
+        "provider_elapsed_ms": 29978.275750007015,
+        "source": "actual saved full Trace + HTTP read cancellation + SQL/billing + phase drain"
+      }
+    },
+    {
+      "request_id": "9c6d253a-ef7a-4802-b015-2e0b854190e1",
+      "concurrency": 1,
+      "mode": "streaming",
+      "proof": {
+        "request_id": "9c6d253a-ef7a-4802-b015-2e0b854190e1",
+        "kind": "manual_http_retry_then_stream_stall",
+        "source": "actual HTTP/SSE and recorded independent SQL/event/billing summary",
+        "limitation": null,
+        "raw_frame_count": 2,
+        "keepalive_observed": true
+      }
+    },
+    {
+      "request_id": "afa2eabf-e449-4207-a94f-518251e0cadb",
+      "concurrency": 1,
+      "mode": "text",
+      "proof": {
+        "request_id": "afa2eabf-e449-4207-a94f-518251e0cadb",
+        "kind": "manual_upstream_body_wait",
+        "operation": "completion",
+        "http_status": 200,
+        "body_bytes": 0,
+        "provider_elapsed_ms": 29988.747166004032,
+        "source": "actual saved full Trace + HTTP read cancellation + SQL/billing + phase drain"
+      }
+    },
+    {
+      "request_id": "7ef3e281-f200-4e7f-8a78-4e99e7a4b73b",
+      "concurrency": 1,
+      "mode": "streaming",
+      "proof": {
+        "request_id": "7ef3e281-f200-4e7f-8a78-4e99e7a4b73b",
+        "attempt_no": 2,
+        "protocol": "responses",
+        "error_code": "provider_unavailable",
+        "upstream_http_status": 503,
+        "provider_elapsed_ms": 101.68624995276332,
+        "kind": "upstream_http_error",
+        "attempt_count": 2,
+        "attempts": [
+          {
+            "request_id": "7ef3e281-f200-4e7f-8a78-4e99e7a4b73b",
+            "attempt_no": 1,
+            "protocol": "responses",
+            "error_code": "provider_unavailable",
+            "upstream_http_status": 503,
+            "provider_elapsed_ms": 291.5803330251947,
+            "kind": "upstream_http_error",
+            "attempt_count": 1
+          },
+          {
+            "request_id": "7ef3e281-f200-4e7f-8a78-4e99e7a4b73b",
+            "attempt_no": 2,
+            "protocol": "responses",
+            "error_code": "provider_unavailable",
+            "upstream_http_status": 503,
+            "provider_elapsed_ms": 101.68624995276332,
+            "kind": "upstream_http_error",
+            "attempt_count": 1
+          }
+        ]
+      }
+    },
+    {
+      "request_id": "ee3b406e-fa2e-44fa-93f9-9a14a5167ecc",
+      "concurrency": 1,
+      "mode": "text",
+      "proof": {
+        "request_id": "ee3b406e-fa2e-44fa-93f9-9a14a5167ecc",
+        "kind": "manual_upstream_body_wait",
+        "operation": "completion",
+        "http_status": 200,
+        "body_bytes": 0,
+        "provider_elapsed_ms": 29987.63925000094,
+        "source": "actual saved full Trace + HTTP read cancellation + SQL/billing + phase drain"
+      }
+    },
+    {
+      "request_id": "28a9d997-449a-44bf-9eda-430e77c101a4",
+      "concurrency": 1,
+      "mode": "streaming",
+      "proof": {
+        "request_id": "28a9d997-449a-44bf-9eda-430e77c101a4",
+        "attempt_no": 2,
+        "protocol": "chat_completions",
+        "error_code": "provider_unavailable",
+        "upstream_http_status": 503,
+        "provider_elapsed_ms": 440.9038329613395,
+        "kind": "upstream_http_error",
+        "attempt_count": 2,
+        "attempts": [
+          {
+            "request_id": "28a9d997-449a-44bf-9eda-430e77c101a4",
+            "attempt_no": 1,
+            "protocol": "chat_completions",
+            "error_code": "provider_unavailable",
+            "upstream_http_status": 503,
+            "provider_elapsed_ms": 467.75549999438226,
+            "kind": "upstream_http_error",
+            "attempt_count": 1
+          },
+          {
+            "request_id": "28a9d997-449a-44bf-9eda-430e77c101a4",
+            "attempt_no": 2,
+            "protocol": "chat_completions",
+            "error_code": "provider_unavailable",
+            "upstream_http_status": 503,
+            "provider_elapsed_ms": 440.9038329613395,
+            "kind": "upstream_http_error",
+            "attempt_count": 1
+          }
+        ]
+      }
+    },
+    {
+      "request_id": "575101f7-b448-4eb8-a687-50d35b18af6f",
+      "concurrency": 1,
+      "mode": "text",
+      "proof": {
+        "request_id": "575101f7-b448-4eb8-a687-50d35b18af6f",
+        "attempt_no": 2,
+        "protocol": "responses",
+        "error_code": "provider_unavailable",
+        "upstream_http_status": 503,
+        "provider_elapsed_ms": 134.3059170176275,
+        "kind": "upstream_http_error",
+        "attempt_count": 2,
+        "attempts": [
+          {
+            "request_id": "575101f7-b448-4eb8-a687-50d35b18af6f",
+            "attempt_no": 1,
+            "protocol": "responses",
+            "error_code": "provider_unavailable",
+            "upstream_http_status": 503,
+            "provider_elapsed_ms": 166.09283298021182,
+            "kind": "upstream_http_error",
+            "attempt_count": 1
+          },
+          {
+            "request_id": "575101f7-b448-4eb8-a687-50d35b18af6f",
+            "attempt_no": 2,
+            "protocol": "responses",
+            "error_code": "provider_unavailable",
+            "upstream_http_status": 503,
+            "provider_elapsed_ms": 134.3059170176275,
+            "kind": "upstream_http_error",
+            "attempt_count": 1
+          }
+        ]
+      }
+    },
+    {
+      "request_id": "3818ecc3-ef0e-4d9d-ac2e-1126b0b0ec16",
+      "concurrency": 1,
+      "mode": "streaming",
+      "proof": {
+        "request_id": "3818ecc3-ef0e-4d9d-ac2e-1126b0b0ec16",
+        "attempt_no": 2,
+        "protocol": "responses",
+        "error_code": "provider_unavailable",
+        "upstream_http_status": 503,
+        "provider_elapsed_ms": 123.7400829559192,
+        "kind": "upstream_http_error",
+        "attempt_count": 2,
+        "attempts": [
+          {
+            "request_id": "3818ecc3-ef0e-4d9d-ac2e-1126b0b0ec16",
+            "attempt_no": 1,
+            "protocol": "responses",
+            "error_code": "provider_unavailable",
+            "upstream_http_status": 503,
+            "provider_elapsed_ms": 104.96008303016424,
+            "kind": "upstream_http_error",
+            "attempt_count": 1
+          },
+          {
+            "request_id": "3818ecc3-ef0e-4d9d-ac2e-1126b0b0ec16",
+            "attempt_no": 2,
+            "protocol": "responses",
+            "error_code": "provider_unavailable",
+            "upstream_http_status": 503,
+            "provider_elapsed_ms": 123.7400829559192,
+            "kind": "upstream_http_error",
+            "attempt_count": 1
+          }
+        ]
+      }
+    },
+    {
+      "request_id": "877f07b1-5847-46ec-be94-ccaed2cb2c67",
+      "concurrency": 1,
+      "mode": "text",
+      "proof": {
+        "request_id": "877f07b1-5847-46ec-be94-ccaed2cb2c67",
+        "kind": "manual_upstream_body_wait",
+        "operation": "completion",
+        "http_status": 200,
+        "body_bytes": 0,
+        "provider_elapsed_ms": 29987.080416991375,
+        "source": "actual saved full Trace + HTTP read cancellation + SQL/billing + phase drain"
+      }
+    },
+    {
+      "request_id": "7a173345-86a1-4226-9687-5e5538d22fc6",
+      "concurrency": 1,
+      "mode": "streaming",
+      "proof": {
+        "request_id": "7a173345-86a1-4226-9687-5e5538d22fc6",
+        "attempt_no": 2,
+        "protocol": "chat_completions",
+        "error_code": "provider_unavailable",
+        "upstream_http_status": 503,
+        "provider_elapsed_ms": 303.06762497639284,
+        "kind": "upstream_http_error",
+        "attempt_count": 2,
+        "attempts": [
+          {
+            "request_id": "7a173345-86a1-4226-9687-5e5538d22fc6",
+            "attempt_no": 1,
+            "protocol": "chat_completions",
+            "error_code": "provider_unavailable",
+            "upstream_http_status": 503,
+            "provider_elapsed_ms": 182.50441702548414,
+            "kind": "upstream_http_error",
+            "attempt_count": 1
+          },
+          {
+            "request_id": "7a173345-86a1-4226-9687-5e5538d22fc6",
+            "attempt_no": 2,
+            "protocol": "chat_completions",
+            "error_code": "provider_unavailable",
+            "upstream_http_status": 503,
+            "provider_elapsed_ms": 303.06762497639284,
+            "kind": "upstream_http_error",
+            "attempt_count": 1
+          }
+        ]
+      }
+    },
+    {
+      "request_id": "34b81908-2452-4c32-91ce-756f5a57d957",
+      "concurrency": 1,
+      "mode": "text",
+      "proof": {
+        "request_id": "34b81908-2452-4c32-91ce-756f5a57d957",
+        "attempt_no": 2,
+        "protocol": "responses",
+        "error_code": "provider_unavailable",
+        "upstream_http_status": 503,
+        "provider_elapsed_ms": 140.9673749585636,
+        "kind": "upstream_http_error",
+        "attempt_count": 2,
+        "attempts": [
+          {
+            "request_id": "34b81908-2452-4c32-91ce-756f5a57d957",
+            "attempt_no": 1,
+            "protocol": "responses",
+            "error_code": "provider_unavailable",
+            "upstream_http_status": 503,
+            "provider_elapsed_ms": 214.54291697591543,
+            "kind": "upstream_http_error",
+            "attempt_count": 1
+          },
+          {
+            "request_id": "34b81908-2452-4c32-91ce-756f5a57d957",
+            "attempt_no": 2,
+            "protocol": "responses",
+            "error_code": "provider_unavailable",
+            "upstream_http_status": 503,
+            "provider_elapsed_ms": 140.9673749585636,
+            "kind": "upstream_http_error",
+            "attempt_count": 1
+          }
+        ]
+      }
+    },
+    {
+      "request_id": "aff41234-72aa-440a-98be-7624ad74a2fd",
+      "concurrency": 1,
+      "mode": "streaming",
+      "proof": {
+        "request_id": "aff41234-72aa-440a-98be-7624ad74a2fd",
+        "attempt_no": 2,
+        "protocol": "responses",
+        "error_code": "provider_unavailable",
+        "upstream_http_status": 503,
+        "provider_elapsed_ms": 111.05079198023304,
+        "kind": "upstream_http_error",
+        "attempt_count": 2,
+        "attempts": [
+          {
+            "request_id": "aff41234-72aa-440a-98be-7624ad74a2fd",
+            "attempt_no": 1,
+            "protocol": "responses",
+            "error_code": "provider_unavailable",
+            "upstream_http_status": 503,
+            "provider_elapsed_ms": 129.25429100869223,
+            "kind": "upstream_http_error",
+            "attempt_count": 1
+          },
+          {
+            "request_id": "aff41234-72aa-440a-98be-7624ad74a2fd",
+            "attempt_no": 2,
+            "protocol": "responses",
+            "error_code": "provider_unavailable",
+            "upstream_http_status": 503,
+            "provider_elapsed_ms": 111.05079198023304,
+            "kind": "upstream_http_error",
+            "attempt_count": 1
+          }
+        ]
+      }
+    },
+    {
+      "request_id": "9e6a54d4-a8ef-474a-aa73-3096decb5e1b",
+      "concurrency": 1,
+      "mode": "text",
+      "proof": {
+        "request_id": "9e6a54d4-a8ef-474a-aa73-3096decb5e1b",
+        "attempt_no": 2,
+        "protocol": "chat_completions",
+        "error_code": "provider_unavailable",
+        "upstream_http_status": 503,
+        "provider_elapsed_ms": 151.18145802989602,
+        "kind": "upstream_http_error",
+        "attempt_count": 2,
+        "attempts": [
+          {
+            "request_id": "9e6a54d4-a8ef-474a-aa73-3096decb5e1b",
+            "attempt_no": 1,
+            "protocol": "chat_completions",
+            "error_code": "provider_unavailable",
+            "upstream_http_status": 503,
+            "provider_elapsed_ms": 325.0111250090413,
+            "kind": "upstream_http_error",
+            "attempt_count": 1
+          },
+          {
+            "request_id": "9e6a54d4-a8ef-474a-aa73-3096decb5e1b",
+            "attempt_no": 2,
+            "protocol": "chat_completions",
+            "error_code": "provider_unavailable",
+            "upstream_http_status": 503,
+            "provider_elapsed_ms": 151.18145802989602,
+            "kind": "upstream_http_error",
+            "attempt_count": 1
+          }
+        ]
+      }
+    },
+    {
+      "request_id": "9309090b-0e1d-4e4e-8ae5-bf42113a9713",
+      "concurrency": 1,
+      "mode": "streaming",
+      "proof": {
+        "request_id": "9309090b-0e1d-4e4e-8ae5-bf42113a9713",
+        "attempt_no": 1,
+        "protocol": "chat_completions",
+        "error_code": "request_timeout",
+        "upstream_http_status": 200,
+        "provider_elapsed_ms": 29985.824708011933,
+        "kind": "upstream_stream_stall",
+        "raw_frame_count": 2,
+        "text_characters": 2,
+        "keepalive_observed": true
+      }
+    },
+    {
+      "request_id": "8b833402-9904-4c04-b4da-ceb26d1f867c",
+      "concurrency": 1,
+      "mode": "text",
+      "proof": {
+        "request_id": "8b833402-9904-4c04-b4da-ceb26d1f867c",
+        "attempt_no": 2,
+        "protocol": "responses",
+        "error_code": "provider_unavailable",
+        "upstream_http_status": 503,
+        "provider_elapsed_ms": 111.23737500747666,
+        "kind": "upstream_http_error",
+        "attempt_count": 2,
+        "attempts": [
+          {
+            "request_id": "8b833402-9904-4c04-b4da-ceb26d1f867c",
+            "attempt_no": 1,
+            "protocol": "responses",
+            "error_code": "provider_unavailable",
+            "upstream_http_status": 503,
+            "provider_elapsed_ms": 289.2285829875618,
+            "kind": "upstream_http_error",
+            "attempt_count": 1
+          },
+          {
+            "request_id": "8b833402-9904-4c04-b4da-ceb26d1f867c",
+            "attempt_no": 2,
+            "protocol": "responses",
+            "error_code": "provider_unavailable",
+            "upstream_http_status": 503,
+            "provider_elapsed_ms": 111.23737500747666,
+            "kind": "upstream_http_error",
+            "attempt_count": 1
+          }
+        ]
+      }
+    },
+    {
+      "request_id": "1344a5b1-fc83-491e-9efa-b892584565e2",
+      "concurrency": 1,
+      "mode": "streaming",
+      "proof": {
+        "request_id": "1344a5b1-fc83-491e-9efa-b892584565e2",
+        "attempt_no": 2,
+        "protocol": "responses",
+        "error_code": "provider_unavailable",
+        "upstream_http_status": 503,
+        "provider_elapsed_ms": 110.04200001480058,
+        "kind": "upstream_http_error",
+        "attempt_count": 2,
+        "attempts": [
+          {
+            "request_id": "1344a5b1-fc83-491e-9efa-b892584565e2",
+            "attempt_no": 1,
+            "protocol": "responses",
+            "error_code": "provider_unavailable",
+            "upstream_http_status": 503,
+            "provider_elapsed_ms": 149.54529097303748,
+            "kind": "upstream_http_error",
+            "attempt_count": 1
+          },
+          {
+            "request_id": "1344a5b1-fc83-491e-9efa-b892584565e2",
+            "attempt_no": 2,
+            "protocol": "responses",
+            "error_code": "provider_unavailable",
+            "upstream_http_status": 503,
+            "provider_elapsed_ms": 110.04200001480058,
+            "kind": "upstream_http_error",
+            "attempt_count": 1
+          }
+        ]
+      }
+    },
+    {
+      "request_id": "2dd13893-d5b5-47be-bbbb-451bf0499b42",
+      "concurrency": 1,
+      "mode": "text",
+      "proof": {
+        "request_id": "2dd13893-d5b5-47be-bbbb-451bf0499b42",
+        "attempt_no": 2,
+        "protocol": "chat_completions",
+        "error_code": "provider_unavailable",
+        "upstream_http_status": 503,
+        "provider_elapsed_ms": 101.83654201682657,
+        "kind": "upstream_http_error",
+        "attempt_count": 2,
+        "attempts": [
+          {
+            "request_id": "2dd13893-d5b5-47be-bbbb-451bf0499b42",
+            "attempt_no": 1,
+            "protocol": "chat_completions",
+            "error_code": "provider_unavailable",
+            "upstream_http_status": 503,
+            "provider_elapsed_ms": 262.68249994609505,
+            "kind": "upstream_http_error",
+            "attempt_count": 1
+          },
+          {
+            "request_id": "2dd13893-d5b5-47be-bbbb-451bf0499b42",
+            "attempt_no": 2,
+            "protocol": "chat_completions",
+            "error_code": "provider_unavailable",
+            "upstream_http_status": 503,
+            "provider_elapsed_ms": 101.83654201682657,
+            "kind": "upstream_http_error",
+            "attempt_count": 1
+          }
+        ]
+      }
+    },
+    {
+      "request_id": "1371a30a-1186-4472-9195-0785767d0de1",
+      "concurrency": 1,
+      "mode": "streaming",
+      "proof": {
+        "request_id": "1371a30a-1186-4472-9195-0785767d0de1",
+        "attempt_no": 2,
+        "protocol": "chat_completions",
+        "error_code": "provider_unavailable",
+        "upstream_http_status": 503,
+        "provider_elapsed_ms": 248.31650004489347,
+        "kind": "upstream_http_error",
+        "attempt_count": 2,
+        "attempts": [
+          {
+            "request_id": "1371a30a-1186-4472-9195-0785767d0de1",
+            "attempt_no": 1,
+            "protocol": "chat_completions",
+            "error_code": "provider_unavailable",
+            "upstream_http_status": 503,
+            "provider_elapsed_ms": 130.3200420225039,
+            "kind": "upstream_http_error",
+            "attempt_count": 1
+          },
+          {
+            "request_id": "1371a30a-1186-4472-9195-0785767d0de1",
+            "attempt_no": 2,
+            "protocol": "chat_completions",
+            "error_code": "provider_unavailable",
+            "upstream_http_status": 503,
+            "provider_elapsed_ms": 248.31650004489347,
+            "kind": "upstream_http_error",
+            "attempt_count": 1
+          }
+        ]
+      }
+    },
+    {
+      "request_id": "4129ffe6-3c87-4222-9e36-e4dced6d0315",
+      "concurrency": 1,
+      "mode": "text",
+      "proof": {
+        "request_id": "4129ffe6-3c87-4222-9e36-e4dced6d0315",
+        "attempt_no": 2,
+        "protocol": "responses",
+        "error_code": "provider_unavailable",
+        "upstream_http_status": 503,
+        "provider_elapsed_ms": 109.58833299810067,
+        "kind": "upstream_http_error",
+        "attempt_count": 2,
+        "attempts": [
+          {
+            "request_id": "4129ffe6-3c87-4222-9e36-e4dced6d0315",
+            "attempt_no": 1,
+            "protocol": "responses",
+            "error_code": "provider_unavailable",
+            "upstream_http_status": 503,
+            "provider_elapsed_ms": 108.69583301246166,
+            "kind": "upstream_http_error",
+            "attempt_count": 1
+          },
+          {
+            "request_id": "4129ffe6-3c87-4222-9e36-e4dced6d0315",
+            "attempt_no": 2,
+            "protocol": "responses",
+            "error_code": "provider_unavailable",
+            "upstream_http_status": 503,
+            "provider_elapsed_ms": 109.58833299810067,
+            "kind": "upstream_http_error",
+            "attempt_count": 1
+          }
+        ]
+      }
+    },
+    {
+      "request_id": "09f4bb28-d168-4594-b921-501dc0f7343d",
+      "concurrency": 1,
+      "mode": "streaming",
+      "proof": {
+        "request_id": "09f4bb28-d168-4594-b921-501dc0f7343d",
+        "attempt_no": 2,
+        "protocol": "responses",
+        "error_code": "provider_unavailable",
+        "upstream_http_status": 503,
+        "provider_elapsed_ms": 102.94745804276317,
+        "kind": "upstream_http_error",
+        "attempt_count": 2,
+        "attempts": [
+          {
+            "request_id": "09f4bb28-d168-4594-b921-501dc0f7343d",
+            "attempt_no": 1,
+            "protocol": "responses",
+            "error_code": "provider_unavailable",
+            "upstream_http_status": 503,
+            "provider_elapsed_ms": 132.4290829943493,
+            "kind": "upstream_http_error",
+            "attempt_count": 1
+          },
+          {
+            "request_id": "09f4bb28-d168-4594-b921-501dc0f7343d",
+            "attempt_no": 2,
+            "protocol": "responses",
+            "error_code": "provider_unavailable",
+            "upstream_http_status": 503,
+            "provider_elapsed_ms": 102.94745804276317,
+            "kind": "upstream_http_error",
+            "attempt_count": 1
+          }
+        ]
+      }
+    },
+    {
+      "request_id": "41d4055e-3974-43e2-8778-c1ab32ba263a",
+      "concurrency": 1,
+      "mode": "text",
+      "proof": {
+        "request_id": "41d4055e-3974-43e2-8778-c1ab32ba263a",
+        "kind": "manual_http_retry_then_body_stall",
+        "source": "actual HTTP/SSE and recorded independent SQL/event/billing summary",
+        "limitation": null,
+        "raw_frame_count": 0,
+        "keepalive_observed": false
+      }
+    },
+    {
+      "request_id": "22e43c82-e66f-4069-ac59-69983c936ca3",
+      "concurrency": 1,
+      "mode": "streaming",
+      "proof": {
+        "request_id": "22e43c82-e66f-4069-ac59-69983c936ca3",
+        "attempt_no": 1,
+        "protocol": "chat_completions",
+        "error_code": "request_timeout",
+        "upstream_http_status": 200,
+        "provider_elapsed_ms": 29986.17279197788,
+        "kind": "upstream_stream_stall",
+        "raw_frame_count": 2,
+        "text_characters": 2,
+        "keepalive_observed": true
+      }
+    },
+    {
+      "request_id": "6de96c27-6520-4604-8768-063bea9045dc",
+      "concurrency": 1,
+      "mode": "text",
+      "proof": {
+        "request_id": "6de96c27-6520-4604-8768-063bea9045dc",
+        "attempt_no": 2,
+        "protocol": "responses",
+        "error_code": "provider_unavailable",
+        "upstream_http_status": 503,
+        "provider_elapsed_ms": 95.29366699280217,
+        "kind": "upstream_http_error",
+        "attempt_count": 2,
+        "attempts": [
+          {
+            "request_id": "6de96c27-6520-4604-8768-063bea9045dc",
+            "attempt_no": 1,
+            "protocol": "responses",
+            "error_code": "provider_unavailable",
+            "upstream_http_status": 503,
+            "provider_elapsed_ms": 196.55333302216604,
+            "kind": "upstream_http_error",
+            "attempt_count": 1
+          },
+          {
+            "request_id": "6de96c27-6520-4604-8768-063bea9045dc",
+            "attempt_no": 2,
+            "protocol": "responses",
+            "error_code": "provider_unavailable",
+            "upstream_http_status": 503,
+            "provider_elapsed_ms": 95.29366699280217,
+            "kind": "upstream_http_error",
+            "attempt_count": 1
+          }
+        ]
+      }
+    },
+    {
+      "request_id": "c343b7d5-5b61-4d53-b969-16da5f548fd4",
+      "concurrency": 1,
+      "mode": "streaming",
+      "proof": {
+        "request_id": "c343b7d5-5b61-4d53-b969-16da5f548fd4",
+        "attempt_no": 2,
+        "protocol": "responses",
+        "error_code": "provider_unavailable",
+        "upstream_http_status": 503,
+        "provider_elapsed_ms": 103.62799995345995,
+        "kind": "upstream_http_error",
+        "attempt_count": 2,
+        "attempts": [
+          {
+            "request_id": "c343b7d5-5b61-4d53-b969-16da5f548fd4",
+            "attempt_no": 1,
+            "protocol": "responses",
+            "error_code": "provider_unavailable",
+            "upstream_http_status": 503,
+            "provider_elapsed_ms": 146.61850000265986,
+            "kind": "upstream_http_error",
+            "attempt_count": 1
+          },
+          {
+            "request_id": "c343b7d5-5b61-4d53-b969-16da5f548fd4",
+            "attempt_no": 2,
+            "protocol": "responses",
+            "error_code": "provider_unavailable",
+            "upstream_http_status": 503,
+            "provider_elapsed_ms": 103.62799995345995,
+            "kind": "upstream_http_error",
+            "attempt_count": 1
+          }
+        ]
+      }
+    },
+    {
+      "request_id": "f7d48df1-ac36-423b-a758-f0463232e06e",
+      "concurrency": 1,
+      "mode": "text",
+      "proof": {
+        "request_id": "f7d48df1-ac36-423b-a758-f0463232e06e",
+        "attempt_no": 2,
+        "protocol": "chat_completions",
+        "error_code": "provider_unavailable",
+        "upstream_http_status": 503,
+        "provider_elapsed_ms": 116.860167006962,
+        "kind": "upstream_http_error",
+        "attempt_count": 2,
+        "attempts": [
+          {
+            "request_id": "f7d48df1-ac36-423b-a758-f0463232e06e",
+            "attempt_no": 1,
+            "protocol": "chat_completions",
+            "error_code": "provider_unavailable",
+            "upstream_http_status": 503,
+            "provider_elapsed_ms": 285.07420798996463,
+            "kind": "upstream_http_error",
+            "attempt_count": 1
+          },
+          {
+            "request_id": "f7d48df1-ac36-423b-a758-f0463232e06e",
+            "attempt_no": 2,
+            "protocol": "chat_completions",
+            "error_code": "provider_unavailable",
+            "upstream_http_status": 503,
+            "provider_elapsed_ms": 116.860167006962,
+            "kind": "upstream_http_error",
+            "attempt_count": 1
+          }
+        ]
+      }
+    },
+    {
+      "request_id": "c5465d4c-74a2-4290-9cf9-8a6a24c550dd",
+      "concurrency": 1,
+      "mode": "streaming",
+      "proof": {
+        "request_id": "c5465d4c-74a2-4290-9cf9-8a6a24c550dd",
+        "kind": "manual_http_retry_then_stream_stall",
+        "source": "actual HTTP/SSE and recorded independent SQL/event/billing summary",
+        "limitation": null,
+        "raw_frame_count": 2,
+        "keepalive_observed": true
+      }
+    },
+    {
+      "request_id": "8a295f09-a5d8-4db8-9faa-cf78f3e55593",
+      "concurrency": 1,
+      "mode": "text",
+      "proof": {
+        "request_id": "8a295f09-a5d8-4db8-9faa-cf78f3e55593",
+        "attempt_no": 2,
+        "protocol": "responses",
+        "error_code": "provider_unavailable",
+        "upstream_http_status": 503,
+        "provider_elapsed_ms": 141.45795803051442,
+        "kind": "upstream_http_error",
+        "attempt_count": 2,
+        "attempts": [
+          {
+            "request_id": "8a295f09-a5d8-4db8-9faa-cf78f3e55593",
+            "attempt_no": 1,
+            "protocol": "responses",
+            "error_code": "provider_unavailable",
+            "upstream_http_status": 503,
+            "provider_elapsed_ms": 180.29716599266976,
+            "kind": "upstream_http_error",
+            "attempt_count": 1
+          },
+          {
+            "request_id": "8a295f09-a5d8-4db8-9faa-cf78f3e55593",
+            "attempt_no": 2,
+            "protocol": "responses",
+            "error_code": "provider_unavailable",
+            "upstream_http_status": 503,
+            "provider_elapsed_ms": 141.45795803051442,
+            "kind": "upstream_http_error",
+            "attempt_count": 1
+          }
+        ]
+      }
+    },
+    {
+      "request_id": "cd09480b-f00d-4639-a4f6-54c57b637bd7",
+      "concurrency": 1,
+      "mode": "text",
+      "proof": {
+        "request_id": "cd09480b-f00d-4639-a4f6-54c57b637bd7",
+        "kind": "manual_upstream_body_wait",
+        "operation": "completion",
+        "http_status": 200,
+        "body_bytes": 0,
+        "provider_elapsed_ms": 29985.06987496512,
+        "source": "actual saved full Trace + HTTP read cancellation + SQL/billing + phase drain"
+      }
+    },
+    {
+      "request_id": "baaf474b-c3ca-47b4-a541-0c8366e6033c",
+      "concurrency": 1,
+      "mode": "streaming",
+      "proof": {
+        "request_id": "baaf474b-c3ca-47b4-a541-0c8366e6033c",
+        "attempt_no": 2,
+        "protocol": "chat_completions",
+        "error_code": "provider_unavailable",
+        "upstream_http_status": 503,
+        "provider_elapsed_ms": 182.25300003541633,
+        "kind": "upstream_http_error",
+        "attempt_count": 2,
+        "attempts": [
+          {
+            "request_id": "baaf474b-c3ca-47b4-a541-0c8366e6033c",
+            "attempt_no": 1,
+            "protocol": "chat_completions",
+            "error_code": "provider_unavailable",
+            "upstream_http_status": 503,
+            "provider_elapsed_ms": 190.00366696855053,
+            "kind": "upstream_http_error",
+            "attempt_count": 1
+          },
+          {
+            "request_id": "baaf474b-c3ca-47b4-a541-0c8366e6033c",
+            "attempt_no": 2,
+            "protocol": "chat_completions",
+            "error_code": "provider_unavailable",
+            "upstream_http_status": 503,
+            "provider_elapsed_ms": 182.25300003541633,
+            "kind": "upstream_http_error",
+            "attempt_count": 1
+          }
+        ]
+      }
+    },
+    {
+      "request_id": "964ad00d-7eed-4304-9299-59c7ea87270b",
+      "concurrency": 1,
+      "mode": "text",
+      "proof": {
+        "request_id": "964ad00d-7eed-4304-9299-59c7ea87270b",
+        "attempt_no": 2,
+        "protocol": "responses",
+        "error_code": "provider_unavailable",
+        "upstream_http_status": 503,
+        "provider_elapsed_ms": 143.31362501252443,
+        "kind": "upstream_http_error",
+        "attempt_count": 2,
+        "attempts": [
+          {
+            "request_id": "964ad00d-7eed-4304-9299-59c7ea87270b",
+            "attempt_no": 1,
+            "protocol": "responses",
+            "error_code": "provider_unavailable",
+            "upstream_http_status": 503,
+            "provider_elapsed_ms": 169.0954589867033,
+            "kind": "upstream_http_error",
+            "attempt_count": 1
+          },
+          {
+            "request_id": "964ad00d-7eed-4304-9299-59c7ea87270b",
+            "attempt_no": 2,
+            "protocol": "responses",
+            "error_code": "provider_unavailable",
+            "upstream_http_status": 503,
+            "provider_elapsed_ms": 143.31362501252443,
+            "kind": "upstream_http_error",
+            "attempt_count": 1
+          }
+        ]
+      }
+    },
+    {
+      "request_id": "0b0cb9e0-6eb6-4bbb-a4e7-3b02fba38502",
+      "concurrency": 1,
+      "mode": "streaming",
+      "proof": {
+        "request_id": "0b0cb9e0-6eb6-4bbb-a4e7-3b02fba38502",
+        "attempt_no": 2,
+        "protocol": "responses",
+        "error_code": "provider_unavailable",
+        "upstream_http_status": 503,
+        "provider_elapsed_ms": 100.41012498550117,
+        "kind": "upstream_http_error",
+        "attempt_count": 2,
+        "attempts": [
+          {
+            "request_id": "0b0cb9e0-6eb6-4bbb-a4e7-3b02fba38502",
+            "attempt_no": 1,
+            "protocol": "responses",
+            "error_code": "provider_unavailable",
+            "upstream_http_status": 503,
+            "provider_elapsed_ms": 98.57329196529463,
+            "kind": "upstream_http_error",
+            "attempt_count": 1
+          },
+          {
+            "request_id": "0b0cb9e0-6eb6-4bbb-a4e7-3b02fba38502",
+            "attempt_no": 2,
+            "protocol": "responses",
+            "error_code": "provider_unavailable",
+            "upstream_http_status": 503,
+            "provider_elapsed_ms": 100.41012498550117,
+            "kind": "upstream_http_error",
+            "attempt_count": 1
+          }
+        ]
+      }
+    },
+    {
+      "request_id": "b18a3970-7d6c-4368-8f12-157bb4d835bb",
+      "concurrency": 1,
+      "mode": "text",
+      "proof": {
+        "request_id": "b18a3970-7d6c-4368-8f12-157bb4d835bb",
+        "kind": "manual_upstream_body_wait",
+        "operation": "completion",
+        "http_status": 200,
+        "body_bytes": 0,
+        "provider_elapsed_ms": 29991.576207976323,
+        "source": "actual saved full Trace + HTTP read cancellation + SQL/billing + phase drain"
+      }
+    },
+    {
+      "request_id": "1da3083d-af4e-471e-9a7f-10f10a88ecb2",
+      "concurrency": 1,
+      "mode": "streaming",
+      "proof": {
+        "request_id": "1da3083d-af4e-471e-9a7f-10f10a88ecb2",
+        "kind": "manual_http_retry_then_stream_stall",
+        "source": "actual HTTP/SSE and recorded independent SQL/event/billing summary",
+        "limitation": "full per-field Trace absent; no Trace was reconstructed",
+        "raw_frame_count": 2,
+        "keepalive_observed": true
+      }
+    }
+  ],
+  "limitations": [
+    "One final mixed-recovery stream has SQL verification summary but no full per-field Trace. Its source distinction is explicit.",
+    "The frozen live gate intentionally did not implement ordinary body waits/mixed-recovery stalls; original capacity pytest remains failed.",
+    "600 seconds actually ran at concurrency 1 chosen using evidence available then; this audit does not relabel it as a 20-concurrency sustained run."
+  ]
+}

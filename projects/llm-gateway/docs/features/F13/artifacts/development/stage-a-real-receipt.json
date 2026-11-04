@@ -1,0 +1,21 @@
+{
+  "command": [
+    "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/.venv/bin/python",
+    "-W",
+    "error",
+    "-m",
+    "pytest",
+    "tests/live/test_f13_models.py",
+    "--run-live",
+    "-ra",
+    "-q",
+    "-o",
+    "junit_family=xunit1",
+    "--junitxml=/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llmgw-f13-work-eifzl4on/stage-a-real.xml",
+    "--basetemp=/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llmgw-f13-work-eifzl4on/pytest-stage-a-real"
+  ],
+  "started_at": "2026-11-03T15:07:09.675832+00:00",
+  "ended_at": "2026-11-03T15:08:15.457376+00:00",
+  "elapsed_seconds": 65.78130591701483,
+  "exit_code": 1
+}

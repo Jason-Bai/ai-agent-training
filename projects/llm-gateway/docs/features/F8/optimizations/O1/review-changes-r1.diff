@@ -1,0 +1,340 @@
+--- baseline/src/providers/mock.py
++++ current/src/providers/mock.py
+@@ -1,9 +1,13 @@
+ import asyncio
+ from copy import deepcopy
+ 
+-from contracts import Message
++from contracts import Message, Usage
+ from providers.base import ProviderResult
+ from services.models import ModelConfig
++
++
++# Synthetic report for the default successful Mock response.
++_DEFAULT_USAGE = Usage(input_tokens=10, output_tokens=1, total_tokens=11)
+ 
+ 
+ class MockProvider:
+@@ -34,7 +38,7 @@
+             await asyncio.sleep(self.delay)
+         if self.error is not None:
+             raise self.error
+-        return self.result if self.result is not None else ProviderResult(text=self.text)
++        return self.result if self.result is not None else ProviderResult(text=self.text, usage=_DEFAULT_USAGE)
+ 
+     async def stream(self, model, messages, *, max_output_tokens, timeout_seconds):
+         from providers.base import ProviderStreamEvent
+@@ -56,7 +60,10 @@
+                 raise self.error
+             events = self.stream_events
+             if events is None:
+-                events = [ProviderStreamEvent(delta=self.text), ProviderStreamEvent(status='completed', upstream_terminal_received=True)]
++                events = [
++                    ProviderStreamEvent(delta=self.text),
++                    ProviderStreamEvent(status='completed', upstream_terminal_received=True, usage=_DEFAULT_USAGE),
++                ]
+             for item in events:
+                 self.stream_next_calls += 1
+                 if isinstance(item, Exception):
+--- baseline/tests/f3_cases.py
++++ current/tests/f3_cases.py
+@@ -6,6 +6,8 @@
+ from services.token_budget import TokenBudget
+ from settings import Settings
+ 
++
++MOCK_USAGE = {'input_tokens': 10, 'output_tokens': 1, 'total_tokens': 11}
+ 
+ MODEL_VALUES = dict(
+     provider="mock-main", model_id="deepseek-flash", supports_streaming=True, thinking_mode="disabled", token_counter="deepseek_v41", structured_output_mode="none",
+--- baseline/tests/integration/test_f2_prompts.py
++++ current/tests/integration/test_f2_prompts.py
+@@ -1,7 +1,7 @@
+-from f3_cases import primary_provider
++from f3_cases import MOCK_USAGE, primary_provider
+ from conftest import changed
+ import asyncio
+-from dataclasses import asdict
++from fastapi.encoders import jsonable_encoder
+ import json
+ 
+ import httpx
+@@ -64,7 +64,7 @@
+ def test_full_context_http_goldens(client, app, provider, payload, version):
+     response = client.post("/v1/llm", json=context_payload(payload, version=version))
+     result = assert_envelope(response, 200, "ok")
+-    assert result["data"] == {"text": "MOCK_REPLY", "usage": None}
++    assert result["data"] == {"text": "MOCK_REPLY", "usage": MOCK_USAGE}
+     assert len(provider.calls) == 1
+     assert provider.calls[0][0] == app.state.model_registry.get("general-primary")
+     assert [m.model_dump() for m in provider.calls[0][1]] == expected_context_messages(version)
+@@ -294,7 +294,8 @@
+ def test_trace_does_not_retain_rendered_data(client, app, provider, payload):
+     response = client.post("/v1/llm", json=context_payload(payload, "PRIVATE_INPUT_MARKER", "1.1.0"))
+     assert_envelope(response, 200, "ok")
+-    serialized = json.dumps([asdict(t) for t in app.state.traces.requests.values()] + [asdict(t) for t in app.state.traces.attempts])
++    records = [*app.state.traces.requests.values(), *app.state.traces.attempts]
++    serialized = json.dumps(jsonable_encoder(records), ensure_ascii=False)
+     for text in ("PRIVATE_INPUT_MARKER", "EXAMPLE-001", "EXAMPLE-002", "MOCK_REPLY", "你是基于所提供资料"):
+         assert text not in serialized
+     assert len(provider.calls) == 1
+--- baseline/tests/integration/test_f3_gateway.py
++++ current/tests/integration/test_f3_gateway.py
+@@ -6,7 +6,7 @@
+ 
+ from contracts import Usage
+ from errors import ProviderCallError
+-from f3_cases import CountingFixture, make_app, primary_provider
++from f3_cases import MOCK_USAGE, CountingFixture, make_app, primary_provider
+ from providers.base import ProviderResult
+ 
+ 
+@@ -34,7 +34,7 @@
+             "messages": [{"role": "user", "content": "Explain TTFT"}],
+         })
+     assert response.status_code == 200
+-    assert response.json()["data"] == {"text": "MOCK_REPLY", "usage": None}
++    assert response.json()["data"] == {"text": "MOCK_REPLY", "usage": MOCK_USAGE}
+ 
+ 
+ def test_f3_probe_has_its_own_trace_operation():
+@@ -84,7 +84,8 @@
+     attempt = app.state.traces.attempts[0]
+     assert (attempt.provider, attempt.adapter, attempt.configured_model) == (selected, "mock", "deepseek-flash")
+     assert attempt.latency_ms >= 0 and attempt.finish_reason == "stop"
+-    assert attempt.actual_model is None and attempt.usage is None
++    assert attempt.actual_model is None
++    assert attempt.usage.model_dump() == MOCK_USAGE
+ 
+ 
+ @pytest.mark.parametrize("field", ["max_output_tokens", "timeout_seconds"])
+--- baseline/tests/integration/test_f4_gateway.py
++++ current/tests/integration/test_f4_gateway.py
+@@ -8,6 +8,7 @@
+ import pytest
+ 
+ from contracts import Usage
++from f3_cases import MOCK_USAGE
+ from f4_cases import make_app, payload, PARSED, SCHEMA, TEXT
+ from providers.base import ProviderResult
+ from providers.mock import MockProvider
+@@ -34,7 +35,7 @@
+     original=deepcopy(body)
+     response,trace,attempts,provider=send(body)
+     assert response.status_code==200,response.json()
+-    assert response.json()['data']=={'text':TEXT,'parsed':PARSED,'usage':None}
++    assert response.json()['data']=={'text':TEXT,'parsed':PARSED,'usage':MOCK_USAGE}
+     assert trace.status==attempts[0].status=='completed'
+     assert trace.attempts==1 and trace.structured_output_mode==mode
+     assert trace.schema_fingerprint and trace.prompt_fingerprint==fingerprint_messages(provider.calls[0][1])
+@@ -50,7 +51,7 @@
+     body=payload(model);body.pop('response_schema')
+     response,trace,attempts,provider=send(body,MockProvider(text='普通回答'))
+     assert response.status_code==200
+-    assert response.json()['data']=={'text':'普通回答','usage':None}
++    assert response.json()['data']=={'text':'普通回答','usage':MOCK_USAGE}
+     assert trace.schema_fingerprint is None and trace.structured_output_mode=='none'
+     assert 'response_schema' not in provider.call_options[0]
+ 
+--- baseline/tests/integration/test_f4o1_boundaries.py
++++ current/tests/integration/test_f4o1_boundaries.py
+@@ -5,7 +5,7 @@
+ from fastapi.testclient import TestClient
+ 
+ from contracts import PromptSelection, UserMessage
+-from f3_cases import CountingFixture, make_app, primary_provider
++from f3_cases import MOCK_USAGE, CountingFixture, make_app, primary_provider
+ from f4_cases import make_app as make_structured_app
+ from providers.mock import MockProvider
+ from services.prompts import build_messages, fingerprint_messages
+@@ -28,7 +28,7 @@
+     assert trace.status == ('completed' if expected_calls else 'failed')
+     assert trace.error_code == (None if expected_calls else expected_code)
+     if expected_calls:
+-        expected = {'text': '{}', 'parsed': {}, 'usage': None} if structured else {'text': 'MOCK_REPLY', 'usage': None}
++        expected = {'text': '{}', 'parsed': {}, 'usage': MOCK_USAGE} if structured else {'text': 'MOCK_REPLY', 'usage': MOCK_USAGE}
+         assert result['data'] == expected
+         assert attempts[0].status == 'completed'
+         assert trace.prompt_fingerprint == fingerprint_messages(provider.calls[0][1])
+--- baseline/tests/integration/test_f5_gateway.py
++++ current/tests/integration/test_f5_gateway.py
+@@ -6,7 +6,7 @@
+ import pytest
+ from fastapi.testclient import TestClient
+ 
+-from f3_cases import make_app, primary_provider
++from f3_cases import MOCK_USAGE, make_app, primary_provider
+ 
+ 
+ def request_body(**changes):
+@@ -42,7 +42,7 @@
+     events = parse_events(response.text)
+     assert [name for name, _ in events] == ['response.delta', 'response.completed']
+     assert events[0][1]['delta'] == 'MOCK_REPLY'
+-    assert events[-1][1]['usage'] is None
++    assert events[-1][1]['usage'] == MOCK_USAGE
+     request_id = response.headers['x-request-id']
+     assert all(data['request_id'] == request_id for _, data in events)
+     assert app.state.traces.requests[request_id].status == 'completed'
+--- baseline/tests/integration/test_f8o1_mock_usage.py
++++ current/tests/integration/test_f8o1_mock_usage.py
+@@ -0,0 +1,63 @@
++"""Compare Mock reports at the HTTP, PostgreSQL and diagnostic boundaries."""
++import pytest
++
++from contracts import Usage
++from errors import ProviderCallError
++from f3_cases import MOCK_USAGE
++from f6_cases import case, frames, observe, server
++from f7_cases import application, body, registry
++from providers.base import ProviderResult, ProviderStreamEvent
++from providers.mock import MockProvider
++from services.models import RecoveryPolicy
++
++
++CUSTOM = {'input_tokens': 3, 'output_tokens': 2, 'total_tokens': 5}
++
++
++@pytest.mark.parametrize('mode', ['completion', 'streaming'])
++@pytest.mark.parametrize('expected', [MOCK_USAGE, CUSTOM, None], ids=['default', 'custom', 'missing'])
++async def test_mock_report_round_trip(server, case, mode, expected):
++    name, config = case
++    mock = MockProvider()
++    if expected != MOCK_USAGE:
++        usage = Usage(**expected) if expected else None
++        mock = MockProvider(result=ProviderResult(text='ok', usage=usage), stream_events=[
++            ProviderStreamEvent(delta='ok'),
++            ProviderStreamEvent(status='completed', upstream_terminal_received=True, usage=usage),
++        ])
++    async with application(config, mock) as (_, client):
++        if mode == 'completion':
++            response = await client.post('/v1/llm', json=body())
++            assert response.status_code == 200
++            rid = response.headers['x-request-id']
++            assert response.json()['data']['usage'] == expected
++        else:
++            created = await client.post('/v1/llm/stream', json=body())
++            rid = created.json()['data']['request_id']
++            url = f'/v1/llm/stream/{rid}/events'
++            delta, terminal = frames((await client.get(url)).text)
++            assert delta[1] == 'response.delta' and 'usage' not in delta[2]
++            assert terminal[1:] == ('response.completed', {'request_id': rid, 'usage': expected})
++            assert frames((await client.get(url, params={'after_seq': delta[0]})).text) == [terminal]
++            assert len(mock.stream_calls) == 1
++        detail = (await client.get(f'/v1/traces/{rid}')).json()['data']
++        row, attempts, _ = observe(server, name, rid)
++        attempt, = attempts
++        assert row['input_token_count'] == detail['input_token_count'] != MOCK_USAGE['input_tokens']
++        for key in MOCK_USAGE:
++            assert attempt[key] == (expected[key] if expected else None)
++        assert detail['attempts'][0]['usage'] == expected
++        assert detail['usage'] == {'known_subtotal': expected, 'unknown_attempts': [] if expected else [1]}
++
++
++async def test_unknown_failure_and_default_mock_fallback(server, case):
++    name, config = case
++    models = registry(policy=RecoveryPolicy(max_attempts=2, max_attempts_per_model=1))
++    primary = MockProvider(error=ProviderCallError(code='provider_timeout'))
++    async with application(config, primary, MockProvider(), models=models) as (_, client):
++        reply = await client.post('/v1/llm', json=body())
++        assert reply.status_code == 200 and reply.json()['data']['usage'] is None
++        rid = reply.headers['x-request-id']
++        trace = (await client.get(f'/v1/traces/{rid}')).json()['data']
++        assert trace['usage'] == {'known_subtotal': MOCK_USAGE, 'unknown_attempts': [1]}
++        assert [a['total_tokens'] for a in observe(server, name, rid)[1]] == [None, 11]
+--- baseline/tests/integration/test_http.py
++++ current/tests/integration/test_http.py
+@@ -6,6 +6,7 @@
+ import pytest
+ from fastapi.testclient import TestClient
+ 
++from f3_cases import MOCK_USAGE
+ from conftest import changed
+ from main import create_app
+ from providers.mock import MockProvider
+@@ -47,7 +48,7 @@
+     response = client.post("/v1/llm", json=payload)
+     body = assert_envelope(response, 200, "ok")
+     assert body["data"] == {
+-        "text": "MOCK_REPLY", "usage": None,
++        "text": "MOCK_REPLY", "usage": MOCK_USAGE,
+     }
+     assert len(provider.calls) == 1
+     model, messages = provider.calls[0]
+@@ -240,12 +241,13 @@
+ 
+ 
+ def test_trace_does_not_retain_prompt_or_output(client, app, payload):
+-    from dataclasses import asdict
++    from fastapi.encoders import jsonable_encoder
+     from services.prompts import SYSTEM_PROMPT
+ 
+     payload["messages"][0]["content"] = "PRIVATE_INPUT_MARKER"
+     response = client.post("/v1/llm", json=payload)
+     assert_envelope(response, 200, "ok")
+-    serialized = json.dumps([asdict(r) for r in app.state.traces.requests.values()] + [asdict(a) for a in app.state.traces.attempts])
++    records = [*app.state.traces.requests.values(), *app.state.traces.attempts]
++    serialized = json.dumps(jsonable_encoder(records), ensure_ascii=False)
+     for private in ["PRIVATE_INPUT_MARKER", "MOCK_REPLY", SYSTEM_PROMPT, "PRIVATE_ERROR_MARKER"]:
+         assert private not in serialized
+--- baseline/tests/smoke/test_http_server.py
++++ current/tests/smoke/test_http_server.py
+@@ -102,7 +102,7 @@
+     bootstrap = runtime_dir / 'src/f4_acceptance.py'
+     bootstrap.write_text('''
+ from contextlib import asynccontextmanager
+-from dataclasses import asdict
++from fastapi.encoders import jsonable_encoder
+ from pathlib import Path
+ import json
+ from main import create_app as build_app
+@@ -118,10 +118,10 @@
+     async def lifespan(app):
+         async with original(app):
+             yield
+-            data={'requests':{k:asdict(v) for k,v in app.state.traces.requests.items()},
+-                  'attempts':[asdict(v) for v in app.state.traces.attempts],
++            data={'requests':app.state.traces.requests,
++                  'attempts':app.state.traces.attempts,
+                   'calls':{k:len(v.calls) for k,v in providers.items()}}
+-            (Path(__file__).parents[1]/'trace.json').write_text(json.dumps(data))
++            (Path(__file__).parents[1]/'trace.json').write_text(json.dumps(jsonable_encoder(data)))
+     app.router.lifespan_context=lifespan
+     return app
+ ''')
+--- baseline/tests/unit/test_app_factory.py
++++ current/tests/unit/test_app_factory.py
+@@ -1,4 +1,4 @@
+-from f3_cases import primary_provider
++from f3_cases import MOCK_USAGE, primary_provider
+ import os
+ from pathlib import Path
+ import subprocess
+@@ -176,7 +176,7 @@
+     assert response.status_code == 200
+     assert set(response.json()) == {"success", "code", "data", "message"}
+     assert response.json()["data"] == {
+-        "text": "MOCK_REPLY", "usage": None,
++        "text": "MOCK_REPLY", "usage": MOCK_USAGE,
+     }
+     assert len(primary_provider(app).calls) == 1
+     assert primary_provider(app).calls[0][0] == app.state.model_registry.get("general-primary")
+--- baseline/tests/unit/test_core.py
++++ current/tests/unit/test_core.py
+@@ -4,6 +4,7 @@
+ import pytest
+ from pydantic import ValidationError
+ 
++from f3_cases import MOCK_USAGE
+ from contracts import LLMRequest
+ 
+ 
+@@ -48,7 +49,7 @@
+     assert result.text == "chosen answer"
+     assert trace.requested_model == "general-primary"
+     assert store.attempts[0].actual_model is None
+-    assert result.usage is None
++    assert result.usage.model_dump() == MOCK_USAGE
+     assert trace.attempts == 1
+     assert len(store.attempts) == 1
+     assert store.attempts[0].status == "completed"

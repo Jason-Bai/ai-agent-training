@@ -1,0 +1,141 @@
+FFFF                                                                     [100%]
+=================================== FAILURES ===================================
+_ test_finality_not_business_content_or_cache_controls_known_usage[False-False] _
+
+case = ('case_d6c1ac098b294bccba7bbe20d59ed739', PosixPath('/private/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/pytest-of-baiyu/pytest-374/test_finality_not_business_con0/config'))
+primary_wire = namespace(calls=[{'path': '/chat/completions', 'headers': {'host': '127.0.0.1:59550', 'accept': '*/*', 'accept-encodin...choices": [{"index": 0, "delta": {"content": []}, "finish_reason": null}]}\n\n', delay=0, url='http://127.0.0.1:59550')
+backup_wire = namespace(calls=[], status=200, body={'id': 'fake', 'object': 'chat.completion', 'created': 0, 'model': 'deepseek-flas...{'prompt_tokens': 120, 'completion_tokens': 30, 'total_tokens': 150}}, raw=None, delay=0, url='http://127.0.0.1:59551')
+terminal = False, cache = False
+
+    @pytest.mark.parametrize('terminal',[False,True])
+    @pytest.mark.parametrize('cache',[False,True])
+    async def test_finality_not_business_content_or_cache_controls_known_usage(case,primary_wire,backup_wire,
+                                                                            terminal,cache):
+        usage={'prompt_tokens':10,'completion_tokens':1,'total_tokens':11}
+        if cache:
+            usage.update(prompt_cache_hit_tokens=7,prompt_cache_miss_tokens=3)
+        chunk={'object':'chat.completion.chunk','model':'deepseek-flash','usage':usage,
+               'choices':[{'index':0,'delta':{'content':[]},'finish_reason':'stop' if terminal else None}]}
+        primary_wire.raw=('data: '+json.dumps(chunk)+'\n\n').replace('\\n','\n').encode()
+        async with account(case[1],primary_wire,backup_wire,('20','30','50')) as (_,client):
+            rid=(await client.post('/v1/llm/stream',json=body(max_output_tokens=100))).headers['x-request-id']
+            reply=await client.get(f'/v1/llm/stream/{rid}/events')
+            assert 'provider_invalid_response' in reply.text
+            bill=(await client.get('/v1/billing/requests/'+rid)).json()['data']
+            attempt,=bill['attempts']
+            trace=(await client.get('/v1/traces/'+rid)).json()['data']
+            assert trace['attempts'][0]['usage']['total_tokens']==attempt['total_tokens']==11
+            summary=(await client.get('/v1/billing/summary')).json()['data']
+            real=summary['usage']['real']
+>           assert real['attempts']==1 and real['unknown_attempts']==(0 if terminal else 1)
+E           assert (1 == 1 and 0 == 1)
+
+tests/integration/test_f9_final_usage.py:32: AssertionError
+_ test_finality_not_business_content_or_cache_controls_known_usage[False-True] _
+
+case = ('case_f19257f16a68466dbf321dff10002856', PosixPath('/private/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/pytest-of-baiyu/pytest-374/test_finality_not_business_con1/config'))
+primary_wire = namespace(calls=[{'path': '/chat/completions', 'headers': {'host': '127.0.0.1:59558', 'accept': '*/*', 'accept-encodin...oices": [{"index": 0, "delta": {"content": []}, "finish_reason": "stop"}]}\n\n', delay=0, url='http://127.0.0.1:59558')
+backup_wire = namespace(calls=[], status=200, body={'id': 'fake', 'object': 'chat.completion', 'created': 0, 'model': 'deepseek-flas...{'prompt_tokens': 120, 'completion_tokens': 30, 'total_tokens': 150}}, raw=None, delay=0, url='http://127.0.0.1:59559')
+terminal = True, cache = False
+
+    @pytest.mark.parametrize('terminal',[False,True])
+    @pytest.mark.parametrize('cache',[False,True])
+    async def test_finality_not_business_content_or_cache_controls_known_usage(case,primary_wire,backup_wire,
+                                                                            terminal,cache):
+        usage={'prompt_tokens':10,'completion_tokens':1,'total_tokens':11}
+        if cache:
+            usage.update(prompt_cache_hit_tokens=7,prompt_cache_miss_tokens=3)
+        chunk={'object':'chat.completion.chunk','model':'deepseek-flash','usage':usage,
+               'choices':[{'index':0,'delta':{'content':[]},'finish_reason':'stop' if terminal else None}]}
+        primary_wire.raw=('data: '+json.dumps(chunk)+'\n\n').replace('\\n','\n').encode()
+        async with account(case[1],primary_wire,backup_wire,('20','30','50')) as (_,client):
+            rid=(await client.post('/v1/llm/stream',json=body(max_output_tokens=100))).headers['x-request-id']
+            reply=await client.get(f'/v1/llm/stream/{rid}/events')
+            assert 'provider_invalid_response' in reply.text
+            bill=(await client.get('/v1/billing/requests/'+rid)).json()['data']
+            attempt,=bill['attempts']
+            trace=(await client.get('/v1/traces/'+rid)).json()['data']
+            assert trace['attempts'][0]['usage']['total_tokens']==attempt['total_tokens']==11
+            summary=(await client.get('/v1/billing/summary')).json()['data']
+            real=summary['usage']['real']
+            assert real['attempts']==1 and real['unknown_attempts']==(0 if terminal else 1)
+            assert real['known_subtotal']==({'input_tokens':10,'output_tokens':1,'total_tokens':11} if terminal else None)
+            assert attempt['state']==('settled' if terminal and cache else 'pending')
+>           assert attempt['usage_complete']==terminal
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+E           KeyError: 'usage_complete'
+
+tests/integration/test_f9_final_usage.py:35: KeyError
+_ test_finality_not_business_content_or_cache_controls_known_usage[True-False] _
+
+case = ('case_30c93d05994c43eb88eda9c759175896', PosixPath('/private/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/pytest-of-baiyu/pytest-374/test_finality_not_business_con2/config'))
+primary_wire = namespace(calls=[{'path': '/chat/completions', 'headers': {'host': '127.0.0.1:59566', 'accept': '*/*', 'accept-encodin...choices": [{"index": 0, "delta": {"content": []}, "finish_reason": null}]}\n\n', delay=0, url='http://127.0.0.1:59566')
+backup_wire = namespace(calls=[], status=200, body={'id': 'fake', 'object': 'chat.completion', 'created': 0, 'model': 'deepseek-flas...{'prompt_tokens': 120, 'completion_tokens': 30, 'total_tokens': 150}}, raw=None, delay=0, url='http://127.0.0.1:59567')
+terminal = False, cache = True
+
+    @pytest.mark.parametrize('terminal',[False,True])
+    @pytest.mark.parametrize('cache',[False,True])
+    async def test_finality_not_business_content_or_cache_controls_known_usage(case,primary_wire,backup_wire,
+                                                                            terminal,cache):
+        usage={'prompt_tokens':10,'completion_tokens':1,'total_tokens':11}
+        if cache:
+            usage.update(prompt_cache_hit_tokens=7,prompt_cache_miss_tokens=3)
+        chunk={'object':'chat.completion.chunk','model':'deepseek-flash','usage':usage,
+               'choices':[{'index':0,'delta':{'content':[]},'finish_reason':'stop' if terminal else None}]}
+        primary_wire.raw=('data: '+json.dumps(chunk)+'\n\n').replace('\\n','\n').encode()
+        async with account(case[1],primary_wire,backup_wire,('20','30','50')) as (_,client):
+            rid=(await client.post('/v1/llm/stream',json=body(max_output_tokens=100))).headers['x-request-id']
+            reply=await client.get(f'/v1/llm/stream/{rid}/events')
+            assert 'provider_invalid_response' in reply.text
+            bill=(await client.get('/v1/billing/requests/'+rid)).json()['data']
+            attempt,=bill['attempts']
+            trace=(await client.get('/v1/traces/'+rid)).json()['data']
+            assert trace['attempts'][0]['usage']['total_tokens']==attempt['total_tokens']==11
+            summary=(await client.get('/v1/billing/summary')).json()['data']
+            real=summary['usage']['real']
+>           assert real['attempts']==1 and real['unknown_attempts']==(0 if terminal else 1)
+E           assert (1 == 1 and 0 == 1)
+
+tests/integration/test_f9_final_usage.py:32: AssertionError
+_ test_finality_not_business_content_or_cache_controls_known_usage[True-True] __
+
+case = ('case_4fa6871f24d1456594977f2e5e1ff264', PosixPath('/private/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/pytest-of-baiyu/pytest-374/test_finality_not_business_con3/config'))
+primary_wire = namespace(calls=[{'path': '/chat/completions', 'headers': {'host': '127.0.0.1:59574', 'accept': '*/*', 'accept-encodin...oices": [{"index": 0, "delta": {"content": []}, "finish_reason": "stop"}]}\n\n', delay=0, url='http://127.0.0.1:59574')
+backup_wire = namespace(calls=[], status=200, body={'id': 'fake', 'object': 'chat.completion', 'created': 0, 'model': 'deepseek-flas...{'prompt_tokens': 120, 'completion_tokens': 30, 'total_tokens': 150}}, raw=None, delay=0, url='http://127.0.0.1:59575')
+terminal = True, cache = True
+
+    @pytest.mark.parametrize('terminal',[False,True])
+    @pytest.mark.parametrize('cache',[False,True])
+    async def test_finality_not_business_content_or_cache_controls_known_usage(case,primary_wire,backup_wire,
+                                                                            terminal,cache):
+        usage={'prompt_tokens':10,'completion_tokens':1,'total_tokens':11}
+        if cache:
+            usage.update(prompt_cache_hit_tokens=7,prompt_cache_miss_tokens=3)
+        chunk={'object':'chat.completion.chunk','model':'deepseek-flash','usage':usage,
+               'choices':[{'index':0,'delta':{'content':[]},'finish_reason':'stop' if terminal else None}]}
+        primary_wire.raw=('data: '+json.dumps(chunk)+'\n\n').replace('\\n','\n').encode()
+        async with account(case[1],primary_wire,backup_wire,('20','30','50')) as (_,client):
+            rid=(await client.post('/v1/llm/stream',json=body(max_output_tokens=100))).headers['x-request-id']
+            reply=await client.get(f'/v1/llm/stream/{rid}/events')
+            assert 'provider_invalid_response' in reply.text
+            bill=(await client.get('/v1/billing/requests/'+rid)).json()['data']
+            attempt,=bill['attempts']
+            trace=(await client.get('/v1/traces/'+rid)).json()['data']
+            assert trace['attempts'][0]['usage']['total_tokens']==attempt['total_tokens']==11
+            summary=(await client.get('/v1/billing/summary')).json()['data']
+            real=summary['usage']['real']
+            assert real['attempts']==1 and real['unknown_attempts']==(0 if terminal else 1)
+            assert real['known_subtotal']==({'input_tokens':10,'output_tokens':1,'total_tokens':11} if terminal else None)
+>           assert attempt['state']==('settled' if terminal and cache else 'pending')
+E           AssertionError: assert 'pending' == 'settled'
+E             
+E             - settled
+E             + pending
+
+tests/integration/test_f9_final_usage.py:34: AssertionError
+=========================== short test summary info ============================
+FAILED tests/integration/test_f9_final_usage.py::test_finality_not_business_content_or_cache_controls_known_usage[False-False]
+FAILED tests/integration/test_f9_final_usage.py::test_finality_not_business_content_or_cache_controls_known_usage[False-True]
+FAILED tests/integration/test_f9_final_usage.py::test_finality_not_business_content_or_cache_controls_known_usage[True-False]
+FAILED tests/integration/test_f9_final_usage.py::test_finality_not_business_content_or_cache_controls_known_usage[True-True]
+4 failed in 4.46s

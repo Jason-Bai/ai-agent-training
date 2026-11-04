@@ -1,0 +1,79 @@
+{
+  "criterion": "user-confirmed gateway correctness with separately reported availability",
+  "fresh_provider_calls": 0,
+  "raw_original_outcomes_unchanged": true,
+  "results": [
+    {
+      "batch": "original",
+      "concurrency": 1,
+      "dispatch_seconds": 60,
+      "requests": 40,
+      "successes": 40,
+      "failures": {},
+      "gateway_outcomes": "passed",
+      "original_outcome": "failed",
+      "original_sha256": "2ee079a9d4d73f1fbde9cad53a939cb8f7f2d87359c39eecd913618f4221ad3a"
+    },
+    {
+      "batch": "original",
+      "concurrency": 5,
+      "dispatch_seconds": 60,
+      "requests": 172,
+      "successes": 172,
+      "failures": {},
+      "gateway_outcomes": "passed",
+      "original_outcome": "failed",
+      "original_sha256": "2ee079a9d4d73f1fbde9cad53a939cb8f7f2d87359c39eecd913618f4221ad3a"
+    },
+    {
+      "batch": "original",
+      "concurrency": 10,
+      "dispatch_seconds": 60,
+      "requests": 339,
+      "successes": 338,
+      "failures": {
+        "request_timeout": 1
+      },
+      "gateway_outcomes": "passed",
+      "original_outcome": "failed",
+      "original_sha256": "2ee079a9d4d73f1fbde9cad53a939cb8f7f2d87359c39eecd913618f4221ad3a"
+    },
+    {
+      "batch": "original",
+      "concurrency": 20,
+      "dispatch_seconds": 60,
+      "requests": 682,
+      "successes": 682,
+      "failures": {},
+      "gateway_outcomes": "passed",
+      "original_outcome": "failed",
+      "original_sha256": "2ee079a9d4d73f1fbde9cad53a939cb8f7f2d87359c39eecd913618f4221ad3a"
+    },
+    {
+      "batch": "original",
+      "concurrency": 20,
+      "dispatch_seconds": 600,
+      "requests": 6825,
+      "successes": 6808,
+      "failures": {
+        "request_timeout": 17
+      },
+      "gateway_outcomes": "passed",
+      "original_outcome": "failed",
+      "original_sha256": "2ee079a9d4d73f1fbde9cad53a939cb8f7f2d87359c39eecd913618f4221ad3a"
+    },
+    {
+      "batch": "followup",
+      "concurrency": 5,
+      "dispatch_seconds": 600,
+      "requests": 1727,
+      "successes": 1725,
+      "failures": {
+        "request_timeout": 2
+      },
+      "gateway_outcomes": "passed",
+      "original_outcome": "failed",
+      "original_sha256": "5340c473a1707ea0beb3a47beb324c24da010e04011ad19cc9f1de40fdda2990"
+    }
+  ]
+}

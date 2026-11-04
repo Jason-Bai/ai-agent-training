@@ -1,0 +1,12 @@
+{
+  "source": "https://help.aliyun.com/zh/model-studio/qwen-api-via-openai-responses",
+  "checked_date": "2026-11-03",
+  "document_lines": {
+    "38-46": "Compatibility is partial; only documented parameters are processed. Input limit is approximately80% of model context; above it the server truncates automatically.",
+    "47-88": "Beijing new workspace-scoped domain and /compatible-mode/v1/responses; old dashscope domain remains usable; old /api/v2/apps/protocols path is no longer maintained.",
+    "175-178": "Minimum max_output_tokens16. Schema is nested under text.format.json_schema with name/schema/strict.",
+    "1149-1177": "response.created status queued; early model may be omitted/empty.",
+    "1068": "usage.input_tokens_details.cached_tokens is cached input count."
+  },
+  "scope": "official documentation and controlled HTTP evidence only; no real Provider call or credential access"
+}

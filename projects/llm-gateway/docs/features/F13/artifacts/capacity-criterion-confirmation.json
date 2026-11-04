@@ -1,0 +1,7 @@
+{
+  "recorded_at": "2026-11-04T05:57:25.958036+00:00",
+  "source": "direct user reply in current Codex conversation",
+  "question_item_id": "[\"request_user_input_async\",\"call_d7ec4d1a5de34a7aacd34d26abf5ebe2\",0]",
+  "question": "两轮容量都未达到原严格门槛：20并发成功率99.7509%，5并发99.8842%。新5档的超时已定位为发送完成后等待响应头到总期限；具体网络或远端原因仍未查清，旧20档也不能补作归因。建议F13按“Gateway功能、期限、终态、账务和释放必须通过；端到端成功率如实报告”分层验收，保留全部失败，不承诺任何档位100%稳定，也不称供应商事故。是否采用这一验收边界？Trace修复仍须完成独立回归。",
+  "answer": "采用分层验收，保留失败与限制（推荐）"
+}

@@ -1,0 +1,31 @@
+--- /var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llmgw-f13-work-eifzl4on/baseline/tests/live/test_f10_capacity.py	2026-11-03 22:56:55
++++ tests/live/test_f10_capacity.py	2026-11-03 23:37:46
+@@ -7,12 +7,12 @@
+ import pytest
+ 
+ from f10_metrics import summarize, validate_records, validate_sustained, sustained_supported
+-from f10_support import f10_environment
++from f13_capacity_support import f13_capacity_environment
+ 
+ 
+ pytestmark = pytest.mark.live
+-KINDS = [('general-primary', 'text'), ('general-primary', 'streaming'),
+-         ('general-backup', 'text'), ('general-backup', 'streaming')]
++KINDS = [(model, mode) for model in ('general-primary', 'general-backup', 'light', 'general', 'analysis', 'auto-general')
++         for mode in ('text', 'structured', 'streaming')]
+ ACTIVE = ('active_generations', 'subscriptions', 'cleanup_tasks', 'cancellations', 'active_requests')
+ 
+ 
+@@ -99,9 +99,9 @@
+     return report
+ 
+ 
+-async def test_real_capacity_and_ten_minute_sustained(f10_environment, record_property):
+-    env = f10_environment
+-    report = {'scope': 'single Gateway worker; true DeepSeek Chat and Responses',
++async def test_real_capacity_and_ten_minute_sustained(f13_capacity_environment, record_property):
++    env = f13_capacity_environment
++    report = {'scope': 'single Gateway worker; DeepSeek Chat/Responses, three Bailian models and auto routing',
+               'environment': env.metadata(), 'phase_seconds': 60, 'sustained_seconds': 600, 'phases': [], 'sustained': None}
+     try:
+         for concurrency in (1, 5, 10, 20):

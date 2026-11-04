@@ -1,0 +1,100 @@
+FF                                                                       [100%]
+=================================== FAILURES ===================================
+_______ test_shared_render_overflow_keeps_prompt_error_before_any_count ________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10e214f50>
+
+    def test_shared_render_overflow_keeps_prompt_error_before_any_count(monkeypatch):
+        router,req,trace=setup()
+        req=request(model='auto-general',
+            prompt={'name':'context_answer','version':'1.1.0','variables':{'context':'C'*10000}},
+            messages=[{'role':'user','content':'M'*10000}])
+        def forbidden(*args,**kwargs):pytest.fail('invalid shared text must not reach token counting')
+        monkeypatch.setattr(router.budget,'count',forbidden)
+        with pytest.raises(GatewayError) as caught:plan_auto_route(router,req,trace)
+>       assert caught.value.code=='prompt_too_long'
+E       AssertionError: assert 'no_available_group' == 'prompt_too_long'
+E         
+E         - prompt_too_long
+E         + no_available_group
+
+tests/unit/test_f13_auto_planning.py:143: AssertionError
+______ test_endpoint_schema_render_overflow_only_excludes_affected_groups ______
+
+    def test_endpoint_schema_render_overflow_only_excludes_affected_groups():
+>       router,req,trace=setup({'general':{'structured_output_mode':'json_schema'}})
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_f13_auto_planning.py:147: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/unit/test_f13_auto_planning.py:26: in setup
+    definition=replace(base,endpoints=endpoints,model_groups=groups,auto_routes={'auto-general':profile})
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/Users/baiyu/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/dataclasses.py:1588: in replace
+    return obj.__class__(**changes)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+<string>:9: in __init__
+    ???
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = ModelRegistry(endpoints={'light': EndpointConfig(provider='mock-main', model_id='deepseek-flash', thinking_mode='disab..._tokens=128, default_output_tokens=1024, max_output_tokens=4096, default_timeout_seconds=30, max_timeout_seconds=120)})
+
+    def __post_init__(self):
+        try:
+            if not self.endpoints or not self.providers or not self.model_groups:
+                raise ValueError
+            endpoints = {name: endpoint if isinstance(endpoint, EndpointConfig) else EndpointConfig.model_validate(endpoint)
+                         for name, endpoint in self.endpoints.items()}
+            providers = {name: provider if isinstance(provider, ProviderConfig) else ProviderConfig.model_validate(provider)
+                         for name, provider in self.providers.items()}
+            groups = {name: group if isinstance(group, ModelGroupConfig) else ModelGroupConfig.model_validate(group)
+                      for name, group in self.model_groups.items()}
+            if any(not isinstance(name, str) or not name.strip() for name in [*endpoints, *providers, *groups]):
+                raise ValueError
+            if any(endpoint.provider not in providers for endpoint in endpoints.values()):
+                raise ValueError
+            if any(name not in endpoints for group in groups.values() for name in group.candidates):
+                raise ValueError
+            concurrency = (self.concurrency if isinstance(self.concurrency, ConcurrencyPolicy)
+                           else ConcurrencyPolicy.model_validate(self.concurrency))
+            recovery = (self.recovery if isinstance(self.recovery, RecoveryPolicy)
+                        else RecoveryPolicy.model_validate(self.recovery))
+            modes = {'chat_completions': {'none', 'json_object'}, 'responses': {'none', 'json_schema'}}
+            if any(endpoint.structured_output_mode not in modes[providers[endpoint.provider].api_protocol]
+                   for endpoint in endpoints.values()):
+                raise ValueError
+            if not isinstance(self.auto_routes, Mapping):
+                raise ValueError
+            auto_routes = {name: profile if isinstance(profile, AutoRouteConfig) else AutoRouteConfig.model_validate(profile)
+                           for name, profile in self.auto_routes.items()}
+            if any(not isinstance(name, str) or not name.strip() or name in groups for name in auto_routes):
+                raise ValueError
+            for profile in auto_routes.values():
+                if profile.classifier_group not in groups or any(name not in groups for name in profile.candidate_groups):
+                    raise ValueError
+                if any(not groups[name].routing_description for name in profile.candidate_groups):
+                    raise ValueError
+                classifier = groups[profile.classifier_group]
+                if (profile.classifier_max_output_tokens > classifier.max_output_tokens
+                        or profile.classifier_timeout_seconds > classifier.max_timeout_seconds):
+                    raise ValueError
+                # Disabled endpoints remain valid configuration. Availability is
+                # checked at execution time, but one endpoint must physically
+                # support the complete fixed classifier budget and JSON output.
+                if not any(
+                    endpoint.min_output_tokens <= profile.classifier_max_output_tokens <= endpoint.max_output_tokens
+                    and profile.classifier_timeout_seconds <= endpoint.max_timeout_seconds
+                    and profile.classifier_max_output_tokens + endpoint.safety_margin_tokens < endpoint.context_window_tokens
+                    and endpoint.structured_output_mode != 'none'
+                    for endpoint in (endpoints[name] for name in classifier.candidates)
+                ):
+                    raise ValueError
+        except (ValueError, TypeError, AttributeError):
+>           raise ConfigurationError('模型注册配置不合法：请检查字段、预算和 Provider/端点引用') from None
+E           services.models.ConfigurationError: 模型注册配置不合法：请检查字段、预算和 Provider/端点引用
+
+src/services/models.py:234: ConfigurationError
+=========================== short test summary info ============================
+FAILED tests/unit/test_f13_auto_planning.py::test_shared_render_overflow_keeps_prompt_error_before_any_count
+FAILED tests/unit/test_f13_auto_planning.py::test_endpoint_schema_render_overflow_only_excludes_affected_groups
+2 failed, 14 deselected in 0.14s

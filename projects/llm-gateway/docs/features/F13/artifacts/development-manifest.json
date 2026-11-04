@@ -1,0 +1,1478 @@
+{
+  "files": [
+    {
+      "path": "docs/features/F13/artifacts/development/pricing-boundaries-red-receipt.json",
+      "sha256": "6e2ef5703b32382ed844981839c55397c838cee14f958d79e16b1581ccbfdaa4"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/auto-planning-red.log",
+      "sha256": "aaa2575dce0ed4b7e7d3421347ae88345c44380c8a8d2513e3d63eb26a909ea6"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pricing-routing-collection-receipt.json",
+      "sha256": "e335940c3d5bfaa46ad0289f90959aaeee86e0e915eca97dce1298fcc48a1334"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/auto-routing-first-green.log",
+      "sha256": "8b435f4df09057ce27acec63769ed63c1ce52686ab31974359b80d2d7e4245db"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/auto-real-public-rerun.xml",
+      "sha256": "350de6724cfb7c9f99af8b9f869202a5c90f84d082ce82e580844209bb11a73d"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/quality-corpus-manifest.json",
+      "sha256": "9542b6dd014606e6ddbef293f267bbabc599307fb411aca6a0095b9ced787e51"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/classifier-first-formal-freeze.json",
+      "sha256": "a5a27709540ff9885f17578c1fa28a2b01f5f8ebc2aac07ebe66172656c9dab8"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pricing-green-first.log",
+      "sha256": "11a6967cea1e475a0b255f81c4f3858eeb4d0d4ffa448a1171b13cc5bf7222a4"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/auto-planning-regression.log",
+      "sha256": "363d0ad5d487d060847600ab12cc680061f14896d7f948976793e3382576374e"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/precision-wire-diagnosis.json",
+      "sha256": "3ea297df3ab7a00a50840154c1229e99f9a3ac234f03ec20ace216811f70cac4"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/auto-config-red-receipt.json",
+      "sha256": "808d60500941ebbd6bddf777c1ba4ccf9bc0471d2bb5a4fe6e4f5e120b4e68e9"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/baseline-manifest.json",
+      "sha256": "fa4eca20dfdf90a92c9b70b849f7adccfb026381f4b650d31c5fdc3b0f62b453"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/estimation-green-receipt.json",
+      "sha256": "eb871a01b3fc38b3372a8a37e60381052b70267d586a8edfbf5392caec58e5d4"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pricing-routing-quality-preparation.log",
+      "sha256": "55216306150d5a9b6b935e9d3b7014fed05e5a89d713672f2044ffcde307e954"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/lifecycle-collection.log",
+      "sha256": "eaedd9941dd0c417e57c04af7c760a78aab19822bdfed5538ecbc6d5792698ee"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/protocol-red.log",
+      "sha256": "efa20fdd3a2493e14953d84132b2c32b57a9b1dc24dd36f51f3ea607bc66b8e1"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pricing-verify-jsonb-red.log",
+      "sha256": "262c2914f86071e411520ab95768a6861454f194fe8d2c9758771d3b1dff8b1b"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/auto-config-green-receipt.json",
+      "sha256": "dba34ba0377c1628e343ec816dd6820506380f13a7f81183012401c23345b373"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/collection-final.log",
+      "sha256": "44fc4c4f81f7d3a6ff0d70cc1b5055251a76c06c2b37c093d3880b078b5b9899"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/estimation-red.log",
+      "sha256": "6ee10ad20abf65d4176c62adc2e3f790c0dc9dd6cecebc6e24a539efbdeb752d"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/auto-real-development-first.xml",
+      "sha256": "2ca8b5b43ae8be381c736d7bb0c5ec20ba03cc7cef3f75db4f25001666eaab77"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/auto-lifecycle-first.xml",
+      "sha256": "6b0a5610fe6ca38f547d79bf6216d1c4eba2f181a68de263e7aba0996775c270"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/raw-probe-qwen3.7-plus.json",
+      "sha256": "ac74c258c489b493dee35e08c80fefaeef668ebca422a7fb48d518e12ac65e72"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/auto-concurrency.log",
+      "sha256": "c91dad03511eb111dba9f317cdb7962c64ec389c7d259de488e167c78aac1b31"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/auto-lifecycle-rerun-receipt.json",
+      "sha256": "d1b7225eb89616b068a53674315431c08ba6fa8f1a48442f481335a14e09a1e8"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/auto-real-public-rerun-receipt.json",
+      "sha256": "9d802d207c2b0bf5dbcd8fbb3a38a5bd2a74e226c70e95885c3fae96635a55f6"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pricing-routing-quality-preparation-receipt.json",
+      "sha256": "72bdefdb03b780b9d5a8bd493b9f828617880c9f0c6b89cab63387940d2f5d06"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/stage-a-real.log",
+      "sha256": "3176ab361f0a99ebb47914342221b14d69a94b06a870b8a7cc55779de58bf8d7"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/auto-planning-final-green-receipt.json",
+      "sha256": "173b4ba29abf62c62d183245134f56ece7c5e0e364df86597e343ad5fa651856"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pricing-routing-model-green-receipt.json",
+      "sha256": "1a21cf6386a3ce191b82a65604057cf65b9b070f51fb91d59725869be7460301"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/auto-planning-render-red-corrected-receipt.json",
+      "sha256": "13d4890a867ad0efc42e5ede4786edc0ae5867d2e0c50819d4a057271c6560d4"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/adapter-schema-qwen3.8-flash.json",
+      "sha256": "fb4404d77622c5cac364af1d423f848362b9e1359ea41bbdc00342b82eee4a4f"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/auto-restore-null-red.log",
+      "sha256": "3c8e317d651373582921d5c7eedd707aa893d181923aa2c2cf78d0b572d2ede8"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pricing-routing-helper-regression.log",
+      "sha256": "fa9cd0e25dcc1e230610463c80c04cc48c6c326debe3521403b94a8e7f25f4ae"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/auto-planning-render-red-receipt.json",
+      "sha256": "05a61c4f4e3e758fa6faeb41d70f87156d080247993c72a793dfbef3c1ef4b8e"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/auto-os-restart-first-receipt.json",
+      "sha256": "0fc31fa067e0c45808746982d15b4b69c052c12785093fd63ee47f0218745aa8"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/capacity-collect.log",
+      "sha256": "e81fd1098e32be0f7b5b9f7b59cc30ba59eee3b8f4a2a65d5f3f5f0df3bae980"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pricing-live-collection-receipt.json",
+      "sha256": "bf4bf079964299757490a91dda72b35d14fb3dce5eb583dba2b20da1062eea16"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/auto-config-red.log",
+      "sha256": "dd545f5bc10b37adef4e024b7c1d7d694e0682409688ad469f585be4ce2e3ad7"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/stage-a-precision-confirmed-receipt.json",
+      "sha256": "010217334fd6e3cbd06362ec73478309d52a922d8e1ecc14bdf1f9425156ed8c"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/auto-planning-green-receipt.json",
+      "sha256": "bdb0b2d9d742f3a00c610ffc652c9bb5c311d88111685f9f454cf05b11118716"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/metering-first.log",
+      "sha256": "00445c8f1cc46596fe78a7fb49b0e30b4f96837acf1468ae375b87101647d9c6"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/collection-before.log",
+      "sha256": "acba5d6779fac59d098ca1c9218dae8c6ea55656d0a759d334e3f85e0ee58728"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/auto-os-restart-first.xml",
+      "sha256": "7a19ec814cd5cbac2b7ee3d44cb0699c6ff75c65e318c99bf91fbff1f5cf6edd"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/protocol-queued-failure-red.log",
+      "sha256": "508f3cd1cf52e6c26447e8b54c13e1f80b425b647fcb55e18033eb3d179b4bf9"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/auto-planning-final-green.log",
+      "sha256": "d8040efa1028177a0731962746ab491b79b694ec018ca17f0f211fbf317ce1ab"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/estimation-green-final-receipt.json",
+      "sha256": "df43db40403aa237f95d5d91e581ed20576a384c0c43443b8851abbdb39a7636"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/auto-planning-green.log",
+      "sha256": "eb2231b57c6105fc6b5e48d09e24296a4e5c277be3986d2c87b4c60262324b64"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pricing-routing-model-red.log",
+      "sha256": "da6f540e1e6071fab801e939f4ecc6ce91b8c6f4438b894d855515b9457b56e0"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/capacity-collect-receipt.json",
+      "sha256": "d9b7e596a3a9b1aa9ede6a6758b0d96a2f9e3960605694588e66ddd70d304960"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/estimation-green.log",
+      "sha256": "31e8ee0c9aa73b3615c09ab260af7a93eeedbcbdf8127d49e8af27cf8ff55be7"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/auto-real-default-first.xml",
+      "sha256": "fe4b919a61a184f66428375c29920cea0a7cceb0b92c4080d4312ff9882758f2"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/capacity-existing-node.diff",
+      "sha256": "16c86706f33ca8ffc83089146bcc03688fca467b7504c4ac30feb941127556e6"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/protocol-queued-failure-green.log",
+      "sha256": "28f94f35a697eb110a559cd36372f2edb63dbb960fb282482e1dcc485cb9a73e"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/stage-a-precision-confirmed.log",
+      "sha256": "591cdd66ab431fd4bb6277a2e2bbf9c43c9aa3a769cdbd1b5081ac24f3f8a732"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/protocol-first-green.log",
+      "sha256": "76af71df60bb5f93ea635e8763126ecf98e837672c9980e80aefde989b203765"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/auto-routing-expanded-red.log",
+      "sha256": "076860a8b4fdcbb99d390a906db14e5e1b41ddfe01e7d1dea49500699e9c9111"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/auto-routing-expanded-green.log",
+      "sha256": "dcd83ecaeae769bc2c19f53be022897ceab39582cb1d68feb32f18d85f014ea1"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pricing-green-final-receipt.json",
+      "sha256": "edb64c6a4b799b401ff5e060c4fdd020b7d1b836d62237269e99e0a4980f0767"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/classification-green.log",
+      "sha256": "912b2a01d721f017b93710fae76c2aa9b632743f845b3967bfadd4df9595bb5e"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/estimation-green-final.log",
+      "sha256": "992eb14eaa84884996a1e97ac41bc95a09fe09625f10f9e4b030d59a6430bfd6"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/protocol-final-target.log",
+      "sha256": "f7254538c85b2c26af33529a3c8f3107f6470420e1a43b44e4b0b66e1ab01e0b"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pricing-routing-actual-green-receipt.json",
+      "sha256": "82103c7eed22837c15008dd99832a9fadb3ef3fda2e42c8e82c53cdd34471b5b"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/metering-first-receipt.json",
+      "sha256": "d979a81e337e703bae04d9b40a560b897849ba71d01b3781cbabd26d514bfcb1"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/stage-a-real-rerun-receipt.json",
+      "sha256": "07da6083d44f0f485a2131edb54c8f87862099e40dc8ab68c438e1a55ce09926"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pricing-verify-jsonb-correct-red.log",
+      "sha256": "29de0ea8ba1b363ff13725205f0c2325643a5bc59abfe4330bd5efe83b2ad1f0"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pricing-live-collection.log",
+      "sha256": "f9f010b269910c011ce984dddc4f2c8ff78ed20a7bb141091b3efe57a220aade"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/auto-lifecycle-rerun.log",
+      "sha256": "c2e8a88a6aa9714a197cf098e078a704d0be91aa05795b8531e93b7b42c1f2b7"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/raw-probe-qwen3.8-max.json",
+      "sha256": "f1d4a0d05adadad66f1ebc9bc6c10f5c8043cc74a8895dc2dad9e903df0a3d58"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/auto-config-green.log",
+      "sha256": "c7e7a78ea91e0942a6cd7c5a2fdd48db5300da8e84df0fa4dc32879dce6043cb"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/stage-a-real-rerun.xml",
+      "sha256": "cb154b3e1b22b14e3804931487bb2eb9c4047ffe3d1a7ded7355e805951ad016"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pricing-verify-jsonb-green.log",
+      "sha256": "09127db71c858d15c75a9f55f3089274fb6d3c66e6cf0a4c27f346414610d482"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/raw-probe-summary.json",
+      "sha256": "559db4c27d9e4d3ce4c775d83e6d8544757da5aa6cebe624da8a0a3600d78538"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pricing-boundaries-red.log",
+      "sha256": "a2788d97860ffbcd478fa17b14ba8c983d27b8dabcee07214c6ea081c7409f10"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/red-minimum-kind.log",
+      "sha256": "b1394912b8e6268282af004ca3ca886927d1c44e4cb064fb1dfa4a15d52ff066"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/protocol-official-evidence.json",
+      "sha256": "8f61ef6943e1ed6e0a9d4d24970f6f9fd132316f3c029f3bb6d50da03400e373"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/protocol-queued-red.log",
+      "sha256": "1677a6260f202c11b62fde2f83570a2248a710641f3ffd49e02922fb6e8a4d28"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pricing-verify-jsonb-final-green.log",
+      "sha256": "fa9cd0e25dcc1e230610463c80c04cc48c6c326debe3521403b94a8e7f25f4ae"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/auto-planning-red-receipt.json",
+      "sha256": "10edac09f99bac561722bb4adfd46555e3e48408a51297d669b707be8be2fdf6"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pricing-routing-quality-green.log",
+      "sha256": "5b828d59d65eca924c91e75ddcfe9e90383e955856ab252a8e4df01f5f6a9450"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/green-config.log",
+      "sha256": "dfb567a5e1af731850eb07479079bfd2d3941cc36afe253b36923a762b1f0ffb"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/red-config.log",
+      "sha256": "008f189646a5245cf3955aa0e26667f28d5d85aa5f9c339c622c93f955d03a9c"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/collection-final-receipt.json",
+      "sha256": "db36974bdb7c965fa0aa6de9c8a33e09d99a2ddba0cd1e7f3d2cc39c8ee28a32"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/protocol-live-streaming-collection.log",
+      "sha256": "113bcf572293fe49a101a23b95e156d47d8353b45636f4e84ec82655da1acfa1"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/auto-os-restart-first.log",
+      "sha256": "00c5dc718509e4dcae8ad17b31440ea00644c2840c65bfe521e8b6a0e5efd8ff"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/collection-before-full.log",
+      "sha256": "a0f1635829a134809a898c309dfe36701c13feaf16fc2768bb6abc541b5a88da"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pricing-routing-model-red-receipt.json",
+      "sha256": "253d3d5c42e1671d1c567ef7d710e718677ddbf75a75942da5af6611e4ff19ca"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/auto-real-default-first.log",
+      "sha256": "17178734f71af445997c06a5b2948f15a27394776c9d064d4fb420bcf4dd44ea"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pricing-verify-jsonb-correct-red-receipt.json",
+      "sha256": "f2463f2fb39bd639a79fa90c4209c8ec1782135765b2348edba97ce802a5d043"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/metering-final.log",
+      "sha256": "e4b971dad62943970f441f4cd3e1e2d5ab20a3b930b90ba68f83cced2b1ab77e"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/auto-config-green-final.log",
+      "sha256": "bf63d52539ad9c0f0c0ac2471ef302d30a706c2382106c413bc6b86cfd8c7162"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/stage-a-precision-confirmed.xml",
+      "sha256": "804ff94223759735fc7ff05f98036e35576cda8acbc06dc626e6ebc2a2f919c7"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pricing-routing-actual-red.log",
+      "sha256": "dd730b84dd3a2acbe59fa942dc7b75c1309c0089cf172a56673be0715951b1d1"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/red-config-receipt.json",
+      "sha256": "28879dccf1b8dbe778e84b81aa5460ad2ae13a13d11c2f76dbd62d92d3a1421e"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/auto-planning-render-red-corrected.log",
+      "sha256": "23c32cde983f01e4f863c4321477fe21d1248b0b96d26605f09fdf6b432f3437"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/adapter-schema-qwen3.8-max.json",
+      "sha256": "e921ba2f9ad3f45f9729636cff41fe3155292cb497bbf3a69915082d754debfe"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/auto-integration-legacy-first.log",
+      "sha256": "e2f6a1bf3bcfec1c7f8713d8367ab7fc711291464048dd4af86b17257a20c6c9"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/classification-related-regression.log",
+      "sha256": "1e33bbca4ea030e15d0b0e3bdcf0be2e024006db916adda245a847c0027cb054"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/auto-planning-restore-green-receipt.json",
+      "sha256": "57984fd19fbe20f07304833ac4cbaa0415f5c865e6bddd34ca6e470eded4adad"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/adapter-schema-qwen3.7-plus.json",
+      "sha256": "a1bc57a0832be4030b78c4b57765560e505d0aa5a1ba178497b633b6ef1a6b4b"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pricing-green-first-receipt.json",
+      "sha256": "ac6bf7cbb71d130649429f0e8c97bd541da3c6a6e3a3cf455c72484dccb83b44"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/default-fallback-collection.log",
+      "sha256": "46e946e2ef4d9a4007479691db0691433ff5da3935304aacf41b8c8449fb39fe"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/auto-real-development-first-receipt.json",
+      "sha256": "64440b348eaae24b1a1e814d4db49b6df9d1bc7713e6b96a67ddd5993eeac652"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/raw-probe-qwen3.8-flash.json",
+      "sha256": "b69e829b216cccd006fcac9389485edbd3c9e64347afa360fec92518d6bb0ef9"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pricing-red.log",
+      "sha256": "54215006cf4799eef823b08d4f5d5f9fd64b6e7831b089309d18fcff7a746c05"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/estimation-red-receipt.json",
+      "sha256": "188ddad35f704a72d0c3961b80df60e2c61d56a64b9bcc45b098b8f6c65fe7ce"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pricing-verify-jsonb-final-green-receipt.json",
+      "sha256": "c73e32e9d37a2fdba1a89db982e63bce68b7eff48fab3c8b6f10062f0b02bb84"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/classification-red.log",
+      "sha256": "d2a79de835a9c8a3b47bf14e924bff1d6dbefec32cd2dad15df615cb1ce9b998"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/auto-lifecycle-first-receipt.json",
+      "sha256": "026904cfb61eea8e35cf86189e3a941d8a12ede2c2992351fcf7d89ff89df01a"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/metering-final-receipt.json",
+      "sha256": "0769b152305a906c9c33337792f6cffc622673c5a0ecddfa3daea02d8763341e"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/auto-lifecycle-rerun.xml",
+      "sha256": "bfa69793955272bf9143178781b37c6cf6264ec122b76bbb590b9d438ff8d7de"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pricing-routing-helper-regression-receipt.json",
+      "sha256": "6365be8b9104fbf9e61265d451754473c0cc4f8ff22ca7da89a8bcfb7b5223af"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/stage-a-real-rerun.log",
+      "sha256": "873fbc416eb2448e7a5dcf80d1c3bc62bf633de1b2e018856fda98bfd1d77ecb"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/auto-planning-restore-green.log",
+      "sha256": "b548cefdc2945976877c7e149627dcea561b743f1bf6c648d2efdd09239c04b5"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/stage-a-real-receipt.json",
+      "sha256": "33c115d9af0eb6668b53420c32e9aa3094969df32b3a98da90753399b9f82179"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/protocol-queued-green.log",
+      "sha256": "78419627264031e09b8d27d312febff809c752c4503708de329ca11ad2b11318"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/auto-config-green-final-receipt.json",
+      "sha256": "e7b22bbc335872a8942f03db747e41e0973395932e95ee3a2544e49df728c63e"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/restart-collection.log",
+      "sha256": "5bb3bd4d0a2711ab44e0a02d0a7115dff169da7418c7689cd7049214cd61c38b"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/auto-real-public-rerun-sources.json",
+      "sha256": "2bc95a524986f5abd157f3cd34948da54197c41d5521d7584e4c180fba3ba805"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/auto-real-default-first-receipt.json",
+      "sha256": "806472f01652313eb752deaa7157c55d0d5d6d0d548d612a0aefb07b584ead34"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pricing-routing-quality-green-receipt.json",
+      "sha256": "1fc47b0d45566d36c6fbe1c8b2abf3ea55a680222ba96e82cb2a07f6b5073425"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/auto-real-public-rerun.log",
+      "sha256": "5af8b72b7b9d69e6c0c7ce64bd52b9573727a3159400d44d812be1e1d7377978"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pricing-routing-collection.log",
+      "sha256": "d85879a124ff484b527be05b8c8b2dd126c1223e2fba3f439b461c723acad262"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/credential-import-receipt.json",
+      "sha256": "636a86b455527f0ad47255d3b8db3ffb853b77f52f47497af1ed4c685dd0e5a0"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pricing-routing-actual-red-receipt.json",
+      "sha256": "c2203b76254619b0f0c69401850c213eabbe5a57ab66de76c7710cba76af359b"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/auto-routing-red.log",
+      "sha256": "3b5db031c1403fef0888b3653af3c4ced7969400be307a0e62f370ce5194f305"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pricing-red-receipt.json",
+      "sha256": "386d75c70037d1d87039db9961eeff8694c23bc815ab49704575e9c2ada9be9e"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/adapter-schema-summary.json",
+      "sha256": "b8c50f983da2401bb139ac9602053726593a3b344339857bcbd096262e097055"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pricing-routing-actual-green.log",
+      "sha256": "bbdd7c94f4657408e1dd6b9f1d4140e4bb940583b726c285d1d7f80e8f090005"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/protocol-target-green.log",
+      "sha256": "43e648c5df40b33d1c7eeffb805c4ce89c5953c8df55e001318ab916f6e7e280"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/classifier-cancel-collection.log",
+      "sha256": "01e89c4439f56bc74755cb3ac695679304af1ae4cdca4af0ae5d78e4fc0ab014"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/auto-real-development-first.log",
+      "sha256": "e41674f9b610dd8820dc06d26bf6dad38d5fe5b1f0ef43e4cf3308f6fc95b525"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/auto-lifecycle-first.log",
+      "sha256": "310536b0e4a880818d2a0e028f2efc9b35e79c3a058fb5d1aba818ffe78ebc23"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/protocol-execution-receipts.json",
+      "sha256": "fba20f3d18f07b5f3a9d6b4b4c586563d2054f366cd29effc245a71b0b12226c"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/protocol-related-regression.log",
+      "sha256": "1f01b3959f19563222b7b01e912447518c5a6fcfa82c5df6e429dec903546871"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/auto-planning-regression-receipt.json",
+      "sha256": "0e73a8dd059ac86df356c984b5930dbf640e7c848e50b1c4805b45ada1b2c8a4"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/green-minimum-kind.log",
+      "sha256": "d067b9cfbc084f518dae4caae2e4c9fc19011b58f60a0c4d00b18fa3960e2e46"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/baseline-gaps.json",
+      "sha256": "dd6863356a3c82faa409f9737cbe1b25fae983977bebd3d73e59d7e68d4c9b58"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/capacity-preparation.json",
+      "sha256": "752de1741ebe06cdd62f6ad15d507373b2ca73efd2efa975bf9f69dc6a182272"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/auto-planning-render-red.log",
+      "sha256": "11d544badbc364012ed170732fa5ed505fbc1d74f54651aaf9b6511fb6877645"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pricing-verify-jsonb-green-receipt.json",
+      "sha256": "1f0973f97cf87b58bea36a0343e2d7d07edcea0443b3564699ff3d5d82d1f6cb"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/stage-a-real.xml",
+      "sha256": "0121ce3504fbe1b85787d3817448c8b24eebb069439f0404a8e2cb128f0a37a7"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pricing-green-final.log",
+      "sha256": "ddcc63d8cd6fcc437035135b74aba87359efa9b89465ff774537aba58c351506"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pricing-routing-model-green.log",
+      "sha256": "2111f1eaf144d2caf5c2ada302eb48724ecce6bfaf7b78a2ba61eb477f76b2eb"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real/test_three_real_bailian_models10/f13-real/availability-430e17fb-a5bd-4058-983f-97aa3901e137.json",
+      "sha256": "0bc1f0ff83f17e078ab71c881ed76ff9fe32347251d852eaa3dfe2a174fa3d6f"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real/test_three_real_bailian_models11/f13-real/availability-1878c197-f69b-4257-8709-35225f970983.json",
+      "sha256": "e97300e3ab604d2c77630aeffe157b0cc25d4bd50a2379a589e0eb7d2c98f237"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real/test_real_qwen_estimate_covers17/f13-real/availability-7819ad72-6cf2-4c07-8065-8197f0f601a8.json",
+      "sha256": "2b9e0d48a3b9f6af85b3fcd950b3803ca9b4b9621b499c66cebffa4a21674548"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real/test_real_qwen_estimate_covers10/f13-real/availability-ffaabfcf-d389-4895-94d5-b37c183ed7d0.json",
+      "sha256": "ec8298e1b620f45b8397a9fdf5afe5597a88f2f02cf8f936e7c578cff2f5f720"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real/test_real_qwen_estimate_covers19/f13-real/availability-f1860e5b-6926-4b4e-914f-9fa1a53cdffe.json",
+      "sha256": "ab3fb100da3089b7bde56f1cfc3b0d2facc95c632b38540d49707080a87790e7"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real/test_real_qwen_estimate_covers20/f13-real/availability-70357632-d68d-4513-8d1d-398164a4a413.json",
+      "sha256": "3118541bf5f43f4a2ee1f5765d0b04b8a5cbefd4539c322b606a5345459d9143"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real/test_real_qwen_estimate_covers18/f13-real/availability-70b8d69a-a181-4e2b-b38d-7595d5278910.json",
+      "sha256": "8820e659d112ad047de62195587cc68adf9fea15546984f82160157ce3f4d242"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real/test_real_qwen_estimate_covers11/f13-real/availability-283765fc-3f99-4ca3-8f39-5b6d53c780c1.json",
+      "sha256": "35e0d161651226e46db48b409f0edcfc266663d89299945657a6f92c0aa87bbf"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real/test_real_qwen_estimate_covers16/f13-real/availability-553e0d96-e023-4eb2-8f49-285c5521ab12.json",
+      "sha256": "de8a0302d817f6020d2fe52e69097f542d6cfac76cd90f905acbde1c602a05e6"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real/test_real_qwen_estimate_covers2/f13-real/availability-e3f5202f-2f38-4954-9996-5d2da6d0a8ac.json",
+      "sha256": "1fbe2d24eface054c56343442d2ec599e40288ceaa977ee92335650934ce9553"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real/test_real_qwen_estimate_covers5/f13-real/availability-92ea9093-1089-46db-a326-1cacbe9964ef.json",
+      "sha256": "c3f41292a5361320aea1b9f98c21a79ee5faf2fe15018bcff97491f137dd2967"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real/test_three_real_bailian_models1/f13-real/availability-88635110-eb0f-449f-bd5a-577c8f8ae657.json",
+      "sha256": "358920b182e51aa09f9a2e86a191ac989a5b1f99ba088f182120f8a4cda2b03f"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real/test_three_real_bailian_models6/f13-real/availability-917daeb3-a1fe-448c-9a1e-35f6590bc276.json",
+      "sha256": "0add53a82a00385073c13e08908f01e062c66dd67ece8dace4926e67a747e072"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real/test_three_real_bailian_models8/f13-real/availability-65597502-fd49-485b-bea9-9759043d8df5.json",
+      "sha256": "61992d9a862b01fe394d71f5b3489bdf36b7d09ecbb259f52fb7faa413a9f2ca"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real/test_real_qwen_estimate_covers4/f13-real/availability-caef0661-2427-4f3e-a75e-fd946e1cd5fe.json",
+      "sha256": "85a042706ad1b65e5a96acad224d7d4275820ffac37870eb4580549bafeb4f92"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real/test_real_qwen_estimate_covers3/f13-real/availability-81291eef-e9a9-4384-88f7-304abf595a1b.json",
+      "sha256": "9a44379c6cc00661aa76587035cb350a86a7d46887f83f506a84507dca06c3b4"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real/test_three_real_bailian_models9/f13-real/availability-5db9c340-d630-4e7f-ad73-02c1b87a1750.json",
+      "sha256": "9b19b1b89629016168c153dc7b46b7ae5ab6e4090decfd59930b42d0bafcae0b"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real/test_three_real_bailian_models7/f13-real/availability-028134f0-c269-48e5-ae75-8c2a8a47d99f.json",
+      "sha256": "06123535895e8e90c8cf95f24785646e04aa399383d27cb01dddbee039209ec0"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real/test_three_real_bailian_models0/f13-real/availability-b3d9f4af-9e59-4e98-bb1a-e42e510ef65c.json",
+      "sha256": "16a74dce0b60d53db22905f703687ecd5e335ca84570bebe15fe92d6efb4669e"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real/test_real_qwen_estimate_covers13/f13-real/availability-a3586ed8-6ccc-45b6-a801-5e789145504e.json",
+      "sha256": "30b9552ebf0dc01ac6938e488a7da446397e542a15ba512d7c2cc887af3a555e"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real/test_real_qwen_estimate_covers14/f13-real/availability-27002c7a-0c6e-4406-8ce4-f4061c099e76.json",
+      "sha256": "310320dabc7f0d941aa098003942b88dab14f4e2d846ebc9547c083e8b271540"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real/test_real_qwen_estimate_covers15/f13-real/availability-d2d2c959-7440-477e-b9b6-f4e8468954e9.json",
+      "sha256": "9d62afbda0dc5dff2bae486ceb5c8eb052fae6001cfc04c811b7da696c1b4cc2"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real/test_real_qwen_estimate_covers12/f13-real/availability-f1aae251-d860-49e1-a763-1f4563319103.json",
+      "sha256": "c5599c264f01bb767679ba26ea31e41025219c29d168e697f13d6c918bbda922"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real/test_three_real_bailian_models5/f13-real/availability-600d43ec-c0ae-42d5-9ee2-bf840a5385d0.json",
+      "sha256": "287243b8155376cd3a484517d1146c7a38a5c1f958694cf55dca3eac86373064"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real/test_three_real_bailian_models2/f13-real/availability-24d26915-7481-4da2-b5c0-2046e59226f6.json",
+      "sha256": "868951bd9f12e6c55204fd7cf11278bd87e5cf4202d150ef047cdad684cf560f"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real/test_real_qwen_estimate_covers8/f13-real/availability-ade35ccc-c166-42f6-b13b-645700c79570.json",
+      "sha256": "a3bdae6b2ed0ed6045a9fa235d661fcba6741209c41f5f9ca80e0771c7f5c4e7"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real/test_real_qwen_estimate_covers6/f13-real/availability-0099ea12-e617-4fb0-a1a2-e4bf69d16f38.json",
+      "sha256": "fd02ce8c6d7682275a695967a041e5b007c4dc9d12f0313950d57845f0c7a34d"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real/test_real_qwen_estimate_covers1/f13-real/availability-d1e1ae9b-614e-4945-bbf4-b317782fbbce.json",
+      "sha256": "4ab623e925e5373fff4c226ea185eaf17c24e538eb4b31cc67a3f93a1e9fdccb"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real/test_three_real_bailian_models3/f13-real/availability-eabd1577-90c1-469a-987c-884d762f71d6.json",
+      "sha256": "6c400eb8cd9d6754ed269356facc794b9eaac90557398f5d55edffe9a1b2ee5c"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real/test_three_real_bailian_models4/f13-real/availability-73072994-748f-44b5-be15-d37bda1fda66.json",
+      "sha256": "e6fd516ffc3cca7a2595ecc805028702121374fd38906facc60b5fc652367500"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real/test_real_qwen_estimate_covers0/f13-real/availability-b5f709f7-7ca5-4bd9-ad36-ff421065f883.json",
+      "sha256": "6353cb440180ff1c4ff58223fca741fda54fd356fb486a7e8218554698a150dd"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real/test_real_qwen_estimate_covers7/f13-real/availability-f0c2eed5-f5bd-4584-a92f-6abf3578ad7a.json",
+      "sha256": "2241ed25286184f90103773879fb10589ca68f64c7c4d0988851796ff4b36e6d"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real/test_real_qwen_estimate_covers9/f13-real/availability-65946a52-50e9-4089-a91c-9c31979e2547.json",
+      "sha256": "82007877f0443c7502b1719152676b87f4641378f7198b2fbbb9c679d7a1fc8c"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_real_bailian_external_del2/f13-external/availability-d3992fa7-a400-4cf4-ba34-3650e290f2e4.json",
+      "sha256": "83febc82e8472637c06f59c8fa5341b5fa61e84b109d29ad14165c03d2afa7fe"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_real_bailian_external_del2/f13-external/f13-os-final.json",
+      "sha256": "e899baf58c908f469439a2c5714a100b35be4c2622a9b146b67ae26af941ea89"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_real_bailian_external_del2/f13-external/f13-os-d3992fa7-a400-4cf4-ba34-3650e290f2e4.json",
+      "sha256": "caaf979c8bef32ded7a1e5f4a8fa9a600cad4b41e650e1511df6ab3e65e4bcdc"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_real_bailian_schema_prese2/f13-real/availability-6c4e3b0d-02a8-405f-bd14-7c57ffc2e6f4.json",
+      "sha256": "799eaf2fc076399ed176f16274574c3eb72b73a3f8d21a87be7b28448bf5fd2e"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_three_real_bailian_models10/f13-real/f13-real-1b8afc2a-b95d-41a9-bec4-049d9fbdfcdd.json",
+      "sha256": "5ef26860f2095de1ad6ea7a5dde5c6e7a791a176f032a1c83f3e9ec01d0481ea"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_three_real_bailian_models10/f13-real/availability-1b8afc2a-b95d-41a9-bec4-049d9fbdfcdd.json",
+      "sha256": "61665ecae5504fa36164d7a1db05b975c7bcc533ead3db3797d7c798b727ddb9"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_three_real_bailian_models11/f13-real/f13-real-5c3c9a08-19ce-41c9-987c-a7d5176f9671.json",
+      "sha256": "ec1cdf5b43f309108df75b7496a320553570688d78dcb44f3359f525eace1082"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_three_real_bailian_models11/f13-real/availability-5c3c9a08-19ce-41c9-987c-a7d5176f9671.json",
+      "sha256": "147aa91f7ae4345a1cbc9a7524c8a92f23f31507c7d57020de63d95e90b95aa8"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_real_qwen_estimate_covers17/f13-real/availability-42c16bc0-5544-4933-a7c5-ae49be48d306.json",
+      "sha256": "960d72b82459d682df503c7cbb66109cc8777124bdceb9a4b5985773b06ecaea"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_real_qwen_estimate_covers17/f13-real/f13-real-42c16bc0-5544-4933-a7c5-ae49be48d306.json",
+      "sha256": "219ffb6951d7990bc136865bced33deaf4a13542b68106dc06ac409b3ed131e0"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_real_qwen_estimate_covers10/f13-real/f13-real-b19603c4-528c-404a-8910-5453b1c21d4b.json",
+      "sha256": "16d57de5218bfdc6291af9c3e94b93c5f07ba260acea9b6065be9053b82a32c9"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_real_qwen_estimate_covers10/f13-real/availability-b19603c4-528c-404a-8910-5453b1c21d4b.json",
+      "sha256": "55b3d251721169338b004ccd8654e884380a8ab3c4b3522b3d0184689ef632b0"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_real_qwen_estimate_covers19/f13-real/f13-real-6407dc35-95b4-4e4c-99e3-59dad8d47dbe.json",
+      "sha256": "6713ac25735ba77ffd383e6b2c0cd532d7e66f5ec0f39f75c43b113c820009cb"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_real_qwen_estimate_covers19/f13-real/availability-6407dc35-95b4-4e4c-99e3-59dad8d47dbe.json",
+      "sha256": "52cf3733fd59a1126eceedce43d8ab3b4b30de5c276650ffe26356135fce190b"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_real_qwen_estimate_covers21/f13-real/availability-20ec4043-a822-4b83-8c4e-d7631c06737e.json",
+      "sha256": "f77581975b925d6fa06b3c144a728568b9a47da5475146e27ef3b82d0a5cbd1f"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_real_qwen_estimate_covers21/f13-real/f13-real-20ec4043-a822-4b83-8c4e-d7631c06737e.json",
+      "sha256": "0c275ce97e1856df16949259e677b9547ee95a4edee2712ef60696952ca55f3d"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_real_qwen_estimate_covers20/f13-real/availability-d02c24a7-1521-4187-b490-79b5702e21ac.json",
+      "sha256": "999323bd77e2d125347864679f3c02c998b48dd6d13ed63f261ce3aeac25c1c3"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_real_qwen_estimate_covers20/f13-real/f13-real-d02c24a7-1521-4187-b490-79b5702e21ac.json",
+      "sha256": "09fe9a1b030c74cf8f822967925c7d10bfe4565c74a7912dca6fbdc83fea215f"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_real_qwen_estimate_covers18/f13-real/f13-real-8d2f2220-b5b3-4c56-9622-7682c9bf91e8.json",
+      "sha256": "e13bebe007ba663384d98ed794a06bab6656d83ebeaa6dc4410f43d57667931d"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_real_qwen_estimate_covers18/f13-real/availability-8d2f2220-b5b3-4c56-9622-7682c9bf91e8.json",
+      "sha256": "21b8b1e2ee51e33dd22b2a5d5cc52539c759da888f9a3bf1002ad292024d8989"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_real_qwen_estimate_covers11/f13-real/availability-428a1eac-4395-4c93-86a3-d64ec33b7d41.json",
+      "sha256": "419b86e5d7c3d8da4d3b58ad8085ac5f28a30bb34390717a239d99f37616ddeb"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_real_qwen_estimate_covers11/f13-real/f13-real-428a1eac-4395-4c93-86a3-d64ec33b7d41.json",
+      "sha256": "a3dacb7831f60c4336934b7e72773883708365c294f9e70eff516aebaf841a05"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_real_qwen_estimate_covers16/f13-real/availability-ab67c0f1-355e-469f-9306-ab812b200773.json",
+      "sha256": "e2862b2c1ddfe952c943b09ba2f5d8cb34f2f0384da5a16039cf52dabaac6767"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_real_qwen_estimate_covers16/f13-real/f13-real-ab67c0f1-355e-469f-9306-ab812b200773.json",
+      "sha256": "5663dc416893256568f5ced195fbda477b9ce7ba27e2318b907fd5d85979f363"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_real_bailian_cancel_after2/f13-external/f13-os-final.json",
+      "sha256": "d1b0de82690d9fde8529141693c1e575da57deb066159315fd879e654f3cd861"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_real_bailian_cancel_after2/f13-external/availability-8d139d2e-8fb9-4c90-826a-2ef2e171b70d.json",
+      "sha256": "79596dcbc95d98ed2cee4519aef9b105f882e3a36b0d30a54269440a6ef1b3e7"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_real_bailian_cancel_after2/f13-external/f13-os-8d139d2e-8fb9-4c90-826a-2ef2e171b70d.json",
+      "sha256": "ea9b637fe4df6d26e849ca939978d8ee9af9247cdda26cee4666e89949e69076"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_real_bailian_pending_canc1/f13-external/f13-os-final.json",
+      "sha256": "ab4cc03c6c885890c011888083cfd085b627ba1003f7c90d6efbff51e60b8cf6"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_real_bailian_pending_canc1/f13-external/f13-os-898f2cef-3b45-435f-ab6b-31f4642dd01e.json",
+      "sha256": "0f6b5cb5165e2588dc4e6f647627d0e64fa09c630883c4cd40738a106623bf53"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_real_qwen_estimate_covers2/f13-real/f13-real-a97c4aeb-1959-4667-821b-4d0f6f40ff5e.json",
+      "sha256": "ab6f213b57d0cfabc07e1b1f2bd0d063d2c4c0d5c62d24d2aa4baff910a7e191"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_real_qwen_estimate_covers2/f13-real/availability-a97c4aeb-1959-4667-821b-4d0f6f40ff5e.json",
+      "sha256": "d4bc2e6ec366dd4d5edc555aba5e83c590a0408fc8554783d3a811b2ac6ea0c0"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_real_qwen_estimate_covers5/f13-real/f13-real-59ffa9b8-c533-4be9-bc70-b63aed2ea2c4.json",
+      "sha256": "ceaac380d2adbfc29296920b5740dc3e3cee8713cf544413165dc202872c2381"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_real_qwen_estimate_covers5/f13-real/availability-59ffa9b8-c533-4be9-bc70-b63aed2ea2c4.json",
+      "sha256": "c1b79eb1d9ff84851b23da707479b793d75beca29c7f01e18a52e2e0846d96de"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_three_real_bailian_models1/f13-real/f13-real-4dc1af8c-8acc-4c48-b637-a2dcaf4bae91.json",
+      "sha256": "2d1c05d36d865c6e5e93f491bb44de5c8087479758ce5e873ee6d18aa4602100"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_three_real_bailian_models1/f13-real/availability-4dc1af8c-8acc-4c48-b637-a2dcaf4bae91.json",
+      "sha256": "7eccda078b1a92efe283384add627768fcf0814aefc8a8d3cd5d6ff2eaf05f1a"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_three_real_bailian_models6/f13-real/availability-7ab25f76-965c-40b2-85f6-8831e4fb9b97.json",
+      "sha256": "76a0349b324f8f58eb6959a4f9306c7284a39a27875297762472f5c58d969e0c"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_three_real_bailian_models6/f13-real/f13-real-7ab25f76-965c-40b2-85f6-8831e4fb9b97.json",
+      "sha256": "096500c50f54b168f5c9aea5d8bdd8317da21615f3b9814ccf2a69433af5c544"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_three_real_bailian_models8/f13-real/f13-real-bdba9837-f1c8-4972-9673-375fe2995378.json",
+      "sha256": "bc306066e22afea97d9e1f4065fbd4f22f9962ca0e97be203685597b29158f1c"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_three_real_bailian_models8/f13-real/availability-bdba9837-f1c8-4972-9673-375fe2995378.json",
+      "sha256": "9f47b726110869325d660bdc975f65860b9edbc78c86c1170c655bdb915c1bb4"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_real_qwen_estimate_covers4/f13-real/availability-c46427ac-d8e0-4ebf-be70-4eef9ff01eaa.json",
+      "sha256": "9614569ab190871a4721dd405a0c58b0bf251d22d906e7fc1ba3dc4266f3dc7b"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_real_qwen_estimate_covers4/f13-real/f13-real-c46427ac-d8e0-4ebf-be70-4eef9ff01eaa.json",
+      "sha256": "56b6940b2ca31fa62aa6968b6ce77c0e04d6118fe37d46bb322f015747b1b999"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_real_qwen_estimate_covers3/f13-real/availability-5c9d8bee-ece7-4f2f-aaf2-21c0c051f5b0.json",
+      "sha256": "9143cba2a9b78b32ff08073fc09485763013ceb117680d15273c15ef24e1af3b"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_real_qwen_estimate_covers3/f13-real/f13-real-5c9d8bee-ece7-4f2f-aaf2-21c0c051f5b0.json",
+      "sha256": "cccae6d44f4cf0c7aa475764d1ef166979e975d7204236ead2ddac68b663716f"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_real_bailian_pending_canc0/f13-external/f13-os-final.json",
+      "sha256": "a7431d457a29473071d1e46d430512a3ac91894e9384918a27ce7c7d2f10ad7a"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_real_bailian_pending_canc0/f13-external/f13-os-ac1b6732-501f-4851-b431-32f486d345c3.json",
+      "sha256": "5ca743b54ac9271bb11ecb03522b576aa984ce0541cd1bc80250e1cca920f4c5"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_three_real_bailian_models9/f13-real/f13-real-bae1f346-20c7-4e47-bfc3-025ded4c2bf6.json",
+      "sha256": "c7a087ae40ac40d2c9670521da28694236f58a79c2cf78afc3d38c8572ee7d7a"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_three_real_bailian_models9/f13-real/availability-bae1f346-20c7-4e47-bfc3-025ded4c2bf6.json",
+      "sha256": "c86378fc725d5290d11801427b0cda11f6ad413db11a73f500748173eba27fa3"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_three_real_bailian_models7/f13-real/availability-3535005f-ac27-4e22-bc8b-4683faadc59c.json",
+      "sha256": "7625acb0914d10adc40f3902cd5ab46963448e843661bb4534f4332d0d1ccaa8"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_three_real_bailian_models7/f13-real/f13-real-3535005f-ac27-4e22-bc8b-4683faadc59c.json",
+      "sha256": "6b41e34f1f5c349f0c987247a8e3ba87eaaf26f2d8a2f6cc5380667f63f87a1e"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_three_real_bailian_models0/f13-real/availability-78fd41cc-f5b8-4d51-b941-289468edbf87.json",
+      "sha256": "51f0f0cf782ee36468c1987119948590f1ec0b3a22f4946a9120652892b9206f"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_three_real_bailian_models0/f13-real/f13-real-78fd41cc-f5b8-4d51-b941-289468edbf87.json",
+      "sha256": "0610cfb4a83512310ec628400a665c267c786b8eb4e41fcbb3f7f0d45e400df0"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_real_bailian_schema_prese1/f13-real/availability-21d974ea-d32c-4388-a8fc-ea526b4f4d22.json",
+      "sha256": "8ff22e728fa1a610af7fc859c0ee9bbabf7e0fddd4fea764acd8332c54004d8d"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_real_bailian_external_del1/f13-external/f13-os-final.json",
+      "sha256": "ff0b3eb7f85525248966dcad1ff024d9e723ae39974e9719f4d82f73705ebc0f"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_real_bailian_external_del1/f13-external/availability-a8512120-4472-470a-9242-fc5bf756a8db.json",
+      "sha256": "95b73e93f6a79e1cc71fe762fe9e818e9cbdbe1b1501b7fcb4bd0fdd05292093"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_real_bailian_external_del1/f13-external/f13-os-a8512120-4472-470a-9242-fc5bf756a8db.json",
+      "sha256": "4604b4bafd64e2eb3ce30f6908411beb38417e25ec7c764da6631a3474b85442"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_real_bailian_external_del0/f13-external/f13-os-final.json",
+      "sha256": "8b60030c8ef042055b52cc729feb2414d5f6a2f27e31dccbfb19036315153037"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_real_bailian_external_del0/f13-external/availability-5f1496e5-33fb-49a1-9a27-69fa9b56e2c7.json",
+      "sha256": "df490590f75e1dcf3a537105d91a046bef63d8fc65cee6a3af13a2b8444688fa"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_real_bailian_external_del0/f13-external/f13-os-5f1496e5-33fb-49a1-9a27-69fa9b56e2c7.json",
+      "sha256": "7e10b401c6a768beadc8b191e3bf7a6c0e3249322ad5b46cd3235c29acf58946"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_real_bailian_schema_prese0/f13-real/availability-ee6821d9-bf59-479a-9e0b-4d6a86d7c980.json",
+      "sha256": "0f592c8f2e96e74bee33007bc3d0aa929d962a2b6bb88bc952370a428021572c"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_real_qwen_estimate_covers13/f13-real/f13-real-3e95c6e8-3736-4261-bb58-58ba846b35a7.json",
+      "sha256": "8563d825fa58344ec8e8f534ed92a38cb32127616fad4669842722b376f67769"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_real_qwen_estimate_covers13/f13-real/availability-3e95c6e8-3736-4261-bb58-58ba846b35a7.json",
+      "sha256": "41f741ff5641eaa62305d2fff642ae85fe0acda480ffe65a255e5a84434a33fb"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_real_qwen_estimate_covers14/f13-real/availability-482d9c2d-3f8c-42e5-94a3-62938642fc62.json",
+      "sha256": "1077523f6ce03f1cf628753581fe7c8bc38bc41029df85791c981a0f1fec3b4b"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_real_qwen_estimate_covers14/f13-real/f13-real-482d9c2d-3f8c-42e5-94a3-62938642fc62.json",
+      "sha256": "6405d67be20ae7ab6a967238b8f1f8aeda54c96d9c1b44499a16178306b56b59"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_real_qwen_estimate_covers22/f13-real/availability-630e4903-32c9-464e-9e03-fe5f8bb3868d.json",
+      "sha256": "a0d91c49b3bf161227653969babd9dc604b67ffd2de10b1967503b9621a37946"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_real_qwen_estimate_covers22/f13-real/f13-real-630e4903-32c9-464e-9e03-fe5f8bb3868d.json",
+      "sha256": "cc8c37a939259be6f53cd389ad0ad56dae9439a40d95adf2084aaa0a754a51f7"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_real_qwen_estimate_covers23/f13-real/f13-real-b76c9dfe-ad8d-440e-97f6-f222e5a58116.json",
+      "sha256": "70d6558f273ab7df4d188aff516523d588fb6f2f414ca3e55a3f5111c6eb201f"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_real_qwen_estimate_covers23/f13-real/availability-b76c9dfe-ad8d-440e-97f6-f222e5a58116.json",
+      "sha256": "29d32aca8356f6e84c78382b83b0b4db98376d6c694076dd25d60bed57a3f324"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_real_qwen_estimate_covers15/f13-real/availability-0bb3ca5a-c3ed-4e46-a04a-4990301f51fe.json",
+      "sha256": "998eca01d190d3c75a25027f897cab339ba8a61b22907e1212731e754759dfa5"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_real_qwen_estimate_covers15/f13-real/f13-real-0bb3ca5a-c3ed-4e46-a04a-4990301f51fe.json",
+      "sha256": "174ecf5d32b9ca79e824d44cb9f688e2d3387072fafbd2c059d8118fa572a28e"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_real_qwen_estimate_covers12/f13-real/availability-8abdb7e9-c22e-4b6c-b169-231a56a60b30.json",
+      "sha256": "231e52ba4dee5b6a4dc61f7ef8f993d1e4810f5bd6150cd2e1c6b15ef8a361a7"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_real_qwen_estimate_covers12/f13-real/f13-real-8abdb7e9-c22e-4b6c-b169-231a56a60b30.json",
+      "sha256": "bfa7262aca799ebdc3b8d954dc785e4da710a7abd54dd1ffc5934866e0f5473c"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_real_bailian_cancel_after1/f13-external/f13-os-final.json",
+      "sha256": "12be5602a668f398e8f2c3a06a7c3f162830ccb5a9bbbe9d417632fdfee60935"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_real_bailian_cancel_after1/f13-external/availability-38529a73-d91e-45e6-9f22-da574bf6f825.json",
+      "sha256": "47533c00d60a150d1f9fd66975657b88aaf4e9f0c3290b3a9532521836361964"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_real_bailian_cancel_after1/f13-external/f13-os-38529a73-d91e-45e6-9f22-da574bf6f825.json",
+      "sha256": "33ae192494c3961cf4d4b136ba51a33d5252d413031d89637284cfea04c25a5c"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_real_bailian_cancel_after0/f13-external/f13-os-393de298-43c7-4e42-8936-eb0c288843bb.json",
+      "sha256": "79edbc5da7bdd7e9e88affd7b4f54290ae9a66b4c89aebb8d97d4caa1c9f78c0"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_real_bailian_cancel_after0/f13-external/f13-os-final.json",
+      "sha256": "e22cd8b87fa6a3365797406447bf24bba677328592e7b1873798677902716fea"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_real_bailian_cancel_after0/f13-external/availability-393de298-43c7-4e42-8936-eb0c288843bb.json",
+      "sha256": "fb65e44b7b9ba68f94c115b291574ca69ceb971f829f204ed3750b14accd1bc6"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_three_real_bailian_models5/f13-real/f13-real-f96663d3-eae6-4410-9528-1ba077eb3072.json",
+      "sha256": "62896026a74c2116607c9e1f74de97cff28c447ce393bbcd2853a036f6358d11"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_three_real_bailian_models5/f13-real/availability-f96663d3-eae6-4410-9528-1ba077eb3072.json",
+      "sha256": "0e512d0d6406b57cdae98bed928c57fb4a5f6e73ca71d3288a52520c63a49ccf"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_three_real_bailian_models2/f13-real/f13-real-4467df9f-6666-4c1e-aa72-82469fe13d08.json",
+      "sha256": "e8060028d073e65e19814dd43ecd228e897a7b65a2f9a732db504e47c532c6d3"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_three_real_bailian_models2/f13-real/availability-4467df9f-6666-4c1e-aa72-82469fe13d08.json",
+      "sha256": "5186d6876371c37bc952c842189e0c0d7599ecbf460fc101f256ea31dbaf13c0"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_real_qwen_estimate_covers8/f13-real/availability-aeb075ff-caa6-48c7-afd5-1f4fa28bfffd.json",
+      "sha256": "a11623dd4a8635bf715658b1009bd346a604a28e3cc4b69890ddbcbdb9781926"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_real_qwen_estimate_covers8/f13-real/f13-real-aeb075ff-caa6-48c7-afd5-1f4fa28bfffd.json",
+      "sha256": "48a8c55f8b8fba4e7cf68ab495d37667b3f7e34c27a92c1874e7231b4a50a59a"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_real_bailian_pending_canc2/f13-external/f13-os-final.json",
+      "sha256": "14bbd1e9772fca6cef845e1e8c35da3bd5aadcedb597e3db4fbd0c08c5dc955a"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_real_bailian_pending_canc2/f13-external/f13-os-c47b185c-1bf1-4bf7-834e-cf3e0041a529.json",
+      "sha256": "2af6b2e562bbf3859ec34ccd7169534ca2a2ad95edab653df78294f80bbbdd88"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_real_qwen_estimate_covers6/f13-real/availability-8d272b45-7c19-4102-9b0d-2bc3690a1095.json",
+      "sha256": "ee7732e8a3b79cce846b3a6bfba2fe19be70eb09f81ced1db8201bb6aa852401"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_real_qwen_estimate_covers6/f13-real/f13-real-8d272b45-7c19-4102-9b0d-2bc3690a1095.json",
+      "sha256": "ae7be58c536ba0a2f10951fbc802ed35f506662576249d3a41b1333977375c07"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_real_qwen_estimate_covers1/f13-real/f13-real-241733e6-b132-4e22-94ec-518f180bec10.json",
+      "sha256": "7268f34a8e1984383a4a1b1382e33775869ecc5e8f306c11f64e33f7fc80830a"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_real_qwen_estimate_covers1/f13-real/availability-241733e6-b132-4e22-94ec-518f180bec10.json",
+      "sha256": "0c5bb5f5f4b5a3440bc9aee9c17b8eace13880ecf54b76ffe19716002a046ede"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_three_real_bailian_models3/f13-real/availability-a9e52668-e4ee-40c6-9a80-e08900cd8379.json",
+      "sha256": "a89467f9401fadc2c348e78692f8a411e5b4f68d91c5cec1778024e825bae2f1"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_three_real_bailian_models3/f13-real/f13-real-a9e52668-e4ee-40c6-9a80-e08900cd8379.json",
+      "sha256": "7c9eebd5af5738bde3ebcc065f1f7f4a4057cd4594628c73e927ce3d1077b8ec"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_three_real_bailian_models4/f13-real/availability-62363c33-f675-4bd1-b5f5-81e01cc49ea2.json",
+      "sha256": "3e3ed3d74081cacf83d4ced2cf78f1deadf5e12f893008e7d13f686df32929f9"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_three_real_bailian_models4/f13-real/f13-real-62363c33-f675-4bd1-b5f5-81e01cc49ea2.json",
+      "sha256": "8e29bbdf7a6f8597c58aa3e7dca22a3b411192ff165aedac3821604b592bf459"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_real_qwen_estimate_covers0/f13-real/availability-38bb6833-2565-419c-8e20-2677deaed378.json",
+      "sha256": "7c1523802c24edb90b2d9f2eefee574aa640940ba728d99026133bd8335899ed"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_real_qwen_estimate_covers0/f13-real/f13-real-38bb6833-2565-419c-8e20-2677deaed378.json",
+      "sha256": "b55ee10cffd5451665ee101ac451e4b3b5aa93ed35817b7c9999d3d3e28a0f72"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_real_qwen_estimate_covers7/f13-real/f13-real-f44f64e9-7ba8-4f76-bf62-79010d82d79c.json",
+      "sha256": "8ef6af306f9ee19b9af7a044d6a5a848b90269e932b7f71e21f4467221ad4030"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_real_qwen_estimate_covers7/f13-real/availability-f44f64e9-7ba8-4f76-bf62-79010d82d79c.json",
+      "sha256": "3fc60a77a82feb4be5df3ca3e0d4ff8e68e656df7449f8255a041ba89a611d01"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_real_qwen_estimate_covers9/f13-real/availability-3cece4ef-ced0-4e41-97fe-a3cc7fdee384.json",
+      "sha256": "65d8677eaf24861282ef75bd1c6ba3abca0d88f577b71f12bb3f382e48f04661"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-real-rerun/test_real_qwen_estimate_covers9/f13-real/f13-real-3cece4ef-ced0-4e41-97fe-a3cc7fdee384.json",
+      "sha256": "d2620acaa192905a08871111215e3f3b64d79c7987a766296ec9b39c7add5524"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-precision-confirmed/test_real_bailian_schema_prese5/f13-real/availability-f4613fa5-0822-464d-9bed-218c231598ae.json",
+      "sha256": "bc4b32ca40882487e1bcd55a8d6019eb2a0f6828533beb87a160ae6867633e65"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-precision-confirmed/test_real_bailian_schema_prese5/f13-real/f13-real-f4613fa5-0822-464d-9bed-218c231598ae.json",
+      "sha256": "9ebe35c3a63053c640e08dbcae229be4c191f8fcac83d6e57cba97901fc1cf0b"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-precision-confirmed/test_real_bailian_schema_prese2/f13-real/availability-8e4ec9c5-c201-41b4-84a1-eae205697613.json",
+      "sha256": "17278499d09e28e46cbf6f5c415fbe1c5dde741d2aaf3fb93d05be1e979c47ae"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-precision-confirmed/test_real_bailian_schema_prese2/f13-real/f13-real-8e4ec9c5-c201-41b4-84a1-eae205697613.json",
+      "sha256": "f64ab65518f790e1467fcb20d2d5111ed298be16fe99e608da9a85df96eb5a10"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-precision-confirmed/test_real_bailian_schema_prese3/f13-real/availability-a911bb72-72e9-44d8-98df-4374fb74f2d3.json",
+      "sha256": "94d1b3ff4295a5a5a36f0c24948658851ccd30fc4382bd97cb91e5b9348d621f"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-precision-confirmed/test_real_bailian_schema_prese3/f13-real/f13-real-a911bb72-72e9-44d8-98df-4374fb74f2d3.json",
+      "sha256": "7a8c6b22b7664f3c484dea47c2fd5113271fc312dea12760c3c1ef77ceef81b3"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-precision-confirmed/test_real_bailian_schema_prese4/f13-real/availability-935af792-faf1-4b8f-8fed-07a2d8ed54cf.json",
+      "sha256": "3b1b6693ef62f5246f01146509c8b0894387f57b6374ef8a1d9283151bddd35d"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-precision-confirmed/test_real_bailian_schema_prese4/f13-real/f13-real-935af792-faf1-4b8f-8fed-07a2d8ed54cf.json",
+      "sha256": "6ebc84e1e590c21db3fa7d8d6306e5e40098b521ada0fc9224af700a11b94c31"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-precision-confirmed/test_real_bailian_schema_prese1/f13-real/availability-799e0771-07ac-40df-a39a-d63e48716866.json",
+      "sha256": "3f98bca5fc952a49917a5746771276509ec82a196aa26e71bd7372525f3c3562"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-precision-confirmed/test_real_bailian_schema_prese1/f13-real/f13-real-799e0771-07ac-40df-a39a-d63e48716866.json",
+      "sha256": "c6ea3d9807bc0e49ec7e6e7bc2c0741d387247c059c12dcb860efe3a398ef732"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-precision-confirmed/test_real_bailian_schema_prese6/f13-real/f13-real-1ec7c05c-88a2-40af-a010-c04207b0c303.json",
+      "sha256": "becadfddb1cd68e6100f30feb3353885a6c277b31b82a4a9a89e7b2c06917886"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-precision-confirmed/test_real_bailian_schema_prese6/f13-real/availability-1ec7c05c-88a2-40af-a010-c04207b0c303.json",
+      "sha256": "1fadf839ed2526814325fa7fb194252726eac2437d3e98011d5968f6fb7480c2"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-precision-confirmed/test_real_bailian_schema_prese8/f13-real/f13-real-1e7b6159-a945-49ee-9604-937f9e61ecff.json",
+      "sha256": "ff8401b970ffe8cdcc64daeada5dc61b6c20462b66b32f8aae84eb19d025e1e1"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-precision-confirmed/test_real_bailian_schema_prese8/f13-real/availability-1e7b6159-a945-49ee-9604-937f9e61ecff.json",
+      "sha256": "1652603f220da3fbfdb43228b4c57baa0c92249837bfc64367c7da0a96434e47"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-precision-confirmed/test_real_bailian_schema_prese7/f13-real/f13-real-8fa0ba99-d9ab-4024-bca8-f63361c08332.json",
+      "sha256": "0a2d148fb84086144649739e9ebf65415ae50a12a2ac6a370fe1cf33fa7f4409"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-precision-confirmed/test_real_bailian_schema_prese7/f13-real/availability-8fa0ba99-d9ab-4024-bca8-f63361c08332.json",
+      "sha256": "fd56d24f6952face2462f9804cda7c45120438f0d21154ddf9fe71d0879aad76"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-precision-confirmed/test_real_bailian_schema_prese0/f13-real/f13-real-5631295e-1b70-46c4-8868-e953b43031e4.json",
+      "sha256": "3dbedc8a513cdc58ac0d9d197592901054b1acd70d8a2b6bc762f5ff85cd5528"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-stage-a-precision-confirmed/test_real_bailian_schema_prese0/f13-real/availability-5631295e-1b70-46c4-8868-e953b43031e4.json",
+      "sha256": "bb75467f650af5e9c5f6541b65a995052cadb2409ddffc0895dfe65ff7407ad4"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-auto-real-development-first/test_real_routing_quality_deve0/f13-real/availability-6ba23540-91ef-4d12-8009-78ddbc8b5f69.json",
+      "sha256": "0349d5d5a4741b150c69255fb4244f7c7133bc9af08ace71f9227bf99d158eed"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-auto-real-development-first/test_real_routing_quality_deve0/f13-real/availability-7f913e12-0872-4b69-ac6f-e8d46c2f13ba.json",
+      "sha256": "dfbcd3dc74db813d7da99d39d9d7a41b53399850de5f603f720740b3c0cab705"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-auto-real-development-first/test_real_routing_quality_deve0/f13-real/availability-262c0a9b-e81f-4569-b6da-1104cf44b53a.json",
+      "sha256": "189b39a50f982fdb66b6f28cdbf7b8464b9e4cfc81d154294418955d9a8813c6"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-auto-real-development-first/test_real_routing_quality_deve0/f13-real/availability-3d84da5d-658f-4078-91cc-3a02bb2662b5.json",
+      "sha256": "f144680db71cb4b897d71294230a4df0b49a6614ab197f1fcb25e34ae475324d"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-auto-real-development-first/test_real_routing_quality_deve0/f13-real/f13-real-9d58e281-643d-41c4-94aa-c89cd79aabaf.json",
+      "sha256": "8b1a59371e58ac90bbf3c97fcdb5157c4fb937d2b1be1bc51365ebb3c4eba659"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-auto-real-development-first/test_real_routing_quality_deve0/f13-real/availability-55d1193b-05e8-4438-80f9-f5782ad16bc3.json",
+      "sha256": "8db7970d8ce2152f9b184421f0bbc0b2e211872c061353c4a854183c3e347019"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-auto-real-development-first/test_real_routing_quality_deve0/f13-real/availability-018e801e-c2ab-4993-b794-9a5f3a3b1947.json",
+      "sha256": "c0651e412dc664e7e28f84dc3759ce46ff84c3547093bf8c9a06a800e4e20468"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-auto-real-development-first/test_real_routing_quality_deve0/f13-real/f13-real-e2a94fda-861b-4cba-af3f-804077c150b7.json",
+      "sha256": "a26ce6d0386f4ffc992047ad00af9a68c16385ddb6e4394025240905c0ded033"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-auto-real-development-first/test_real_routing_quality_deve0/f13-real/availability-a1a5b88c-9fd9-4734-9b5f-5ab761448e65.json",
+      "sha256": "9154266d62cfc2565a4a033a254b37ff5adcb02fe6c7c6505897d0c418318fa9"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-auto-real-development-first/test_real_routing_quality_deve0/f13-real/f13-real-87919ffa-7a34-4cae-a66e-5501c84b9fd8.json",
+      "sha256": "3be0121bd8f73ef6e278c8f636d7ce0df7bc84ad8a8bc8579bce0a0233396f32"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-auto-real-development-first/test_real_routing_quality_deve0/f13-real/availability-4f178e27-f929-4391-857b-61d4c5ec36f2.json",
+      "sha256": "7ac1096bd8feb9006129a1186649abd371909cd0cb574010bdbbfb0a010baa04"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-auto-real-development-first/test_real_routing_quality_deve0/f13-real/f13-real-12f9f3ce-6e89-4a60-add1-36d7a0c10871.json",
+      "sha256": "5c0999c872345df3d96c7b71e1421e52d5c1c17d06de766aefdcdd96d65c0ee1"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-auto-real-development-first/test_real_routing_quality_deve0/f13-real/f13-real-a46c52f4-f78c-417e-baf1-7b730fcf281d.json",
+      "sha256": "43508fcf8aedc936e190688072afa4e74fafbe39ad1ef7d53d396c516f107e69"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-auto-real-development-first/test_real_routing_quality_deve0/f13-real/f13-real-b04e6480-22d6-4946-b97f-e860d192291b.json",
+      "sha256": "e24e141fb543a5bbb98f12e09b851d36e6a2ddbef150b33b8f7a76bb59a29bed"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-auto-real-development-first/test_real_routing_quality_deve0/f13-real/f13-real-e53f0196-a3c7-43e0-ade5-7d55b711ea3b.json",
+      "sha256": "e5bf2a061d79fcbb0b3c88baf8e8a3333b6f0bb4b20791267f5ce0fe7bf142fa"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-auto-real-development-first/test_real_routing_quality_deve0/f13-real/f13-real-1f41f66e-6a72-4f6c-a84f-baef07da4f01.json",
+      "sha256": "fbb76c7b1793950e2988edc4cb3f4b74a4dd39cd761470afde12fd6784bdf0c5"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-auto-real-development-first/test_real_routing_quality_deve0/f13-real/availability-f183a456-e341-4357-8970-7fa40a46d870.json",
+      "sha256": "c4840d09b03b221b497d1fe58ec05bb8298125e87901f5a2322023ce41651ee2"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-auto-real-development-first/test_real_routing_quality_deve0/f13-real/availability-516e8619-e829-4cbb-ab52-87e1ed058692.json",
+      "sha256": "7acad9874fe647bf65b0f64c117c150075bd45870dbb9b62637ebd910d3d34ac"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-auto-real-development-first/test_real_routing_quality_deve0/f13-real/availability-a35d66c1-b28d-4b01-9822-70c028546eda.json",
+      "sha256": "6d7273a95d51eafce7165ba177891eb5aafb9a03c3de2d305fdc8eac179f012a"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-auto-real-development-first/test_real_routing_quality_deve0/f13-real/availability-11abea27-4b4e-4ec3-8d7b-c6704cfa2d24.json",
+      "sha256": "80439f564f565740a1b05cad65687352d4e0f01bf71bc5f93d7105ff394794b2"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-auto-real-development-first/test_real_routing_quality_deve0/f13-real/availability-b6753ff6-b454-49ec-a70e-fc751c273ac5.json",
+      "sha256": "faeaf1f1988ec81dd42ad19786fde6aea3bbb822a06ebd30bc9ba235d3f146b7"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-auto-real-development-first/test_real_routing_quality_deve0/f13-real/f13-real-77772784-5208-4e0c-be95-80691d493dea.json",
+      "sha256": "d85e075e688ee81599b533c355670201b2cb2fafce8d411f38015c85dc052ace"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-auto-real-development-first/test_real_routing_quality_deve0/f13-real/availability-13bb20c3-ed50-4812-8dea-241e9f22d25d.json",
+      "sha256": "c39bec9d0466015249668e9879a8a017ef70db655c639769b259e002e67fc605"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-auto-real-development-first/test_real_routing_quality_deve0/f13-real/f13-real-6ca9fe79-82c6-431c-bc66-7768a207542b.json",
+      "sha256": "4b066198f36564b1878a71b7608bf75e1e08c39fe714c6ea5f61128a084e84aa"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-auto-real-development-first/test_real_routing_quality_deve0/f13-real/availability-d734bd85-e864-48c1-8224-5a43beb01e32.json",
+      "sha256": "df05205d48837999fffb5d8cb02a52179f8bc800ed5c9d1dc32a8508457ce519"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-auto-real-development-first/test_real_routing_quality_deve0/f13-real/availability-93db559c-fc85-4111-872b-38a222e2d7a9.json",
+      "sha256": "d0935cd628d816b89fe0670f4557e831128b7b60e6ef1ba140898c725171fb35"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-auto-real-development-first/test_real_routing_quality_deve0/f13-real/availability-6947a3ad-a698-44e0-9afd-6600e88a6e36.json",
+      "sha256": "1b3087d9f126cafd8a76f6540eeb575d95887f61978d5777728a6fd52d145b60"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-auto-real-development-first/test_real_routing_quality_deve0/f13-real/availability-4532d4e9-235d-4fa6-852f-889ff00cd155.json",
+      "sha256": "f87c02cd8ab590b547bdd8f9f0887bbc8e6ad67b368ee9ffe4782e8e645b587f"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-auto-real-development-first/test_real_routing_quality_deve0/f13-real/availability-de34f0de-f15b-4504-9b6f-12139ca5f75b.json",
+      "sha256": "fcbac73b0a5969d3b0cfa751d803e1f3e0105d2e2872f03af05e262c6ce75c2e"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-auto-real-development-first/test_real_routing_quality_deve0/f13-real/availability-1be6d04d-5433-49bf-995e-f01975c94f54.json",
+      "sha256": "8369469a27a885d64de371ec7cfc514235c9f1aaef269c3ddeeca6a3c58be13e"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-auto-real-development-first/test_real_routing_quality_deve0/f13-real/availability-77772784-5208-4e0c-be95-80691d493dea.json",
+      "sha256": "bb573fec44bb8e6645508c25a27b0035e2a326209df9e1e4e1a6aa01b2bbbe7a"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-auto-real-development-first/test_real_routing_quality_deve0/f13-real/f13-real-13bb20c3-ed50-4812-8dea-241e9f22d25d.json",
+      "sha256": "a94898438e9b1029f03acba546f19c0696a298ede21295c36de290cc98f04954"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-auto-real-development-first/test_real_routing_quality_deve0/f13-real/availability-6ca9fe79-82c6-431c-bc66-7768a207542b.json",
+      "sha256": "b6c59e44db7ec35c5aedd6d06aedc7c031cc96e9ae4c07ab6e55b87ad5be35d1"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-auto-real-development-first/test_real_routing_quality_deve0/f13-real/f13-real-b6753ff6-b454-49ec-a70e-fc751c273ac5.json",
+      "sha256": "9e0adfadd76ac861f7dbe6646abd585afa76d33b46e08753c0c80f76e3a9c748"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-auto-real-development-first/test_real_routing_quality_deve0/f13-real/f13-real-11abea27-4b4e-4ec3-8d7b-c6704cfa2d24.json",
+      "sha256": "9b44d39ce0cdb78ba135ddd2769bfc4350aace3a37911959b05bd28b9423f3e3"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-auto-real-development-first/test_real_routing_quality_deve0/f13-real/f13-real-a35d66c1-b28d-4b01-9822-70c028546eda.json",
+      "sha256": "995009a9c13f300a1ce945fb93d73865c9a7ed7fe3c2c435a16786bf68e5e77e"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-auto-real-development-first/test_real_routing_quality_deve0/f13-real/f13-real-de34f0de-f15b-4504-9b6f-12139ca5f75b.json",
+      "sha256": "d282e06e6b28ec48be930e18c7067dd2dbfc148af7b999b1d081097a77a88556"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-auto-real-development-first/test_real_routing_quality_deve0/f13-real/f13-real-1be6d04d-5433-49bf-995e-f01975c94f54.json",
+      "sha256": "4aaac2b221a1e9e465841ac2117400b340fe544ad11e26d560ab0d95ef701732"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-auto-real-development-first/test_real_routing_quality_deve0/f13-real/f13-routing-development-0476ca7f03f845ef869d74b10edb7659.json",
+      "sha256": "52a2830ac287d50c19754c17b203a37e6caaa796d6d138e0cb023548798f30ee"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-auto-real-development-first/test_real_routing_quality_deve0/f13-real/f13-real-6947a3ad-a698-44e0-9afd-6600e88a6e36.json",
+      "sha256": "68225ce2fb909f2df204a10d4d0cf77ad09d145bfc5d2ec9119638112f319c77"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-auto-real-development-first/test_real_routing_quality_deve0/f13-real/f13-real-4532d4e9-235d-4fa6-852f-889ff00cd155.json",
+      "sha256": "c34c1e00c983500a0a6161676e9b36cd0c0fb43f847e0b34e836c36202250349"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-auto-real-development-first/test_real_routing_quality_deve0/f13-real/f13-real-d734bd85-e864-48c1-8224-5a43beb01e32.json",
+      "sha256": "b3bbe691dcf051e1d9aea01a3d062ea697fe9bbc23bcb955d59fa2feb6bdac44"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-auto-real-development-first/test_real_routing_quality_deve0/f13-real/f13-real-93db559c-fc85-4111-872b-38a222e2d7a9.json",
+      "sha256": "01836fc1b820cb1b58337b76dc47d4902d47283e10df6c763d46698e220db433"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-auto-real-development-first/test_real_routing_quality_deve0/f13-real/availability-e2a94fda-861b-4cba-af3f-804077c150b7.json",
+      "sha256": "350d2a0fba332255e1a033d65dc16bad284277903a9840d7d9f0ef46bbbac127"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-auto-real-development-first/test_real_routing_quality_deve0/f13-real/f13-real-a1a5b88c-9fd9-4734-9b5f-5ab761448e65.json",
+      "sha256": "ef40a199b7b4b3de1329c9f5e000648fde5bce90717ca342696d4bd8583d9fe2"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-auto-real-development-first/test_real_routing_quality_deve0/f13-real/f13-real-55d1193b-05e8-4438-80f9-f5782ad16bc3.json",
+      "sha256": "f07b34c3ae09f8a8563e6fb70081840b5b7c2f347009bdb1296bbc603f026d3c"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-auto-real-development-first/test_real_routing_quality_deve0/f13-real/f13-real-018e801e-c2ab-4993-b794-9a5f3a3b1947.json",
+      "sha256": "8415fe515a9abd3773c7e4722e76503e002b58b3124259c27449ccb47c53cd84"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-auto-real-development-first/test_real_routing_quality_deve0/f13-real/f13-real-262c0a9b-e81f-4569-b6da-1104cf44b53a.json",
+      "sha256": "a904cdd19961e0acbe0ed86c4b63d457a7ea72ddccaf7e49317dbe66802a9417"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-auto-real-development-first/test_real_routing_quality_deve0/f13-real/f13-real-3d84da5d-658f-4078-91cc-3a02bb2662b5.json",
+      "sha256": "3fe87adbfd98ce20cd8a6c8e951e9f255834142f5c2e597ed7b64d84590f9c55"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-auto-real-development-first/test_real_routing_quality_deve0/f13-real/availability-9d58e281-643d-41c4-94aa-c89cd79aabaf.json",
+      "sha256": "b0df2223584d758115347a349690c0ed1bb8f4c2a443c3f96f70f27f89a0edc5"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-auto-real-development-first/test_real_routing_quality_deve0/f13-real/f13-real-6ba23540-91ef-4d12-8009-78ddbc8b5f69.json",
+      "sha256": "19acf5a3615c6a880988549b8dd79bbdf00b844889f57f8726b8fa5ae156ceb8"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-auto-real-development-first/test_real_routing_quality_deve0/f13-real/f13-real-7f913e12-0872-4b69-ac6f-e8d46c2f13ba.json",
+      "sha256": "bad4520d6817ed9194daaf995610b1796df49f667c0fc8479c866e0769d127f3"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-auto-real-development-first/test_real_routing_quality_deve0/f13-real/f13-real-f183a456-e341-4357-8970-7fa40a46d870.json",
+      "sha256": "d84a4d4e8e9f3859378ed5f9b76d53ac80eb0655e9668a7e7c4130ace5bbd066"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-auto-real-development-first/test_real_routing_quality_deve0/f13-real/f13-real-516e8619-e829-4cbb-ab52-87e1ed058692.json",
+      "sha256": "4d4574d2aa9c0e2934866afb7387ef67974697626310ff1f3be973888c2f4ac0"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-auto-real-development-first/test_real_routing_quality_deve0/f13-real/availability-b04e6480-22d6-4946-b97f-e860d192291b.json",
+      "sha256": "0c245fd6518b07eaa7dd1084513c2bc399840949eeafe1a7f4c46fb676e31b81"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-auto-real-development-first/test_real_routing_quality_deve0/f13-real/availability-e53f0196-a3c7-43e0-ade5-7d55b711ea3b.json",
+      "sha256": "afe16c1e460b764d7343072240ac5fbff439f92352497220491a79a60f90aa4c"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-auto-real-development-first/test_real_routing_quality_deve0/f13-real/availability-1f41f66e-6a72-4f6c-a84f-baef07da4f01.json",
+      "sha256": "367921b6322636bdd9100fc21e8df46c5721d8d97af944cb2caaa43f7ad90682"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-auto-real-development-first/test_real_routing_quality_deve0/f13-real/availability-12f9f3ce-6e89-4a60-add1-36d7a0c10871.json",
+      "sha256": "2e374d709608bb8a192e63a7d9ac47f25aa0338d1ccf33adb0e0767ed9e5f156"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-auto-real-development-first/test_real_routing_quality_deve0/f13-real/availability-a46c52f4-f78c-417e-baf1-7b730fcf281d.json",
+      "sha256": "c5709e4aecf23bb7f8b257ceab951adcc274c6c04efecdab976898c0f0026d61"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-auto-real-development-first/test_real_routing_quality_deve0/f13-real/availability-87919ffa-7a34-4cae-a66e-5501c84b9fd8.json",
+      "sha256": "90b6c86cee07643db6446197636b288dd3fe56314687ceae7f52c07abe3bde4d"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-auto-real-development-first/test_real_routing_quality_deve0/f13-real/f13-real-4f178e27-f929-4391-857b-61d4c5ec36f2.json",
+      "sha256": "80020607710fc1c777c6db273fa7c901a169d214de87b7287c225d92e0a2d70a"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-auto-real-development-first/test_real_auto_routing_public_1/f13-real/availability-d12aefde-b309-4bb0-86e0-debb26b9dc4b.json",
+      "sha256": "20dba0341644d7110aa837d8fc36fbfc89e4bab8cdb5cc56d8073ef5f0ad59c4"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-auto-real-development-first/test_real_auto_routing_public_1/f13-real/f13-real-d12aefde-b309-4bb0-86e0-debb26b9dc4b.json",
+      "sha256": "dc552bf92ab3a2c7a78fde14b84fd0b0c8fdc35b0fdca510f5a900a9b099f1a6"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-auto-real-development-first/test_real_auto_routing_public_0/f13-real/availability-1ee3f92a-ebdf-4201-b371-4bb359ca1574.json",
+      "sha256": "5b0ded8694b5ed96aae3db79b0769a6bf94a4e542079fd4dfc57ae39500a1a84"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-auto-real-development-first/test_real_auto_routing_public_0/f13-real/f13-real-1ee3f92a-ebdf-4201-b371-4bb359ca1574.json",
+      "sha256": "5a3e4d43a0cbcc72a9999b51e917967473c2ff19ace64d9da6ddb42ffdc23023"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-auto-real-development-first/test_real_auto_routing_public_2/f13-real/f13-real-8505396e-e5fe-4491-885d-74090878e08a.json",
+      "sha256": "f046898284cdb00ee23a7649fec61804a156699a526fcd3486eacba7475ad6ba"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-auto-real-public-rerun/test_real_auto_routing_public_1/f13-real/f13-real-7511fce3-f40e-45fa-ab7e-1c4399e4738f.json",
+      "sha256": "2e69b3b761feb0ab7b5744b127500eb1a968d79e18ba44d2c5bb099f57096b57"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-auto-real-public-rerun/test_real_auto_routing_public_1/f13-real/availability-7511fce3-f40e-45fa-ab7e-1c4399e4738f.json",
+      "sha256": "a4225e6655c68535188dc99d805891e4aff59a265b3908b2cb1d35927db9ab88"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-auto-real-public-rerun/test_real_auto_routing_public_0/f13-real/f13-real-38d9a68f-8dca-422b-9a2a-3a51779c9427.json",
+      "sha256": "ad0f3b533eead6f3f30e9c54f95d1bcac2284d1924ab1dee4d6aace38f7b6938"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-auto-real-public-rerun/test_real_auto_routing_public_0/f13-real/availability-38d9a68f-8dca-422b-9a2a-3a51779c9427.json",
+      "sha256": "18cd64574336241cc2445a4aae17017e1abaffe5a4363186f1cf66c3de97af40"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-auto-real-public-rerun/test_real_auto_routing_public_2/f13-real/availability-2e7cb4af-9e22-42de-ae92-460628aa651c.json",
+      "sha256": "0cfe97e4ecb7cda441942e0c936a55ba2667eabbeaa1b4454f651b4886baec48"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-auto-real-public-rerun/test_real_auto_routing_public_2/f13-real/f13-real-2e7cb4af-9e22-42de-ae92-460628aa651c.json",
+      "sha256": "87249808a0e28ba0b770493853ac0f09e11fd332cc33ef5186841ff4aea956be"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-auto-real-default-first/test_controlled_classifier_5030/f13-real/f13-real-8a407dbb-b4b3-4a82-bf1a-4b7107619080.json",
+      "sha256": "f33d8c65a6017489829575619e2e1b796476ec1d0be4c17f85656a66011e2c4a"
+    },
+    {
+      "path": "docs/features/F13/artifacts/development/pytest-auto-real-default-first/test_controlled_classifier_5030/f13-real/availability-8a407dbb-b4b3-4a82-bf1a-4b7107619080.json",
+      "sha256": "88eba547420cd9b6479d3e9fe61992a8d051cc3711924a462b5a677e57dc483c"
+    }
+  ],
+  "known_secret_scan": "matched against current actual upstream keys; no matches, keys not emitted",
+  "frozen_existing_source_test_changes": []
+}

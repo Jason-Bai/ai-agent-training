@@ -1,0 +1,26 @@
+.F                                                                       [100%]
+=================================== FAILURES ===================================
+_______ test_bailian_queued_and_unknown_early_model_reach_real_terminal ________
+
+stream_server = namespace(data=b'data: {"type": "response.created", "response": {"object": "response", "status": "queued", "model": ""...rt': 'none'}, 'store': False}}], split=False, delay_headers=0, delay_body=0, reset=False, url='http://127.0.0.1:54831')
+
+    async def test_bailian_queued_and_unknown_early_model_reach_real_terminal(stream_server):
+        terminal=response();terminal['model']='qwen3.8-flash'
+        stream_server.data=(frame({'type':'response.created','response':{'object':'response','status':'queued','model':''}})
+            +frame({'type':'response.in_progress','response':{'object':'response','status':'in_progress'}})
+            +frame({'type':'response.output_text.delta','delta':'订单 A123'})
+            +frame({'type':'response.completed','response':terminal}))
+        provider=BailianProvider(stream_server.url,'FAKE-F13-KEY')
+        try:
+            events=[e async for e in provider.stream(SimpleNamespace(model_id='qwen3.8-flash'),
+                [Message(role='user',content='Question')],max_output_tokens=128,timeout_seconds=2)]
+        finally:await provider.aclose()
+>       assert ''.join(e.delta for e in events)=='订单 A123'
+E       AssertionError: assert '' == '订单 A123'
+E         
+E         - 订单 A123
+
+tests/protocol/test_f13_bailian.py:39: AssertionError
+=========================== short test summary info ============================
+FAILED tests/protocol/test_f13_bailian.py::test_bailian_queued_and_unknown_early_model_reach_real_terminal
+1 failed, 1 passed in 0.21s

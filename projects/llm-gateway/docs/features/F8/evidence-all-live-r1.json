@@ -1,0 +1,342 @@
+{
+  "command": [
+    "uv",
+    "run",
+    "--python",
+    "3.12",
+    "python",
+    "-W",
+    "error",
+    "-m",
+    "pytest",
+    "--run-live",
+    "-o",
+    "junit_family=xunit1",
+    "--junitxml=/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llmgw-f8-nguavuqz/all-live-fixed.xml",
+    "-ra",
+    "-q"
+  ],
+  "start": "2026-11-02T13:38:30.009007+00:00",
+  "end": "2026-11-02T13:47:58.138493+00:00",
+  "elapsed": 568.1292604160262,
+  "exit_code": 0,
+  "suite_counts": {
+    "passed": 1817
+  },
+  "expected_collection": 1817,
+  "full_node_set_match": true,
+  "old_renamed": [
+    "tests/integration/test_f5o1_http.py::test_probe_liveness_and_unknown_paths_do_not_persist_model_requests"
+  ],
+  "new_or_renamed": 42,
+  "live": [
+    {
+      "file": "tests/live/test_f5_streaming.py",
+      "name": "test_real_streaming[F5-L01-primary-stream]",
+      "properties": {
+        "request_id": "28f25f84-f502-4717-99d3-1f3c0a4c45af",
+        "adapter": "deepseek",
+        "api_protocol": "chat_completions",
+        "actual_model": "deepseek-flash",
+        "upstream_status": "None",
+        "upstream_finish_reason": "stop",
+        "prompt_fingerprint": "e0ae2f3507820159bd433e9af45807220a1f22c7216f1272257df60823259cc2",
+        "counter_version": "314113f8a7dadb388215396ba5fbee2c610a04d6:response-schema-v1",
+        "max_output_tokens": "128",
+        "timeout_seconds": "30",
+        "local_input_tokens": "514",
+        "input_delta": "0",
+        "input_tokens": "514",
+        "output_tokens": "9",
+        "total_tokens": "523",
+        "ttft_ms": "552.2261659498326",
+        "generation_duration_ms": "108.06699999375269",
+        "stream_duration_ms": "631.9230409571901",
+        "client_first_delta_ms": "571.0762090166099",
+        "delta_event_count": "9",
+        "attempts": "1",
+        "status": "completed"
+      }
+    },
+    {
+      "file": "tests/live/test_f5_streaming.py",
+      "name": "test_real_streaming[F5-L02-backup-stream]",
+      "properties": {
+        "request_id": "4fb0965e-6b43-4658-886d-e5047d80d3d5",
+        "adapter": "openai_compatible",
+        "api_protocol": "responses",
+        "actual_model": "deepseek-flash",
+        "upstream_status": "completed",
+        "upstream_finish_reason": "None",
+        "prompt_fingerprint": "e0ae2f3507820159bd433e9af45807220a1f22c7216f1272257df60823259cc2",
+        "counter_version": "314113f8a7dadb388215396ba5fbee2c610a04d6:response-schema-v1",
+        "max_output_tokens": "128",
+        "timeout_seconds": "30",
+        "local_input_tokens": "514",
+        "input_delta": "0",
+        "input_tokens": "514",
+        "output_tokens": "9",
+        "total_tokens": "523",
+        "ttft_ms": "771.9140829867683",
+        "generation_duration_ms": "193.92325001535937",
+        "stream_duration_ms": "869.0984169952571",
+        "client_first_delta_ms": "785.2925000479445",
+        "delta_event_count": "9",
+        "attempts": "1",
+        "status": "completed"
+      }
+    },
+    {
+      "file": "tests/live/test_f5o1_acceptance.py",
+      "name": "test_real_call_and_committed_records[text-general-primary-deepseek-chat_completions]",
+      "properties": {
+        "request_id": "43fa955a-8fb9-484b-8848-72473a4789b8",
+        "mode": "text",
+        "adapter": "deepseek",
+        "protocol": "chat_completions",
+        "actual_model": "deepseek-flash",
+        "input_tokens": "243",
+        "output_tokens": "20",
+        "events": "0"
+      }
+    },
+    {
+      "file": "tests/live/test_f5o1_acceptance.py",
+      "name": "test_real_call_and_committed_records[text-general-backup-openai_compatible-responses]",
+      "properties": {
+        "request_id": "9a333948-6158-44da-bf7e-9daba7b29695",
+        "mode": "text",
+        "adapter": "openai_compatible",
+        "protocol": "responses",
+        "actual_model": "deepseek-flash",
+        "input_tokens": "243",
+        "output_tokens": "16",
+        "events": "0"
+      }
+    },
+    {
+      "file": "tests/live/test_f5o1_acceptance.py",
+      "name": "test_real_call_and_committed_records[structured-general-primary-deepseek-chat_completions]",
+      "properties": {
+        "request_id": "dbfc7bc2-61de-44e4-8cb5-a223c4a4d0a4",
+        "mode": "structured",
+        "adapter": "deepseek",
+        "protocol": "chat_completions",
+        "actual_model": "deepseek-flash",
+        "input_tokens": "477",
+        "output_tokens": "12",
+        "events": "0"
+      }
+    },
+    {
+      "file": "tests/live/test_f5o1_acceptance.py",
+      "name": "test_real_call_and_committed_records[structured-general-backup-openai_compatible-responses]",
+      "properties": {
+        "request_id": "f666c292-9604-4f14-a940-8e4b76883384",
+        "mode": "structured",
+        "adapter": "openai_compatible",
+        "protocol": "responses",
+        "actual_model": "deepseek-flash",
+        "input_tokens": "476",
+        "output_tokens": "15",
+        "events": "0"
+      }
+    },
+    {
+      "file": "tests/live/test_f5o1_acceptance.py",
+      "name": "test_real_call_and_committed_records[streaming-general-primary-deepseek-chat_completions]",
+      "properties": {
+        "request_id": "ec6fdedf-62c4-4f01-b58f-bf161c34b525",
+        "mode": "streaming",
+        "adapter": "deepseek",
+        "protocol": "chat_completions",
+        "actual_model": "deepseek-flash",
+        "input_tokens": "243",
+        "output_tokens": "20",
+        "events": "21"
+      }
+    },
+    {
+      "file": "tests/live/test_f5o1_acceptance.py",
+      "name": "test_real_call_and_committed_records[streaming-general-backup-openai_compatible-responses]",
+      "properties": {
+        "request_id": "3a34c39a-9ff7-45da-9610-83eec80a9e04",
+        "mode": "streaming",
+        "adapter": "openai_compatible",
+        "protocol": "responses",
+        "actual_model": "deepseek-flash",
+        "input_tokens": "243",
+        "output_tokens": "15",
+        "events": "16"
+      }
+    },
+    {
+      "file": "tests/live/test_f5o2_acceptance.py",
+      "name": "test_real_two_stage_stream_disconnect_and_resume[general-primary-deepseek-chat_completions]",
+      "properties": {
+        "request_id": "b366b130-d51d-4c34-8f01-ee680cd10d51",
+        "adapter": "deepseek",
+        "protocol": "chat_completions",
+        "actual_model": "deepseek-flash",
+        "input_tokens": "243",
+        "output_tokens": "22",
+        "events": "23",
+        "first_seq": "1"
+      }
+    },
+    {
+      "file": "tests/live/test_f5o2_acceptance.py",
+      "name": "test_real_two_stage_stream_disconnect_and_resume[general-backup-openai_compatible-responses]",
+      "properties": {
+        "request_id": "4fadd7b9-8d3d-4010-aefa-fb355da0b025",
+        "adapter": "openai_compatible",
+        "protocol": "responses",
+        "actual_model": "deepseek-flash",
+        "input_tokens": "243",
+        "output_tokens": "23",
+        "events": "24",
+        "first_seq": "1"
+      }
+    },
+    {
+      "file": "tests/live/test_real_providers.py",
+      "name": "test_real_provider_case[F4-L01-primary-completion]",
+      "properties": {
+        "request_id": "44c09236-5aae-4ae3-8d93-beded77398b3",
+        "provider": "deepseek-main",
+        "adapter": "deepseek",
+        "api_protocol": "chat_completions",
+        "upstream_status": "None",
+        "upstream_finish_reason": "stop",
+        "actual_model": "deepseek-flash",
+        "counter_version": "314113f8a7dadb388215396ba5fbee2c610a04d6:response-schema-v1",
+        "prompt_fingerprint": "e17a281a18c58372850707381c6590cf0278e92c475ab92f116d7a4b19c4091b",
+        "schema_fingerprint": "None",
+        "structured_output_mode": "none",
+        "local_input_tokens": "358",
+        "input_delta": "0",
+        "input_tokens": "358",
+        "output_tokens": "9",
+        "total_tokens": "367",
+        "latency_ms": "714.2006669891998"
+      }
+    },
+    {
+      "file": "tests/live/test_real_providers.py",
+      "name": "test_real_provider_case[F4-L02-backup-completion]",
+      "properties": {
+        "request_id": "83c1135c-8c03-4039-a300-cf3a1e4463e2",
+        "provider": "openai-main",
+        "adapter": "openai_compatible",
+        "api_protocol": "responses",
+        "upstream_status": "completed",
+        "upstream_finish_reason": "None",
+        "actual_model": "deepseek-flash",
+        "counter_version": "314113f8a7dadb388215396ba5fbee2c610a04d6:response-schema-v1",
+        "prompt_fingerprint": "980afec5fdd5cd3e5fb6733cb12aabd5d7e38b517f2b8dd54f3e5614b4e740b2",
+        "schema_fingerprint": "None",
+        "structured_output_mode": "none",
+        "local_input_tokens": "515",
+        "input_delta": "0",
+        "input_tokens": "515",
+        "output_tokens": "9",
+        "total_tokens": "524",
+        "latency_ms": "627.2072499850765"
+      }
+    },
+    {
+      "file": "tests/live/test_real_providers.py",
+      "name": "test_real_provider_case[F4-L03-primary-structured]",
+      "properties": {
+        "request_id": "bd080d92-4a0a-4918-93e5-15825a6b5b8c",
+        "provider": "deepseek-main",
+        "adapter": "deepseek",
+        "api_protocol": "chat_completions",
+        "upstream_status": "None",
+        "upstream_finish_reason": "stop",
+        "actual_model": "deepseek-flash",
+        "counter_version": "314113f8a7dadb388215396ba5fbee2c610a04d6:response-schema-v1",
+        "prompt_fingerprint": "beb5dc7b755e5872917a6efd6268753eac2c847cad6551c46fd5ce2df189384f",
+        "schema_fingerprint": "524c4295f7fbbce035546f0a9f27a22c89050e99e3ac5c67db7a1326114d7a03",
+        "structured_output_mode": "json_object",
+        "local_input_tokens": "594",
+        "input_delta": "0",
+        "input_tokens": "594",
+        "output_tokens": "27",
+        "total_tokens": "621",
+        "latency_ms": "872.4035419872962"
+      }
+    },
+    {
+      "file": "tests/live/test_real_providers.py",
+      "name": "test_real_provider_case[F4-L04-backup-structured]",
+      "properties": {
+        "request_id": "e3dc8b20-1d7e-454d-b089-ece2c9f92ded",
+        "provider": "openai-main",
+        "adapter": "openai_compatible",
+        "api_protocol": "responses",
+        "upstream_status": "completed",
+        "upstream_finish_reason": "None",
+        "actual_model": "deepseek-flash",
+        "counter_version": "314113f8a7dadb388215396ba5fbee2c610a04d6:response-schema-v1",
+        "prompt_fingerprint": "38013c86f70143fbbf2b23af12dd40dc8956b90b700820229d72292f1fe2fa9a",
+        "schema_fingerprint": "524c4295f7fbbce035546f0a9f27a22c89050e99e3ac5c67db7a1326114d7a03",
+        "structured_output_mode": "json_schema",
+        "local_input_tokens": "615",
+        "input_delta": "0",
+        "input_tokens": "615",
+        "output_tokens": "27",
+        "total_tokens": "642",
+        "latency_ms": "849.425166961737"
+      }
+    },
+    {
+      "file": "tests/live/test_real_providers.py",
+      "name": "test_real_provider_case[F4-L05-primary-probe]",
+      "properties": {
+        "request_id": "07ffb632-6bc2-4695-8e96-9fd6397225c3",
+        "provider": "deepseek-main",
+        "adapter": "deepseek",
+        "api_protocol": "chat_completions",
+        "upstream_status": "None",
+        "upstream_finish_reason": "stop",
+        "actual_model": "deepseek-flash",
+        "counter_version": "314113f8a7dadb388215396ba5fbee2c610a04d6:response-schema-v1",
+        "prompt_fingerprint": "3a699c266e9b63288082d5c38a0dc8e1fd4bf69449be27714a44710c0a5fe457",
+        "schema_fingerprint": "None",
+        "structured_output_mode": "none",
+        "local_input_tokens": "237",
+        "input_delta": "0",
+        "input_tokens": "237",
+        "output_tokens": "1",
+        "total_tokens": "238",
+        "latency_ms": "632.5570830376819"
+      }
+    },
+    {
+      "file": "tests/live/test_real_providers.py",
+      "name": "test_real_provider_case[F4-L06-backup-probe]",
+      "properties": {
+        "request_id": "3f6b3cea-0012-4da3-b114-f29a8d34f9ba",
+        "provider": "openai-main",
+        "adapter": "openai_compatible",
+        "api_protocol": "responses",
+        "upstream_status": "completed",
+        "upstream_finish_reason": "None",
+        "actual_model": "deepseek-flash",
+        "counter_version": "314113f8a7dadb388215396ba5fbee2c610a04d6:response-schema-v1",
+        "prompt_fingerprint": "3a699c266e9b63288082d5c38a0dc8e1fd4bf69449be27714a44710c0a5fe457",
+        "schema_fingerprint": "None",
+        "structured_output_mode": "none",
+        "local_input_tokens": "237",
+        "input_delta": "0",
+        "input_tokens": "237",
+        "output_tokens": "1",
+        "total_tokens": "238",
+        "latency_ms": "934.6512500196695"
+      }
+    }
+  ],
+  "original_stdout": "........................................................................ [  3%]\n........................................................................ [  7%]\n........................................................................ [ 11%]\n........................................................................ [ 15%]\n........................................................................ [ 19%]\n........................................................................ [ 23%]\n........................................................................ [ 27%]\n........................................................................ [ 31%]\n........................................................................ [ 35%]\n........................................................................ [ 39%]\n........................................................................ [ 43%]\n........................................................................ [ 47%]\n........................................................................ [ 51%]\n........................................................................ [ 55%]\n........................................................................ [ 59%]\n........................................................................ [ 63%]\n........................................................................ [ 67%]\n........................................................................ [ 71%]\n........................................................................ [ 75%]\n........................................................................ [ 79%]\n........................................................................ [ 83%]\n........................................................................ [ 87%]\n........................................................................ [ 91%]\n........................................................................ [ 95%]\n........................................................................ [ 99%]\n.................                                                        [100%]\n1817 passed in 551.74s (0:09:11)\n",
+  "junit_sha256": "4ffa5b1d8fff163225a21a87fe937040c5c13f3098f7427d86e41dfc19fcdf0e"
+}

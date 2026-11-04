@@ -1,0 +1,3 @@
+tests/live/test_f13_classifier_cancel.py::test_real_classifier_http_cancel_closes_response_and_never_starts_generation
+
+1 test collected in 0.07s

@@ -1,0 +1,54 @@
+{
+  "corpus_version": "1.0.0",
+  "files": {
+    "development": {
+      "path": "tests/fixtures/f13_routing_development.json",
+      "sha256": "2f8679f79eea562467b0229310b9bdd7eec3a6561a1530776d72a382872ba589",
+      "cases": 30,
+      "groups": {
+        "analysis": 10,
+        "general": 10,
+        "light": 10
+      },
+      "message_chars": {
+        "min": 7,
+        "max": 37
+      },
+      "context_chars": {
+        "min": 13,
+        "max": 5539
+      },
+      "with_response_schema": 4
+    },
+    "acceptance": {
+      "path": "tests/fixtures/f13_routing_acceptance.json",
+      "sha256": "4237bab0402c6643560c23354e1b7859351bbf9ec99cdf5e5073849a429c925b",
+      "cases": 30,
+      "groups": {
+        "analysis": 10,
+        "general": 10,
+        "light": 10
+      },
+      "message_chars": {
+        "min": 7,
+        "max": 36
+      },
+      "context_chars": {
+        "min": 23,
+        "max": 3610
+      },
+      "with_response_schema": 1
+    }
+  },
+  "isolation": "Acceptance content is sealed from prompt development. Rationale and expected_group must never be sent to classifier.",
+  "coverage": [
+    "long but simple",
+    "short but complex",
+    "strong emotion",
+    "JSON format alone",
+    "insufficient information",
+    "identical question with different controlled roles",
+    "embedded route or business commands as quoted data"
+  ],
+  "real_provider_calls": 0
+}

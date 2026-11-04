@@ -1,0 +1,49 @@
+FFF.                                                                     [100%]
+=================================== FAILURES ===================================
+_____ test_inactive_flat_prices_cannot_make_fixed_tiers_calendar_dependent _____
+
+tmp_path = PosixPath('/private/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/pytest-of-baiyu/pytest-480/test_inactive_flat_prices_cann0')
+
+    def test_inactive_flat_prices_cannot_make_fixed_tiers_calendar_dependent(tmp_path):
+        data=document();data['versions'][0]['off_peak']=rates('99','99','99')
+        quote=load(tmp_path,data).quote('bailian','qwen3.7-plus',NOW,100,16)
+>       assert quote.period=='fixed'
+E       AssertionError: assert 'unknown' == 'fixed'
+E         
+E         - fixed
+E         + unknown
+
+tests/unit/test_f13_pricing.py:135: AssertionError
+____ test_restore_rejects_disordered_or_overlapping_tier_snapshot[bounds0] _____
+
+tmp_path = PosixPath('/private/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/pytest-of-baiyu/pytest-480/test_restore_rejects_disordere0')
+bounds = [1000000, 256000]
+
+    @pytest.mark.parametrize('bounds',[[1000000,256000],[256000,256000]])
+    def test_restore_rejects_disordered_or_overlapping_tier_snapshot(tmp_path,bounds):
+        snapshot=load(tmp_path).quote('bailian','qwen3.7-plus',NOW,100,16).snapshot()
+        for tier,bound in zip(snapshot['input_tiers'],bounds):tier['max_input_tokens']=bound
+>       with pytest.raises(ValueError):PriceQuote.from_snapshot(snapshot)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests/unit/test_f13_pricing.py:144: Failed
+____ test_restore_rejects_disordered_or_overlapping_tier_snapshot[bounds1] _____
+
+tmp_path = PosixPath('/private/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/pytest-of-baiyu/pytest-480/test_restore_rejects_disordere1')
+bounds = [256000, 256000]
+
+    @pytest.mark.parametrize('bounds',[[1000000,256000],[256000,256000]])
+    def test_restore_rejects_disordered_or_overlapping_tier_snapshot(tmp_path,bounds):
+        snapshot=load(tmp_path).quote('bailian','qwen3.7-plus',NOW,100,16).snapshot()
+        for tier,bound in zip(snapshot['input_tiers'],bounds):tier['max_input_tokens']=bound
+>       with pytest.raises(ValueError):PriceQuote.from_snapshot(snapshot)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests/unit/test_f13_pricing.py:144: Failed
+=========================== short test summary info ============================
+FAILED tests/unit/test_f13_pricing.py::test_inactive_flat_prices_cannot_make_fixed_tiers_calendar_dependent
+FAILED tests/unit/test_f13_pricing.py::test_restore_rejects_disordered_or_overlapping_tier_snapshot[bounds0]
+FAILED tests/unit/test_f13_pricing.py::test_restore_rejects_disordered_or_overlapping_tier_snapshot[bounds1]
+3 failed, 1 passed, 29 deselected in 0.06s

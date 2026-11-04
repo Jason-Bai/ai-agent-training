@@ -1,0 +1,129 @@
+--- r1/src/services/routing.py
++++ r2/src/services/routing.py
+@@ -107,12 +107,16 @@
+         template = validate_selection(request.prompt, self.prompts)
+         if schema is not None and not template.supports_structured_output:
+             raise GatewayError('unsupported_capability', 'Prompt 模板不支持结构化输出', 400)
+-        # Text assembly has no endpoint-dependent output contract; preserve the
+-        # existing input validation and fingerprint even for an unknown group.
++        # Cache shared text and known fingerprints, but report render overflow
++        # only when the ordered filtering reaches the render stage.
+         text_messages = None
+         if schema is None:
+-            text_messages = build_messages(request.prompt, request.messages, self.prompts)
+-            trace.prompt_fingerprint = fingerprint_messages(text_messages)
++            try:
++                text_messages = build_messages(request.prompt, request.messages, self.prompts)
++                trace.prompt_fingerprint = fingerprint_messages(text_messages)
++            except GatewayError as error:
++                if error.code != 'prompt_too_long':
++                    raise
+         group = self.registry.get_group(request.model)
+         output = group.default_output_tokens if request.max_output_tokens is None else request.max_output_tokens
+         timeout = group.default_timeout_seconds if request.timeout_seconds is None else request.timeout_seconds
+@@ -164,6 +168,8 @@
+             prefix = list(codes)[:list(codes).index(chosen) + 1]
+             codes = {name: codes[name] for name in prefix}
+             eligible = [chosen]
++            if timeout > self.registry.get_endpoint(chosen).max_timeout_seconds:
++                raise GatewayError('invalid_timeout', '探测固定超时超过端点上限', 400)
+         stage(lambda name, endpoint: (not streaming or endpoint.supports_streaming)
+               and (schema is None or endpoint.structured_output_mode != 'none'),
+               'unsupported_capability', '模型组没有支持本次调用能力的端点')
+@@ -173,6 +179,8 @@
+         def render(name, endpoint):
+             try:
+                 if schema is None:
++                    if text_messages is None:
++                        return False
+                     messages[name] = text_messages
+                 else:
+                     contract = ('{"mode":"json","schema":' + schema.canonical + '}'
+--- r1/tests/integration/test_f12_review_boundaries.py
++++ r2/tests/integration/test_f12_review_boundaries.py
+@@ -0,0 +1,55 @@
++"""R1 counterexamples: public errors, persisted diagnostics and zero side effects."""
++from fastapi.testclient import TestClient
++import pytest
++
++from f12_cases import registry, request
++from legacy_identity import HEADERS
++from providers.mock import MockProvider
++from test_f12_stream_plan import f12_pg, f12_case, app, rows, trace
++
++
++@pytest.mark.parametrize('streaming',[False,True])
++@pytest.mark.parametrize('disabled',[False,True])
++def test_render_overflow_obeys_route_stage_and_persists_rejection(f12_case,f12_pg,streaming,disabled):
++    name,config,_=f12_case
++    definition=registry({n:{'enabled':not disabled} for n in ('chat-a','responses-b')})
++    a,b=MockProvider(),MockProvider()
++    application=app(config,definition,a,b)
++    with TestClient(application,headers=HEADERS) as client:
++        body=request(streaming=streaming,
++            prompt={'name':'context_answer','version':'1.1.0','variables':{'context':'C'*10000}},
++            messages=[{'role':'user','content':'M'*10000}]).model_dump(exclude_none=True)
++        response=client.post('/v1/llm/stream' if streaming else '/v1/llm',json=body)
++        code='no_available_endpoint' if disabled else 'prompt_too_long'
++        assert response.status_code==(503 if disabled else 400)
++        assert set(response.json())=={'success','code','data','message'}
++        assert response.json()['success'] is False and response.json()['code']==code
++        assert response.json()['data'] is None
++        rid=response.headers['x-request-id'];diagnostic=trace(client,rid)
++        assert diagnostic['status']=='failed' and diagnostic['error_stage']=='routing'
++        route=diagnostic['routing']
++        assert route['selected_endpoint'] is None and route['reason']=='no_eligible_endpoint'
++        assert route['candidates']==[
++            {'endpoint_id':n,'status':'skipped','code':'endpoint_disabled' if disabled else 'prompt_too_long'}
++            for n in ('chat-a','responses-b')]
++        row,attempts,events,bills=rows(f12_pg,name,rid)
++        assert row[3] is None and not attempts and not events and not bills
++        assert not a.calls and not b.calls and not a.stream_calls and not b.stream_calls
++        assert application.state.concurrency_limiter.snapshot()['active_requests']==0
++
++
++def test_probe_timeout_rejection_has_no_attempt_or_fee_reservation(f12_case,f12_pg):
++    name,config,_=f12_case
++    a,b=MockProvider(),MockProvider()
++    application=app(config,registry({'chat-a':{'max_timeout_seconds':9}}),a,b)
++    with TestClient(application,headers=HEADERS) as client:
++        response=client.post('/v1/models/general-primary/health')
++        assert response.status_code==400
++        assert response.json()['code']=='invalid_timeout' and response.json()['data'] is None
++        rid=response.headers['x-request-id'];diagnostic=trace(client,rid)
++        assert diagnostic['status']=='failed' and diagnostic['error_code']=='invalid_timeout'
++        assert diagnostic['attempts']==[]
++        row,attempts,events,bills=rows(f12_pg,name,rid)
++        assert row[3] is None and not attempts and not events and not bills
++        assert not a.calls and not b.calls
++        assert application.state.concurrency_limiter.snapshot()['active_requests']==0
+--- r1/tests/unit/test_f12_recovery.py
++++ r2/tests/unit/test_f12_recovery.py
+@@ -101,6 +101,27 @@
+     assert not a.calls and not b.calls and not traces.attempts
+ 
+ 
++@pytest.mark.parametrize('endpoint_timeout',[9,10,11])
++@pytest.mark.parametrize('disabled_prefix',[False,True])
++async def test_probe_fixed_timeout_is_not_reduced_to_endpoint_cap(endpoint_timeout,disabled_prefix):
++    selected='responses-b' if disabled_prefix else 'chat-a'
++    changes={selected:{'max_timeout_seconds':endpoint_timeout}}
++    if disabled_prefix:changes['chat-a']={'enabled':False}
++    svc,trace,a,b,traces=service(registry(changes))
++    trace.operation='provider_probe'
++    if endpoint_timeout<10:
++        with pytest.raises(GatewayError) as caught:await svc.probe('general-primary',trace)
++        assert caught.value.code=='invalid_timeout'
++        assert not a.calls and not b.calls and not traces.attempts
++    else:
++        await svc.probe('general-primary',trace)
++        calls=b.calls if disabled_prefix else a.calls
++        assert len(calls)==1 and 0<calls[0][2]['timeout_seconds']<=10
++        assert not (a.calls if disabled_prefix else b.calls)
++        assert len(traces.attempts)==1
++    assert svc.limiter.snapshot()['active_requests']==0
++
++
+ async def test_attempt_timeouts_respect_endpoint_cap_and_request_remaining_budget():
+     a=ScriptedProvider(transient(),transient());b=ScriptedProvider(ProviderResult(text='backup'))
+     svc,trace,a,b,_=service(registry({'chat-a':{'max_timeout_seconds':1}}),a,b)

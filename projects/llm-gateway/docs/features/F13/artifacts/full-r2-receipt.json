@@ -1,0 +1,21 @@
+{
+  "command": [
+    ".venv/bin/python",
+    "-W",
+    "error",
+    "-m",
+    "pytest",
+    "--run-live",
+    "-ra",
+    "-q",
+    "-o",
+    "junit_family=xunit1",
+    "--junitxml=/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llmgw-f13-work-eifzl4on/full-r2.xml",
+    "--basetemp=/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llmgw-f13-work-eifzl4on/pytest-full-r2"
+  ],
+  "started_at": "2026-11-03T16:26:11.548132+00:00",
+  "ended_at": "2026-11-03T17:19:08.041889+00:00",
+  "elapsed_seconds": 3176.489466457977,
+  "exit_code": 1,
+  "manifest": "pre-full-r2-manifest.json"
+}

@@ -1,0 +1,212 @@
+--- round1/src/providers/openai_compatible.py
++++ round2/src/providers/openai_compatible.py
+@@ -49,6 +49,7 @@
+     async def stream(self, model, messages, *, max_output_tokens, timeout_seconds):
+         from providers.streaming import responses_events, failure
+         from pydantic import ValidationError
++        observed = {}
+         try:
+             # Streaming raw response avoids SDK model coercion and full-body buffering.
+             async with self.client.responses.with_streaming_response.create(
+@@ -56,20 +57,20 @@
+                 max_output_tokens=max_output_tokens, reasoning={'effort': 'none'},
+                 stream=True, store=False, timeout=timeout_seconds,
+             ) as response:
+-                async for event in responses_events(response.iter_lines()):
++                async for event in responses_events(response.iter_lines(), observed):
+                     yield event
+         except APITimeoutError:
+-            yield failure('provider_timeout')
++            yield failure('provider_timeout', **observed)
+         except APIConnectionError:
+-            yield failure('provider_connection_error')
++            yield failure('provider_connection_error', **observed)
+         except APIStatusError as error:
+-            yield failure(error_for_status(error.status_code).code)
++            yield failure(error_for_status(error.status_code).code, **observed)
+         except httpx2.TimeoutException:
+-            yield failure('provider_timeout')
++            yield failure('provider_timeout', **observed)
+         except httpx2.RequestError:
+-            yield failure('provider_connection_error')
++            yield failure('provider_connection_error', **observed)
+         except (ValueError, KeyError, TypeError, UnicodeError, ValidationError):
+-            yield failure('provider_invalid_response')
++            yield failure('provider_invalid_response', **observed)
+ 
+     async def aclose(self):
+         await self.client.close()
+--- round1/src/providers/deepseek.py
++++ round2/src/providers/deepseek.py
+@@ -45,6 +45,7 @@
+     async def stream(self, model, messages, *, max_output_tokens, timeout_seconds):
+         from providers.streaming import chat_events, failure
+         from pydantic import ValidationError
++        observed = {}
+         try:
+             async with self.client.stream('POST', 'chat/completions', json={
+                 'model': model.model_id, 'messages': [m.model_dump() for m in messages],
+@@ -52,16 +53,16 @@
+                 'stream': True, 'stream_options': {'include_usage': True},
+             }, timeout=timeout_seconds) as response:
+                 if not response.is_success:
+-                    yield failure(error_for_status(response.status_code).code)
++                    yield failure(error_for_status(response.status_code).code, **observed)
+                     return
+-                async for event in chat_events(response.aiter_lines()):
++                async for event in chat_events(response.aiter_lines(), observed):
+                     yield event
+         except httpx2.TimeoutException:
+-            yield failure('provider_timeout')
++            yield failure('provider_timeout', **observed)
+         except httpx2.RequestError:
+-            yield failure('provider_connection_error')
++            yield failure('provider_connection_error', **observed)
+         except (ValueError, KeyError, TypeError, UnicodeError, ValidationError):
+-            yield failure('provider_invalid_response')
++            yield failure('provider_invalid_response', **observed)
+ 
+     async def aclose(self):
+         await self.client.aclose()
+--- round1/src/providers/streaming.py
++++ round2/src/providers/streaming.py
+@@ -1,6 +1,4 @@
+ """Wire-only SSE decoding and protocol state; Gateway consumes platform events."""
+-from pydantic import ValidationError
+-
+ from contracts import Usage
+ from errors import ProviderCallError
+ from providers.base import ProviderStreamEvent, parse_responses_response
+@@ -38,7 +36,7 @@
+           'insufficient_system_resource':'provider_unavailable'}
+ 
+ 
+-async def chat_events(lines):
++async def chat_events(lines, observed):
+     terminal=None
+     async for name,data in frames(lines):
+         if data=='[DONE]':
+@@ -49,6 +47,7 @@
+         raw=loads(data)
+         if not isinstance(raw,dict) or raw.get('object')!='chat.completion.chunk':raise ValueError
+         meta=metadata(raw)
++        observed.update(meta)
+         choices=raw.get('choices')
+         if not isinstance(choices,list) or len(choices)!=1:raise ValueError
+         choice=choices[0]
+@@ -69,8 +68,9 @@
+             if usage is not None:raise ValueError
+             yield ProviderStreamEvent(delta=text,**meta)
+         elif reason=='stop':
++            terminal=ProviderStreamEvent(status='completed',usage=usage,upstream_terminal_received=True,upstream_finish_reason='stop',**meta)
++            observed.update(usage=terminal.usage,upstream_finish_reason='stop')
+             if text:yield ProviderStreamEvent(delta=text,**meta)
+-            terminal=ProviderStreamEvent(status='completed',usage=usage,upstream_terminal_received=True,upstream_finish_reason='stop',**meta)
+         else:
+             if reason not in _REASONS:raise ValueError
+             yield failure(_REASONS[reason],delta=text,usage=usage,upstream_terminal_received=True,upstream_finish_reason=reason,**meta)
+@@ -85,7 +85,7 @@
+     'response.reasoning_summary_part.added','response.reasoning_summary_part.done'}
+ 
+ 
+-async def responses_events(lines):
++async def responses_events(lines, observed):
+     refusal_seen = False
+     async for name,data in frames(lines):
+         raw=loads(data)
+@@ -116,6 +116,10 @@
+             else:raise ValueError
+             return
+         elif kind in _LIFECYCLE:
++            if kind in {'response.created','response.in_progress'}:
++                body=raw.get('response')
++                if not isinstance(body,dict) or body.get('object')!='response' or body.get('status')!='in_progress':raise ValueError
++                observed.update(metadata(body),upstream_status='in_progress')
+             item=raw.get('item') or raw.get('part')
+             if item is not None and (not isinstance(item,dict) or item.get('type') not in {'message','reasoning','output_text','reasoning_text','summary_text','refusal'}):raise ValueError
+             if isinstance(item,dict) and item.get('type')=='refusal':refusal_seen=True
+--- round1/src/services/streaming.py
++++ round2/src/services/streaming.py
+@@ -130,6 +130,8 @@
+         self.last_sent_at = monotonic()
+         if self.disconnected.is_set():
+             raise StreamFailure('client_disconnected')
++        if asyncio.get_running_loop().time() >= self.deadline:
++            raise StreamFailure('request_timeout')
+         p = self.prepared
+         self.attempt = self.traces.start_attempt(
+             self.trace, p.model_name, provider=p.model.provider, adapter=p.definition.adapter,
+--- round1/tests/unit/test_f5_execution.py
++++ round2/tests/unit/test_f5_execution.py
+@@ -413,3 +413,12 @@
+ 
+     output, trace, _, _ = await run([delayed_failure], timeout=0.01)
+     assert trace.error_code == 'request_timeout'
++
++
++async def test_no_provider_attempt_after_headers_return_beyond_deadline():
++    import time
++    async def start():
++        time.sleep(0.02)
++    output,trace,store,provider=await run([event(delta='正文'),event('completed')],timeout=0.01,start=start)
++    assert trace.error_code=='request_timeout'
++    assert trace.attempts==len(store.attempts)==provider.opened==0
+--- round1/tests/protocol/test_f5_providers.py
++++ round2/tests/protocol/test_f5_providers.py
+@@ -222,3 +222,56 @@
+     events=await collect(kind,stream_server)
+     assert events[-1].error_code=='provider_connection_error' and not events[-1].upstream_terminal_received
+     assert len(stream_server.calls)==1
++
++
++@pytest.mark.parametrize('tail',[b'',frame('INVALID')])
++async def test_chat_missing_tail_keeps_valid_usage(stream_server,tail):
++    stream_server.data=frame(chat('text'))+frame(chat(reason='stop',usage={'prompt_tokens':10,'completion_tokens':5,'total_tokens':15}))+tail
++    events=await collect(DeepSeekProvider,stream_server)
++    assert events[-1].error_code=='provider_invalid_response'
++    assert events[-1].usage is not None, 'validated Usage must survive a missing/corrupt DONE tail'
++    assert events[-1].usage.total_tokens==15
++    assert events[-1].actual_model=='deepseek-flash'
++    assert events[-1].upstream_finish_reason=='stop'
++    assert events[-1].upstream_terminal_received is False
++
++
++@pytest.mark.parametrize('tail',[b'',frame('INVALID')])
++async def test_responses_known_model_survives_later_protocol_failure(stream_server,tail):
++    created=response('in_progress');created.update(output=[],usage=None)
++    stream_server.data=frame({'type':'response.created','response':created})+tail
++    events=await collect(OpenAICompatibleProvider,stream_server)
++    assert events[-1].error_code=='provider_invalid_response'
++    assert events[-1].actual_model=='deepseek-flash'
++    assert events[-1].upstream_status=='in_progress'
++    assert events[-1].usage is None and not events[-1].upstream_terminal_received
++
++
++@pytest.mark.parametrize('tail',[b'',frame('INVALID')])
++async def test_gateway_failure_trace_retains_observed_wire_usage(stream_server,tail):
++    from contextlib import asynccontextmanager
++    from fastapi.testclient import TestClient
++    from main import create_app
++    from settings import Settings
++    stream_server.data=frame(chat('text'))+frame(chat(reason='stop',usage={'prompt_tokens':10,'completion_tokens':5,'total_tokens':15}))+tail
++    provider=DeepSeekProvider(stream_server.url,'FAKE_KEY')
++    app=create_app(settings=Settings(env='test',_env_file=None),provider=provider,model_registry=registry())
++    original=app.router.lifespan_context
++    @asynccontextmanager
++    async def lifespan(app):
++        async with original(app):
++            try:yield
++            finally:await provider.aclose()
++    app.router.lifespan_context=lifespan
++    with TestClient(app) as client:
++        response=client.post('/v1/llm/stream',json={'model':'general-primary','prompt':{'name':'basic_text','version':'1.0.0'},'messages':[{'role':'user','content':'A123'}]})
++        assert not provider.client.is_closed
++    trace=app.state.traces.requests[response.headers['x-request-id']]
++    attempt=app.state.traces.attempts[0]
++    assert response.status_code==200 and 'response.failed' in response.text
++    assert trace.error_code==attempt.error_code=='provider_invalid_response'
++    assert attempt.status=='failed' and trace.attempts==len(stream_server.calls)==1
++    assert attempt.usage.model_dump()=={'input_tokens':10,'output_tokens':5,'total_tokens':15}
++    assert attempt.upstream_finish_reason=='stop'
++    assert trace.upstream_terminal_at is None and trace.generation_duration_ms is None
++    assert provider.client.is_closed

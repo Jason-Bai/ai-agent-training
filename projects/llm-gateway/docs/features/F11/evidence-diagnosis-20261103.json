@@ -1,0 +1,405 @@
+{
+  "scope": "F11 authorized diagnosis only; not acceptance or fix",
+  "observed_at": "2026-11-03T09:37:55.507695+00:00",
+  "commands": [
+    {
+      "command": "uv run --python 3.12 python /tmp/llmgw-f11-diagnostic.py",
+      "exit_code": 0
+    },
+    {
+      "command": "uv run --python 3.12 python /tmp/llmgw-f11-direct-wire.py",
+      "exit_code": 0
+    },
+    {
+      "command": "uv run --python 3.12 python /tmp/llmgw-f11-diagnostic-rawlines.py",
+      "exit_code": 0
+    },
+    {
+      "command": "uv run --python 3.12 python /tmp/llmgw-f11-diagnostic-rawbytes.py",
+      "exit_code": 0
+    },
+    {
+      "command": "uv run --python 3.12 python -W error -m pytest tests/unit/test_f7_recovery.py tests/integration/test_f7_protocol.py -o junit_family=xunit1 --junitxml=/tmp/llmgw-f11-diagnostic-recovery.xml -q",
+      "exit_code": 0
+    }
+  ],
+  "cases": [
+    {
+      "label": "D01-primary-probe",
+      "request_id": "3bc17b3a-9be5-4731-9f9a-be91f589a8b6",
+      "scope": "real_gateway_diagnostic",
+      "status": "completed",
+      "error_code": null,
+      "elapsed_ms": 7805.943666957319,
+      "attempt_count": 1,
+      "error_stage": null,
+      "recovery": {
+        "wait_ms": 0.0,
+        "skipped_candidates": [],
+        "stop_reason": null
+      },
+      "artifact": "D01-primary-probe.json"
+    },
+    {
+      "label": "D02-backup-probe",
+      "request_id": "a28c16bc-70c3-4da3-92d6-d8aedf029631",
+      "scope": "real_gateway_diagnostic",
+      "status": "completed",
+      "error_code": null,
+      "elapsed_ms": 4600.555666023865,
+      "attempt_count": 1,
+      "error_stage": null,
+      "recovery": {
+        "wait_ms": 0.0,
+        "skipped_candidates": [],
+        "stop_reason": null
+      },
+      "artifact": "D02-backup-probe.json"
+    },
+    {
+      "label": "D03-primary-stream",
+      "request_id": "7f8b3fc6-1862-4087-bb30-807dbec7e74c",
+      "scope": "real_gateway_diagnostic",
+      "status": "completed",
+      "error_code": null,
+      "elapsed_ms": 3891.3684170111082,
+      "attempt_count": 1,
+      "error_stage": null,
+      "recovery": {
+        "wait_ms": 0.0,
+        "skipped_candidates": [],
+        "stop_reason": null
+      },
+      "artifact": "D03-primary-stream.json"
+    },
+    {
+      "label": "D04-backup-structured",
+      "request_id": "1b3b14df-16f6-488c-a01f-aa03ef862d24",
+      "scope": "real_gateway_diagnostic",
+      "status": "completed",
+      "error_code": null,
+      "elapsed_ms": 2411.3538329838775,
+      "attempt_count": 1,
+      "error_stage": null,
+      "recovery": {
+        "wait_ms": 0.0,
+        "skipped_candidates": [],
+        "stop_reason": null
+      },
+      "artifact": "D04-backup-structured.json"
+    },
+    {
+      "label": "D05-primary-text",
+      "request_id": "9817be76-b280-4885-bcd7-48e1b4862d64",
+      "scope": "real_gateway_diagnostic",
+      "status": "completed",
+      "error_code": null,
+      "elapsed_ms": 6653.314416005742,
+      "attempt_count": 1,
+      "error_stage": null,
+      "recovery": {
+        "wait_ms": 0.0,
+        "skipped_candidates": [],
+        "stop_reason": null
+      },
+      "artifact": "D05-primary-text.json"
+    },
+    {
+      "label": "D06-backup-stream",
+      "request_id": "d486b988-608c-4763-a889-c1958fc316fe",
+      "scope": "real_gateway_diagnostic",
+      "status": "failed",
+      "error_code": "request_timeout",
+      "elapsed_ms": 30374.97570901178,
+      "attempt_count": 1,
+      "error_stage": "provider",
+      "recovery": {
+        "wait_ms": 0.0,
+        "skipped_candidates": [],
+        "stop_reason": null
+      },
+      "artifact": "D06-backup-stream.json"
+    },
+    {
+      "label": "D09-backup-stream-raw",
+      "request_id": "99100555-24f5-4ff6-be0a-ecdb068e7313",
+      "scope": "real_gateway_diagnostic",
+      "status": "completed",
+      "error_code": null,
+      "elapsed_ms": 7345.326833019499,
+      "attempt_count": 1,
+      "error_stage": null,
+      "recovery": {
+        "wait_ms": 0.0,
+        "skipped_candidates": [],
+        "stop_reason": null
+      },
+      "artifact": "raw-line-phase/D09-backup-stream-raw.json"
+    },
+    {
+      "label": "D10-primary-stream-raw",
+      "request_id": "f1a47b77-e9a8-42e0-8656-0f69fbdc9819",
+      "scope": "real_gateway_diagnostic",
+      "status": "completed",
+      "error_code": null,
+      "elapsed_ms": 4208.988041966222,
+      "attempt_count": 1,
+      "error_stage": null,
+      "recovery": {
+        "wait_ms": 0.0,
+        "skipped_candidates": [],
+        "stop_reason": null
+      },
+      "artifact": "raw-line-phase/D10-primary-stream-raw.json"
+    },
+    {
+      "label": "D11-backup-structured-raw",
+      "request_id": "3b775681-d84b-48c3-a88b-e361ca55f16c",
+      "scope": "real_gateway_diagnostic",
+      "status": "completed",
+      "error_code": null,
+      "elapsed_ms": 465.38354200311005,
+      "attempt_count": 1,
+      "error_stage": null,
+      "recovery": {
+        "wait_ms": 0.0,
+        "skipped_candidates": [],
+        "stop_reason": null
+      },
+      "artifact": "raw-line-phase/D11-backup-structured-raw.json"
+    },
+    {
+      "label": "D12-backup-stream-bytes",
+      "request_id": "5a2b0acc-bacd-4b5c-88a9-1e563c41cf86",
+      "scope": "real_gateway_diagnostic",
+      "status": "completed",
+      "error_code": null,
+      "elapsed_ms": 9819.875875022262,
+      "attempt_count": 1,
+      "error_stage": null,
+      "recovery": {
+        "wait_ms": 0.0,
+        "skipped_candidates": [],
+        "stop_reason": null
+      },
+      "artifact": "raw-line-repro/D12-backup-stream-bytes.json"
+    },
+    {
+      "label": "D13-backup-stream-bytes",
+      "request_id": "b2c41729-2ac2-44b0-9e1a-84fc3794143f",
+      "scope": "real_gateway_diagnostic",
+      "status": "completed",
+      "error_code": null,
+      "elapsed_ms": 10151.044124970213,
+      "attempt_count": 1,
+      "error_stage": null,
+      "recovery": {
+        "wait_ms": 0.0,
+        "skipped_candidates": [],
+        "stop_reason": null
+      },
+      "artifact": "raw-line-repro/D13-backup-stream-bytes.json"
+    },
+    {
+      "label": "D14-backup-stream-bytes",
+      "request_id": "d6065d5d-a3c1-44e0-a222-811e29197e05",
+      "scope": "real_gateway_diagnostic",
+      "status": "completed",
+      "error_code": null,
+      "elapsed_ms": 7821.472458017524,
+      "attempt_count": 1,
+      "error_stage": null,
+      "recovery": {
+        "wait_ms": 0.0,
+        "skipped_candidates": [],
+        "stop_reason": null
+      },
+      "artifact": "raw-line-repro/D14-backup-stream-bytes.json"
+    },
+    {
+      "label": "D07-direct-backup-stream",
+      "scope": "direct_raw_http_diagnostic",
+      "http_status": 200,
+      "elapsed_ms": 8089.288165967446,
+      "exception": null,
+      "body_eof": true,
+      "artifact": "D07-direct-backup-stream.json"
+    },
+    {
+      "label": "D08-direct-primary-stream",
+      "scope": "direct_raw_http_diagnostic",
+      "http_status": 200,
+      "elapsed_ms": 12915.406000043731,
+      "exception": null,
+      "body_eof": true,
+      "artifact": "D08-direct-primary-stream.json"
+    }
+  ],
+  "upstream_headers": [
+    {
+      "phase": "",
+      "request_id": "3bc17b3a-9be5-4731-9f9a-be91f589a8b6",
+      "attempt_no": 1,
+      "status": 200
+    },
+    {
+      "phase": "",
+      "request_id": "a28c16bc-70c3-4da3-92d6-d8aedf029631",
+      "attempt_no": 1,
+      "status": 200
+    },
+    {
+      "phase": "",
+      "request_id": "7f8b3fc6-1862-4087-bb30-807dbec7e74c",
+      "attempt_no": 1,
+      "status": 200
+    },
+    {
+      "phase": "",
+      "request_id": "1b3b14df-16f6-488c-a01f-aa03ef862d24",
+      "attempt_no": 1,
+      "status": 200
+    },
+    {
+      "phase": "",
+      "request_id": "9817be76-b280-4885-bcd7-48e1b4862d64",
+      "attempt_no": 1,
+      "status": 200
+    },
+    {
+      "phase": "",
+      "request_id": "d486b988-608c-4763-a889-c1958fc316fe",
+      "attempt_no": 1,
+      "status": 200
+    },
+    {
+      "phase": "raw-line-phase",
+      "request_id": "99100555-24f5-4ff6-be0a-ecdb068e7313",
+      "attempt_no": 1,
+      "status": 200
+    },
+    {
+      "phase": "raw-line-phase",
+      "request_id": "f1a47b77-e9a8-42e0-8656-0f69fbdc9819",
+      "attempt_no": 1,
+      "status": 200
+    },
+    {
+      "phase": "raw-line-phase",
+      "request_id": "3b775681-d84b-48c3-a88b-e361ca55f16c",
+      "attempt_no": 1,
+      "status": 200
+    },
+    {
+      "phase": "raw-line-repro",
+      "request_id": "5a2b0acc-bacd-4b5c-88a9-1e563c41cf86",
+      "attempt_no": 1,
+      "status": 200
+    },
+    {
+      "phase": "raw-line-repro",
+      "request_id": "b2c41729-2ac2-44b0-9e1a-84fc3794143f",
+      "attempt_no": 1,
+      "status": 200
+    },
+    {
+      "phase": "raw-line-repro",
+      "request_id": "d6065d5d-a3c1-44e0-a222-811e29197e05",
+      "attempt_no": 1,
+      "status": 200
+    }
+  ],
+  "drained": [
+    {
+      "phase": "",
+      "observation": {
+        "observation_errors": 0,
+        "snapshot_at": "2026-11-03T09:34:04.770522+00:00",
+        "active_generations": 0,
+        "subscriptions": 0,
+        "cleanup_tasks": 0,
+        "cancellations": 0,
+        "active_requests": 0,
+        "agent_requests": {},
+        "trace_requests": 6,
+        "trace_attempts": 6,
+        "db_bytes": 8500927,
+        "requests": 6,
+        "events": 12,
+        "billing_attempts": 6,
+        "connections": 3,
+        "active_connections": 1,
+        "rss_kb": 182704,
+        "cpu_percent": 1.2,
+        "sampled_at": "2026-11-03T09:34:04.955351+00:00"
+      }
+    },
+    {
+      "phase": "raw-line-phase",
+      "observation": {
+        "observation_errors": 0,
+        "snapshot_at": "2026-11-03T09:35:39.396981+00:00",
+        "active_generations": 0,
+        "subscriptions": 0,
+        "cleanup_tasks": 0,
+        "cancellations": 0,
+        "active_requests": 0,
+        "agent_requests": {},
+        "trace_requests": 3,
+        "trace_attempts": 3,
+        "db_bytes": 8451775,
+        "requests": 3,
+        "events": 20,
+        "billing_attempts": 3,
+        "connections": 3,
+        "active_connections": 1,
+        "rss_kb": 199168,
+        "cpu_percent": 1.0,
+        "sampled_at": "2026-11-03T09:35:39.768589+00:00"
+      }
+    },
+    {
+      "phase": "raw-line-repro",
+      "observation": {
+        "observation_errors": 0,
+        "snapshot_at": "2026-11-03T09:36:43.477105+00:00",
+        "active_generations": 0,
+        "subscriptions": 0,
+        "cleanup_tasks": 0,
+        "cancellations": 0,
+        "active_requests": 0,
+        "agent_requests": {},
+        "trace_requests": 3,
+        "trace_attempts": 3,
+        "db_bytes": 8435391,
+        "requests": 3,
+        "events": 30,
+        "billing_attempts": 3,
+        "connections": 3,
+        "active_connections": 1,
+        "rss_kb": 183856,
+        "cpu_percent": 0.6,
+        "sampled_at": "2026-11-03T09:36:44.487559+00:00"
+      }
+    }
+  ],
+  "controlled_recovery_tests": {
+    "tests": 134,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "time_seconds": 5.101
+  },
+  "protection": {
+    "file_count": 196,
+    "changed": [],
+    "includes": "src/tests/safe YAML/migrations/two AGENTS; excludes real credentials"
+  },
+  "limitations": [
+    "No natural real upstream 503 observed in this batch; controlled HTTP recovery is not real-provider recovery proof.",
+    "One Responses stream timed out after the first delta; raw byte/line observers were added only to later successful calls, so that failure does not locate server vs network vs parser.",
+    "Historical failure tests lack full per-attempt raw records, except capacity sample; no reconstructed claims about all original attempts.",
+    "Real test registry has retry limits 3 total/2 per model but both fallback_models empty; cannot validate fallback.",
+    "No full --run-live/capacity/sustained acceptance run performed; F11 remains blocked."
+  ]
+}

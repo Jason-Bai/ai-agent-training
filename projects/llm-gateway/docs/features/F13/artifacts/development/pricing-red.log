@@ -1,0 +1,35 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+___ test_low_estimate_reserves_highest_tier_and_actual_usage_reselects_tier ____
+
+tmp_path = PosixPath('/private/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/pytest-of-baiyu/pytest-475/test_low_estimate_reserves_hig0')
+
+    def test_low_estimate_reserves_highest_tier_and_actual_usage_reselects_tier(tmp_path):
+>       quote=load(tmp_path).quote('bailian','qwen3.7-plus',NOW,100,16)
+              ^^^^^^^^^^^^^^
+
+tests/unit/test_f13_pricing.py:42: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/unit/test_f13_pricing.py:34: in load
+    return PriceBook.load(tmp_path)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+cls = <class 'services.prices.PriceBook'>
+config_dir = PosixPath('/private/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/pytest-of-baiyu/pytest-475/test_low_estimate_reserves_hig0')
+
+    @classmethod
+    def load(cls, config_dir: Path):
+        path = Path(config_dir) / 'prices.yaml'
+        if not path.exists():
+            return cls(Catalog(bindings={}, versions=[]))
+        try:
+            return cls(Catalog.model_validate(read_yaml(path)))
+        except ValueError:
+>           raise ConfigurationError('prices.yaml 价格配置不合法') from None
+E           services.models.ConfigurationError: prices.yaml 价格配置不合法
+
+src/services/prices.py:121: ConfigurationError
+=========================== short test summary info ============================
+FAILED tests/unit/test_f13_pricing.py::test_low_estimate_reserves_highest_tier_and_actual_usage_reselects_tier
+1 failed in 0.17s

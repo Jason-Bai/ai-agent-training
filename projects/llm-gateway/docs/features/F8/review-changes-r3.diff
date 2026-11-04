@@ -1,0 +1,528 @@
+--- r2/src/persistence/store.py
++++ r3/src/persistence/store.py
+@@ -6,6 +6,7 @@
+ from sqlalchemy.dialects.postgresql import insert as pg_insert
+ from persistence.tables import request, attempt as attempt_table, event as event_table
+ from utils.json_codec import dumps, loads
++from utils.diagnostic_values import attempt_usage, metadata_text
+ from constants import SUBSCRIPTION_PAGE_SIZE
+ 
+ TERMINAL = {'completed', 'failed', 'canceled'}
+@@ -19,7 +20,11 @@
+     fields = ('requested_model', 'prompt_name', 'prompt_version', 'prompt_fingerprint',
+               'schema_fingerprint', 'input_token_count', 'max_output_tokens', 'counter_version',
+               'structured_output_mode', 'timeout_seconds')
+-    return {name: getattr(trace, name) for name in fields}
++    values = {name: getattr(trace, name) for name in fields}
++    # Rejected client identifiers can contain characters PostgreSQL TEXT cannot store.
++    for name in ('requested_model', 'prompt_name', 'prompt_version'):
++        values[name] = metadata_text(values[name])
++    return values
+ 
+ 
+ def timing(trace):
+@@ -34,13 +39,15 @@
+ 
+ 
+ def attempt_values(trace, record):
+-    fields = ('actual_model', 'finish_reason', 'upstream_status', 'upstream_finish_reason',
+-              'latency_ms', 'provider_duration_ms', 'error_code', 'provider_error_code')
+-    result = {name: getattr(record, name) for name in fields}
++    result = {name: metadata_text(getattr(record, name)) for name in
++              ('actual_model', 'finish_reason', 'upstream_status', 'upstream_finish_reason')}
++    for name in ('latency_ms', 'provider_duration_ms', 'error_code', 'provider_error_code'):
++        result[name] = getattr(record, name)
+     result['cleanup_error_code'] = trace.cleanup_error_code
+     result['provider_entered'] = record.provider_entered
++    usage = attempt_usage(record.usage)
+     for field in ('input_tokens', 'output_tokens', 'total_tokens'):
+-        result[field] = getattr(record.usage, field) if record.usage else None
++        result[field] = getattr(usage, field) if usage is not None else None
+     return result
+ 
+ 
+--- r2/src/providers/base.py
++++ r3/src/providers/base.py
+@@ -12,37 +12,46 @@
+ from contracts import Message, StrictObject, Usage
+ from errors import PROVIDER_MESSAGES, ProviderCallError
+ from services.models import ModelConfig
+-
+-
+-class ProviderResult(StrictObject):
++from utils.diagnostic_values import attempt_usage, metadata_text
++
++
++class ProviderMetadata(StrictObject):
++    actual_model: str | None = None
++    usage: Usage | None = None
++
++    @field_validator('actual_model', 'finish_reason', 'upstream_status', 'upstream_finish_reason', check_fields=False)
++    @classmethod
++    def valid_text(cls, value):
++        if value is not None and metadata_text(value) is None:
++            raise ValueError('invalid Provider diagnostic text')
++        return value
++
++    @field_validator('usage')
++    @classmethod
++    def valid_usage(cls, value):
++        if value is not None and attempt_usage(value) is None:
++            raise ValueError('invalid per-attempt token counts')
++        return value
++
++
++class ProviderResult(ProviderMetadata):
+     text: str
+-    actual_model: str | None = None
+     finish_reason: str = 'stop'
+-    usage: Usage | None = None
+     upstream_status: str | None = None
+     upstream_finish_reason: str | None = None
+ 
+ 
+-class ProviderStreamEvent(StrictObject):
++class ProviderStreamEvent(ProviderMetadata):
+     delta: str = ''
+     status: Literal['running', 'completed', 'failed'] = 'running'
+-    usage: Usage | None = None
+     error_code: str | None = None
+     transient: bool = False
+     retry_after_seconds: float | None = Field(default=None, ge=0, allow_inf_nan=False)
+     upstream_http_status: int | None = Field(default=None, ge=400, le=599)
+     upstream_terminal_received: bool = False
+-    actual_model: str | None = None
+     upstream_status: Literal['in_progress', 'completed', 'failed', 'incomplete'] | None = None
+     upstream_finish_reason: Literal['stop', 'length', 'content_filter', 'refusal', 'tool_calls',
+                                     'aborted', 'insufficient_system_resource', 'max_output_tokens'] | None = None
+-
+-    @field_validator('actual_model', 'upstream_status', 'upstream_finish_reason')
+-    @classmethod
+-    def metadata_nonblank(cls, value):
+-        if value is not None and not value.strip():
+-            raise ValueError('stream metadata must not be blank')
+-        return value
+ 
+     @model_validator(mode='after')
+     def valid_combination(self):
+@@ -70,28 +79,32 @@
+     async def aclose(self) -> None: ...
+ 
+ 
+-def reported_model(raw):
+-    model = raw.get('model')
+-    if not isinstance(model, str) or not model.strip():
+-        raise ValueError
+-    return model
+-
+-
+-def chat_usage(raw):
+-    if raw is None:
+-        return None
+-    return Usage(input_tokens=raw['prompt_tokens'], output_tokens=raw['completion_tokens'],
+-                 total_tokens=raw['total_tokens'])
++def observe_reported_metadata(raw, observed, *, chat):
++    """Capture independent facts before rejecting malformed response data."""
++    model = metadata_text(raw.get('model'))
++    if model is not None:
++        observed['actual_model'] = model
++    usage = None
++    counts = raw.get('usage')
++    if counts is not None:
++        usage = attempt_usage(Usage(input_tokens=counts['prompt_tokens' if chat else 'input_tokens'],
++                                    output_tokens=counts['completion_tokens' if chat else 'output_tokens'],
++                                    total_tokens=counts['total_tokens']))
++        if usage is None:
++            raise ValueError('invalid Provider token counts')
++        observed['usage'] = usage
++    if model is None:
++        raise ValueError('invalid Provider model')
++    return model, usage
+ 
+ 
+ def parse_response(raw) -> ProviderResult:
+     """Validate raw wire types before SDK coercion; ignore unrelated metadata."""
+-    actual = usage = None
++    observed = {}
+     try:
+         if not isinstance(raw, dict):
+             raise ValueError
+-        actual = reported_model(raw)
+-        usage = chat_usage(raw.get('usage'))
++        actual, usage = observe_reported_metadata(raw, observed, chat=True)
+         choices = raw.get('choices')
+         if not isinstance(choices, list) or len(choices) != 1:
+             raise ValueError
+@@ -102,7 +115,7 @@
+         text = message['content']
+         reason = choice['finish_reason']
+         original_reason = reason
+-        if not isinstance(reason, str) or not reason.strip():
++        if metadata_text(reason) is None:
+             raise ValueError
+         if message.get('refusal') and reason == 'stop':
+             if not isinstance(message['refusal'], str):
+@@ -114,21 +127,17 @@
+         return ProviderResult(text=text, actual_model=actual, finish_reason=reason, usage=usage,
+                               upstream_finish_reason=original_reason)
+     except (KeyError, TypeError, ValueError, ValidationError):
+-        raise ProviderCallError(code='provider_invalid_response', actual_model=actual, usage=usage) from None
++        raise ProviderCallError(code='provider_invalid_response', **observed) from None
+ 
+ 
+ def parse_responses_response(raw) -> ProviderResult:
+     """Decode Responses without treating HTTP 200 or SDK output_text as success."""
+-    actual = usage = None
++    observed = {}
+     try:
+         if not isinstance(raw, dict) or raw.get('object') != 'response':
+             raise ValueError
+-        actual = reported_model(raw)
++        actual, usage = observe_reported_metadata(raw, observed, chat=False)
+         state = raw.get('status')
+-        usage_raw = raw.get('usage')
+-        usage = None if usage_raw is None else Usage(
+-            input_tokens=usage_raw['input_tokens'], output_tokens=usage_raw['output_tokens'],
+-            total_tokens=usage_raw['total_tokens'])
+         metadata = dict(actual_model=actual, usage=usage, upstream_status=state)
+         error, incomplete = raw.get('error'), raw.get('incomplete_details')
+         if state == 'failed':
+@@ -186,7 +195,7 @@
+             raise ValueError
+         return ProviderResult(text=''.join(parts), finish_reason='refusal' if refusal else 'stop', **metadata)
+     except (KeyError, TypeError, ValueError, ValidationError):
+-        raise ProviderCallError(code='provider_invalid_response', actual_model=actual, usage=usage) from None
++        raise ProviderCallError(code='provider_invalid_response', **observed) from None
+ 
+ 
+ def validate_result(result: ProviderResult) -> None:
+--- r2/src/providers/streaming.py
++++ r3/src/providers/streaming.py
+@@ -1,6 +1,7 @@
+ """Wire-only SSE decoding and protocol state; Gateway consumes platform events."""
+ from errors import ProviderCallError
+-from providers.base import ProviderStreamEvent, chat_usage, parse_responses_response, reported_model
++from providers.base import ProviderStreamEvent, observe_reported_metadata, parse_responses_response
++from utils.diagnostic_values import metadata_text
+ from utils.json_codec import loads
+ 
+ 
+@@ -24,10 +25,6 @@
+     # An unterminated SSE event is not a completed protocol message.
+ 
+ 
+-def metadata(raw):
+-    return {'actual_model': reported_model(raw)}
+-
+-
+ _REASONS={'length':'output_truncated','content_filter':'provider_content_filtered',
+           'refusal':'provider_refused','aborted':'provider_unavailable',
+           'insufficient_system_resource':'provider_unavailable'}
+@@ -43,11 +40,8 @@
+         if terminal is not None:raise ValueError
+         raw=loads(data)
+         if not isinstance(raw,dict) or raw.get('object')!='chat.completion.chunk':raise ValueError
+-        meta=metadata(raw)
+-        observed.update(meta)
+-        usage=chat_usage(raw.get('usage'))
+-        if usage is not None:
+-            observed['usage']=usage
++        actual,usage=observe_reported_metadata(raw, observed, chat=True)
++        meta={'actual_model':actual}
+         choices=raw.get('choices')
+         if not isinstance(choices,list) or len(choices)!=1:raise ValueError
+         choice=choices[0]
+@@ -58,6 +52,7 @@
+         if text is None:text=''
+         if not isinstance(text,str):raise ValueError
+         reason=choice.get('finish_reason')
++        if reason is not None and metadata_text(reason) is None:raise ValueError
+         refusal=delta.get('refusal')
+         if refusal is not None:
+             if not isinstance(refusal,str):raise ValueError
+@@ -99,7 +94,10 @@
+             refusal_seen = True
+         elif kind in {'response.completed','response.failed','response.incomplete'}:
+             body=raw.get('response')
+-            if not isinstance(body,dict) or kind!='response.'+str(body.get('status')):raise ValueError
++            if not isinstance(body,dict) or body.get('object')!='response':raise ValueError
++            if kind!='response.'+str(body.get('status')):
++                observe_reported_metadata(body, observed, chat=False)
++                raise ValueError
+             try:result=parse_responses_response(body)
+             except ProviderCallError as error:
+                 if error.code=='provider_invalid_response':
+@@ -122,7 +120,9 @@
+             if kind in {'response.created','response.in_progress'}:
+                 body=raw.get('response')
+                 if not isinstance(body,dict) or body.get('object')!='response' or body.get('status')!='in_progress':raise ValueError
+-                observed.update(metadata(body),upstream_status='in_progress')
++                model = metadata_text(body.get('model'))
++                if model is None:raise ValueError
++                observed.update(actual_model=model,upstream_status='in_progress')
+             item=raw.get('item') or raw.get('part')
+             if item is not None and (not isinstance(item,dict) or item.get('type') not in {'message','reasoning','output_text','reasoning_text','summary_text','refusal'}):raise ValueError
+             if isinstance(item,dict) and item.get('type')=='refusal':refusal_seen=True
+--- r2/src/utils/diagnostic_values.py
++++ r3/src/utils/diagnostic_values.py
+@@ -0,0 +1,21 @@
++"""Representable metadata for one persisted Provider invocation."""
++from contracts import Usage
++
++
++def metadata_text(value) -> str | None:
++    if not isinstance(value, str) or not value.strip() or '\x00' in value:
++        return None
++    try:
++        value.encode('utf-8')
++    except UnicodeEncodeError:
++        return None
++    return value
++
++
++def attempt_usage(value) -> Usage | None:
++    if not isinstance(value, Usage):
++        return None
++    counts = tuple(getattr(value, field, None) for field in ('input_tokens', 'output_tokens', 'total_tokens'))
++    if not all(type(count) is int and 0 <= count < 2**63 for count in counts):
++        return None
++    return value if counts[0] + counts[1] == counts[2] else None
+--- r2/tests/integration/test_f8_metadata_storage.py
++++ r3/tests/integration/test_f8_metadata_storage.py
+@@ -0,0 +1,73 @@
++"""Database-safe diagnostic facts also apply to injected Provider errors and rejected input."""
++import pytest
++
++from contracts import Usage
++from errors import ProviderCallError
++from f6_cases import server, case, observe
++from f7_cases import application
++from providers.mock import MockProvider
++
++
++@pytest.mark.parametrize('bad_field', ['actual_model', 'finish_reason', 'upstream_status', 'upstream_finish_reason'])
++async def test_unrepresentable_error_metadata_cannot_block_valid_usage_or_termination(server, case, bad_field):
++    name, config = case
++    provider = MockProvider(error=ProviderCallError(code='provider_invalid_response',
++        usage=Usage(input_tokens=60, output_tokens=25, total_tokens=85), **{bad_field:'invalid\x00meta'}))
++    async with application(config, provider) as (_, client):
++        failed = await client.post('/v1/models/general-primary/health')
++        rid = failed.headers['x-request-id']
++        assert (failed.status_code, failed.json()['code']) == (502, 'provider_invalid_response')
++        row, attempts, _ = observe(server, name, rid)
++        assert row['status'] == 'failed' and attempts[0][bad_field] is None
++        detail = (await client.get(f'/v1/traces/{rid}')).json()['data']
++        assert detail['usage']['known_subtotal']['total_tokens'] == attempts[0]['total_tokens'] == 85
++        assert len(provider.calls) == 1
++
++
++async def test_rejected_probe_model_name_cannot_prevent_metadata_registration(server, case):
++    name, config = case
++    provider = MockProvider()
++    async with application(config, provider) as (_, client):
++        rejected = await client.post('/v1/models/unknown%00alias/health')
++        rid = rejected.headers['x-request-id']
++        assert rejected.status_code == 400
++        record = await client.get(f'/v1/traces/{rid}')
++        assert record.status_code == 200
++        assert record.json()['data']['status'] == 'failed'
++        assert observe(server, name, rid)[0]['requested_model'] is None
++        assert not provider.calls
++
++
++async def test_individually_unrepresentable_usage_is_unknown_in_failed_trace(server, case):
++    name, config = case
++    provider = MockProvider(error=ProviderCallError(code='provider_invalid_response',
++        actual_model='known', usage=Usage(input_tokens=2**63, output_tokens=0, total_tokens=2**63)))
++    async with application(config, provider) as (_, client):
++        response = await client.post('/v1/models/general-primary/health')
++        assert response.status_code == 502
++        rid = response.headers['x-request-id']
++        saved = observe(server, name, rid)[1][0]
++        assert saved['total_tokens'] is None and saved['actual_model'] == 'known'
++        assert (await client.get(f'/v1/traces/{rid}')).json()['data']['usage'] == {
++            'known_subtotal': None, 'unknown_attempts': [1]}
++
++
++async def test_f8_known_subtotal_can_exceed_single_attempt_bigint(server, case):
++    from f7_cases import body, registry, SequenceProvider
++    from providers.base import ProviderResult
++    from services.models import RecoveryPolicy
++
++    name, config = case
++    maximum = 2**63 - 1
++    usage = Usage(input_tokens=maximum, output_tokens=0, total_tokens=maximum)
++    primary = SequenceProvider([ProviderCallError(code='provider_timeout', usage=usage)])
++    backup = SequenceProvider([ProviderResult(text='ok', usage=usage)])
++    models = registry(policy=RecoveryPolicy(max_attempts=2, max_attempts_per_model=1))
++    async with application(config, primary, backup, models=models) as (_, client):
++        reply = await client.post('/v1/llm', json=body())
++        assert reply.status_code == 200
++        rid = reply.headers['x-request-id']
++        assert [a['total_tokens'] for a in observe(server, name, rid)[1]] == [maximum, maximum]
++        data = (await client.get(f'/v1/traces/{rid}')).json()['data']
++        assert data['usage']['known_subtotal']['total_tokens'] == reply.json()['data']['usage']['total_tokens'] == 2 * maximum
++        assert data['usage']['unknown_attempts'] == []
+--- r2/tests/integration/test_f8_trace_query.py
++++ r3/tests/integration/test_f8_trace_query.py
+@@ -136,7 +136,8 @@
+             statements.append(statement)
+         event.listen(engine, 'before_cursor_execute', capture)
+         try:
+-            assert get(client, rid)['recovery']['skipped_candidates'] == []
++            for _ in range(2):
++                assert get(client, rid)['recovery']['skipped_candidates'] == []
+         finally:
+             event.remove(engine, 'before_cursor_execute', capture)
+         assert not any('input_snapshot' in stmt for stmt in statements)
+--- r2/tests/protocol/test_f8_rejected_usage.py
++++ r3/tests/protocol/test_f8_rejected_usage.py
+@@ -9,10 +9,11 @@
+ from test_providers import adapter_type, server
+ 
+ 
++@pytest.mark.parametrize('model', ['wire-model', None, 'unsafe\x00model'])
+ @pytest.mark.parametrize('valid_usage', [True, False])
+ @pytest.mark.parametrize('stream', [False, True])
+ async def test_f8_unsupported_tool_result_preserves_only_valid_usage(
+-        server, adapter_type, legacy_postgres_environment, monkeypatch, valid_usage, stream):
++        server, adapter_type, legacy_postgres_environment, monkeypatch, valid_usage, stream, model):
+     pg, template = legacy_postgres_environment
+     name = pg.create_database(template=template)
+     monkeypatch.setattr('main.load_database_config', lambda directory: DatabaseConfig(**pg.config(name)))
+@@ -27,8 +28,12 @@
+         response = {'object': 'response', 'status': 'completed', 'model': 'wire-model',
+                     'output': [{'type': 'function_call'}],
+                     'usage': {'input_tokens': 60, 'output_tokens': 25, 'total_tokens': total}}
+-        if stream:
+-            response = {'type': 'response.completed', 'response': response}
++    if model is None:
++        del response['model']
++    else:
++        response['model'] = model
++    if stream and kind != 'deepseek':
++        response = {'type': 'response.completed', 'response': response}
+     server.raw = (('data: ' + json.dumps(response) + '\n\n') if stream else json.dumps(response)).encode()
+     try:
+         async with app.router.lifespan_context(app):
+@@ -47,11 +52,13 @@
+                 trace = (await client.get(f'/v1/traces/{rid}')).json()['data']
+                 assert len(server.calls) == 1 and trace['error_code'] == 'provider_invalid_response'
+                 with pg.connect(name) as conn:
+-                    saved = conn.execute('SELECT a.input_tokens,a.output_tokens,a.total_tokens FROM tb_llm_attempt a '
++                    saved = conn.execute('SELECT a.input_tokens,a.output_tokens,a.total_tokens,a.status,r.status,a.actual_model FROM tb_llm_attempt a '
+                                          'JOIN tb_llm_request r ON a.request_pk=r.id WHERE r.request_id=%s',
+                                          (rid,)).fetchall()
+-                assert saved == ([(60, 25, 85)] if valid_usage else [(None, None, None)])
+-                assert trace['attempts'][0]['actual_model'] == 'wire-model'
++                expected_model = model if model == 'wire-model' else None
++                counts = (60, 25, 85) if valid_usage else (None, None, None)
++                assert saved == [(*counts, 'failed', 'failed', expected_model)]
++                assert trace['attempts'][0]['actual_model'] == expected_model
+                 subtotal = {'input_tokens':60,'output_tokens':25,'total_tokens':85} if valid_usage else None
+                 assert trace['usage'] == {'known_subtotal': subtotal, 'unknown_attempts': [] if valid_usage else [1]}
+     finally:
+--- r2/tests/protocol/test_f8_wire_diagnostic_values.py
++++ r3/tests/protocol/test_f8_wire_diagnostic_values.py
+@@ -0,0 +1,101 @@
++import json
++
++import pytest
++
++from contracts import Message
++from errors import ProviderCallError
++from providers.deepseek import DeepSeekProvider
++from services.models import load_registry
++from test_providers import adapter_type, server
++
++
++MAX = 2**63 - 1
++
++
++@pytest.mark.parametrize('stream', [False, True])
++@pytest.mark.parametrize('damage', [
++    'none', 'missing_model', 'nul_model', 'surrogate_model', 'oversize_usage',
++    'model_and_usage', 'nul_reason', 'surrogate_reason', 'missing_usage',
++])
++async def test_independent_verified_fields_from_wire(server, adapter_type, stream, damage):
++    chat = adapter_type is DeepSeekProvider
++    number = MAX + int(damage in {'oversize_usage', 'model_and_usage'})
++    model = {'nul_model':'bad\x00model', 'surrogate_model':'bad\ud800name',
++             'model_and_usage':None, 'missing_model':None}.get(damage, 'reported')
++    reason = {'nul_reason':'bad\x00end', 'surrogate_reason':'bad\ud800end'}.get(damage)
++    if chat:
++        envelope = {'object':'chat.completion.chunk' if stream else 'chat.completion',
++                    'choices':[{'index':0, 'finish_reason':reason or 'stop',
++                                'delta' if stream else 'message':{'role':'assistant','content':'ok'}}],
++                    'usage':{'prompt_tokens':number-1, 'completion_tokens':1, 'total_tokens':number}}
++    else:
++        envelope = {'object':'response', 'status':'incomplete' if reason else 'completed',
++                    'incomplete_details':{'reason':reason} if reason else None,
++                    'output':[{'type':'message','role':'assistant','status':'completed',
++                               'content':[{'type':'output_text','text':'ok'}]}],
++                    'usage':{'input_tokens':number-1, 'output_tokens':1, 'total_tokens':number}}
++    if model is not None:
++        envelope['model'] = model
++    if damage == 'missing_usage':
++        del envelope['usage']
++    wire = {'type':'response.' + envelope['status'], 'response':envelope} if stream and not chat else envelope
++    data = json.dumps(wire)
++    server.raw = (('data: ' + data + '\n\n' + ('data: [DONE]\n\n' if chat else '')) if stream else data).encode()
++    valid = damage in {'none', 'missing_usage'}
++    adapter = adapter_type(server.url, 'FAKE_TEST_ONLY')
++    config = load_registry().get('general-primary')
++    messages = [Message(role='user',content='hello')]
++    options = dict(max_output_tokens=32,timeout_seconds=2)
++    try:
++        if stream:
++            events = [e async for e in adapter.stream(config,messages,**options)]
++            terminal = events[-1]
++            assert terminal.status == ('completed' if valid else 'failed')
++            if not valid:
++                assert terminal.error_code == 'provider_invalid_response'
++        elif valid:
++            terminal = await adapter.complete(config,messages,**options)
++        else:
++            with pytest.raises(ProviderCallError) as error:
++                await adapter.complete(config,messages,**options)
++            terminal = error.value
++            assert terminal.code == 'provider_invalid_response'
++        assert terminal.actual_model == ('reported' if model == 'reported' else None)
++        reported = None if terminal.usage is None else terminal.usage.total_tokens
++        assert reported == (None if damage in {'oversize_usage','model_and_usage','missing_usage'} else MAX)
++        assert len(server.calls) == 1
++    finally:
++        await adapter.aclose()
++
++
++@pytest.mark.parametrize('field', ['actual_model','finish_reason','upstream_status','upstream_finish_reason','usage'])
++@pytest.mark.parametrize('stream', [False, True])
++def test_typed_per_attempt_metadata_safe(field, stream):
++    from pydantic import ValidationError
++    from contracts import Usage
++    from providers.base import ProviderResult, ProviderStreamEvent
++    if stream and field == 'finish_reason':
++        # Stream events expose only upstream_finish_reason, enforced by a literal.
++        field = 'upstream_finish_reason'
++    args = {'status':'completed','upstream_terminal_received':True} if stream else {'text':'ok'}
++    aggregate = Usage(input_tokens=MAX,output_tokens=1,total_tokens=MAX+1)
++    assert aggregate.total_tokens == MAX+1
++    args[field] = aggregate if field == 'usage' else 'bad\x00metadata'
++    with pytest.raises(ValidationError):
++        (ProviderStreamEvent if stream else ProviderResult)(**args)
++
++
++async def test_mismatching_responses_terminal_is_failure_with_verified_facts(server):
++    from providers.openai_compatible import OpenAICompatibleProvider
++    adapter = OpenAICompatibleProvider(server.url, 'FAKE_TEST_ONLY')
++    raw = {'type':'response.completed','response':{'object':'response','status':'incomplete','model':'reported',
++           'usage':{'input_tokens':60,'output_tokens':25,'total_tokens':85}}}
++    server.raw = ('data: ' + json.dumps(raw) + '\n\n').encode()
++    try:
++        result = [e async for e in adapter.stream(load_registry().get('general-primary'),
++                        [Message(role='user',content='question')],max_output_tokens=32,timeout_seconds=2)]
++        assert len(server.calls) == len(result) == 1
++        assert result[0].error_code == 'provider_invalid_response'
++        assert result[0].actual_model == 'reported' and result[0].usage.total_tokens == 85
++    finally:
++        await adapter.aclose()

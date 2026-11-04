@@ -1,0 +1,3 @@
+tests/live/test_f13_default_fallback.py::test_controlled_classifier_503_generates_once_with_actual_plus_default
+
+1 test collected in 0.08s

@@ -1,0 +1,38 @@
+{
+  "review_round": 1,
+  "verdict": "BLOCKED",
+  "code_findings": {
+    "P0": 0,
+    "P1": 0,
+    "P2": 0,
+    "P3": 0
+  },
+  "root_verified_review_manifest_files": 211,
+  "root_verified_review_drift_before_status_updates": [],
+  "reviewer_verified_files_excluding_runtime_config": 209,
+  "after_review_changes": [
+    "README.md",
+    "docs/1.7-plan.md",
+    "docs/contracts.md",
+    "docs/features/F11/design.md",
+    "docs/features/F11/implementation-plan.md",
+    "docs/features/F11/implementation-summary.md",
+    "docs/features/F11/test-plan.md",
+    "docs/progress.md"
+  ],
+  "change_scope": "Status/evidence references only; code/tests/config/AGENTS unchanged.",
+  "acceptance": "not_passed",
+  "latest_real_recheck": {
+    "passed": 6,
+    "failed": 2,
+    "duration_seconds": 71.64
+  },
+  "missing_validation": [
+    "successful required real regression",
+    "capacity 5/10/20 phases",
+    "600-second sustained run"
+  ],
+  "local_links_missing": [],
+  "documentation_files_checked": 12,
+  "protected_files_unchanged": 293
+}

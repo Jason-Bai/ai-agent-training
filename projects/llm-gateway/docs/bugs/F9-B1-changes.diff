@@ -1,0 +1,105 @@
+--- before/src/constants.py
++++ current/src/constants.py
+@@ -18,3 +18,9 @@
+ SUBSCRIPTION_POLL_SECONDS = 0.1
+ SUBSCRIPTION_PAGE_SIZE = 100
+ SUBSCRIPTION_SEND_TIMEOUT_SECONDS = 30
++
++# Recognized Chat terminal metering signals, independent of answer delivery.
++CHAT_TERMINAL_REASONS = (
++    'stop', 'length', 'content_filter', 'tool_calls',
++    'aborted', 'insufficient_system_resource', 'refusal',
++)
+--- before/src/providers/base.py
++++ current/src/providers/base.py
+@@ -9,6 +9,7 @@
+ from pydantic import AwareDatetime, Field, ValidationError, field_validator, model_validator
+ from starlette import status as http_status
+ 
++from constants import CHAT_TERMINAL_REASONS
+ from contracts import Message, StrictObject, Usage
+ from errors import PROVIDER_MESSAGES, ProviderCallError
+ from services.models import ModelConfig
+@@ -149,8 +150,7 @@
+             raise ValueError
+         choice = choices[0]
+         if (isinstance(choice, dict) and raw.get('object') == 'chat.completion'
+-                and choice.get('finish_reason') in ('stop', 'length', 'content_filter', 'tool_calls',
+-                                                   'aborted', 'insufficient_system_resource', 'refusal')):
++                and choice.get('finish_reason') in CHAT_TERMINAL_REASONS):
+             observe_terminal_usage(observed)
+         message = choice['message']
+         if message['role'] != 'assistant' or message.get('tool_calls'):
+--- before/src/providers/streaming.py
++++ current/src/providers/streaming.py
+@@ -1,4 +1,5 @@
+ """Wire-only SSE decoding and protocol state; Gateway consumes platform events."""
++from constants import CHAT_TERMINAL_REASONS
+ from errors import ProviderCallError
+ from providers.base import ProviderStreamEvent, observe_terminal_usage, observe_reported_metadata, parse_responses_response
+ from utils.diagnostic_values import metadata_text
+@@ -48,7 +49,7 @@
+         if not isinstance(choice,dict) or type(choice.get('index')) is not int or choice['index']!=0:raise ValueError
+         reason=choice.get('finish_reason')
+         if reason is not None and metadata_text(reason) is None:raise ValueError
+-        if reason == 'stop' or reason in _REASONS:
++        if reason in CHAT_TERMINAL_REASONS:
+             observe_terminal_usage(observed)
+         delta=choice.get('delta')
+         if not isinstance(delta,dict) or delta.get('role','assistant')!='assistant' or delta.get('tool_calls'):raise ValueError
+--- before/tests/integration/test_f9_tool_terminal.py
++++ current/tests/integration/test_f9_tool_terminal.py
+@@ -0,0 +1,53 @@
++"""Compare the same final metering evidence across ordinary and streaming Chat."""
++import json
++from decimal import Decimal
++
++import pytest
++
++from f6_cases import case, server
++from f7_cases import body
++from test_f9_paid_flow import account, primary_wire, backup_wire
++
++
++@pytest.mark.parametrize('reason', ['tool_calls', None, 'unrecognized'])
++@pytest.mark.parametrize('stream', [False, True])
++async def test_tool_output_rejection_keeps_independent_final_metering(case, primary_wire, backup_wire,
++                                                                    reason, stream):
++    usage = {'prompt_tokens': 10, 'completion_tokens': 1, 'total_tokens': 11,
++             'prompt_cache_hit_tokens': 7, 'prompt_cache_miss_tokens': 3}
++    calls = [{'index': 0, 'id': 'tool', 'type': 'function',
++              'function': {'name': 'unused', 'arguments': '{}'}}]
++    output = {'tool_calls': calls, 'content': None}
++    if stream:
++        raw = {'object': 'chat.completion.chunk', 'model': 'deepseek-flash', 'usage': usage,
++               'choices': [{'index': 0, 'delta': output, 'finish_reason': reason}]}
++        primary_wire.raw = ('data: ' + json.dumps(raw) + '\n\n').replace('\\n', '\n').encode()
++    else:
++        primary_wire.body = {'object': 'chat.completion', 'model': 'deepseek-flash', 'usage': usage,
++                            'choices': [{'index': 0, 'message': dict(output, role='assistant'),
++                                         'finish_reason': reason}]}
++    async with account(case[1], primary_wire, backup_wire, ('20', '30', '50')) as (_, client):
++        path = '/v1/llm/stream' if stream else '/v1/llm'
++        response = await client.post(path, json=body(max_output_tokens=100))
++        rid = response.headers['x-request-id']
++        if stream:
++            events = await client.get(f'/v1/llm/stream/{rid}/events')
++            assert 'provider_invalid_response' in events.text
++            assert 'response.completed' not in events.text
++        else:
++            assert response.status_code == 502 and response.json()['code'] == 'provider_invalid_response'
++        detail = (await client.get('/v1/billing/requests/' + rid)).json()['data']
++        item, = detail['attempts']
++        summary = (await client.get('/v1/billing/summary')).json()['data']
++        final = reason == 'tool_calls'
++        assert item['usage_complete'] is final
++        assert item['state'] == ('settled' if final else 'pending')
++        assert summary['usage']['real']['unknown_attempts'] == (0 if final else 1)
++        assert len(primary_wire.calls) == 1 and not backup_wire.calls
++        if final:
++            assert Decimal(item['agent_charge']) == Decimal(item['supplier_cost']) == Decimal('.000280')
++            assert Decimal(detail['reserved']) == 0
++            assert Decimal(summary['available']) == Decimal('.999720')
++        else:
++            assert item['agent_charge'] is item['supplier_cost'] is None
++            assert Decimal(detail['reserved']) > 0

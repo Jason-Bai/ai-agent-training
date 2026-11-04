@@ -1,0 +1,391 @@
+{
+  "recorded_at": "2026-11-03T17:52:40.078516+00:00",
+  "status": "accepted_under_user_confirmed_layered_criterion",
+  "pre_trace_fix_version": {
+    "source_manifest": "final-source-manifest.json",
+    "full_r2": {
+      "nodes": 2904,
+      "passed": 2903,
+      "failed": 1,
+      "errors": 0,
+      "skipped": 0,
+      "receipt": "full-r2-receipt.json"
+    },
+    "supplemental": {
+      "nodes": 8,
+      "passed": 8,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "receipt": "supplemental-final-receipt.json"
+    },
+    "capacity_followup": {
+      "nodes": 1,
+      "passed": 0,
+      "failed": 1,
+      "errors": 0,
+      "skipped": 0,
+      "receipt": "capacity-followup-receipt.json"
+    }
+  },
+  "post_trace_fix_version": {
+    "source_manifest": "trace-fix-manifest.json",
+    "source_files": 255,
+    "source_stable": true,
+    "production_changes_since_previous_version": [
+      "src/persistence/store.py"
+    ],
+    "all_default_non_live": {
+      "nodes": 2813,
+      "passed": 2813,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "receipt": "trace-fix-offline-receipt.json"
+    },
+    "impacted_real_provider_nodes": {
+      "nodes": 17,
+      "passed": 17,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "receipt": "trace-fix-live-receipt.json"
+    },
+    "default_collected": 2917,
+    "not_one_full_2917_run": true,
+    "unchanged_live_evidence_reuse": "trace-fix-evidence-reuse.json"
+  },
+  "quality": {
+    "metric": "fixed synthetic case classification agreement; not real-business accuracy",
+    "reports": {
+      "development": {
+        "report": "pytest-full-r2/test_real_routing_quality_deve0/f13-real/f13-routing-development-ed6ad5075d924f75901cc5d78b3f7e73.json",
+        "sha256": "a84f5bc50716ce904071a9e4cbb16a53eab374b2756b2a157a33a65c3714a40e",
+        "batch_id": "ed6ad5075d924f75901cc5d78b3f7e73",
+        "corpus_sha256": "2f8679f79eea562467b0229310b9bdd7eec3a6561a1530776d72a382872ba589",
+        "started_at": "2026-11-03T16:57:03.398097+00:00",
+        "ended_at": "2026-11-03T17:04:27.895184+00:00",
+        "valid": 30,
+        "correct": 29,
+        "confusion_matrix": {
+          "light": {
+            "light": 9,
+            "general": 1,
+            "analysis": 0
+          },
+          "general": {
+            "light": 0,
+            "general": 10,
+            "analysis": 0
+          },
+          "analysis": {
+            "light": 0,
+            "general": 0,
+            "analysis": 10
+          }
+        },
+        "misclassified": [
+          "F13-D018"
+        ],
+        "fallbacks": [],
+        "classification_failures": [],
+        "end_to_end": {
+          "completed": 23,
+          "failed": 7
+        },
+        "generation_failures": [
+          {
+            "id": "F13-D002",
+            "attempt_no": 2,
+            "error_code": "output_truncated"
+          },
+          {
+            "id": "F13-D002",
+            "attempt_no": 3,
+            "error_code": "output_truncated"
+          },
+          {
+            "id": "F13-D003",
+            "attempt_no": 2,
+            "error_code": "output_truncated"
+          },
+          {
+            "id": "F13-D003",
+            "attempt_no": 3,
+            "error_code": "output_truncated"
+          },
+          {
+            "id": "F13-D010",
+            "attempt_no": 2,
+            "error_code": "output_truncated"
+          },
+          {
+            "id": "F13-D012",
+            "attempt_no": 2,
+            "error_code": "output_truncated"
+          },
+          {
+            "id": "F13-D014",
+            "attempt_no": 2,
+            "error_code": "output_truncated"
+          },
+          {
+            "id": "F13-D014",
+            "attempt_no": 3,
+            "error_code": "output_truncated"
+          },
+          {
+            "id": "F13-D017",
+            "attempt_no": 2,
+            "error_code": "output_truncated"
+          },
+          {
+            "id": "F13-D021",
+            "attempt_no": 2,
+            "error_code": "output_truncated"
+          },
+          {
+            "id": "F13-D021",
+            "attempt_no": 3,
+            "error_code": "output_truncated"
+          },
+          {
+            "id": "F13-D026",
+            "attempt_no": 2,
+            "error_code": "output_truncated"
+          },
+          {
+            "id": "F13-D026",
+            "attempt_no": 3,
+            "error_code": "output_truncated"
+          },
+          {
+            "id": "F13-D027",
+            "attempt_no": 2,
+            "error_code": "output_truncated"
+          },
+          {
+            "id": "F13-D027",
+            "attempt_no": 3,
+            "error_code": "output_truncated"
+          },
+          {
+            "id": "F13-D028",
+            "attempt_no": 2,
+            "error_code": "output_truncated"
+          },
+          {
+            "id": "F13-D028",
+            "attempt_no": 3,
+            "error_code": "output_truncated"
+          },
+          {
+            "id": "F13-D029",
+            "attempt_no": 2,
+            "error_code": "output_truncated"
+          }
+        ],
+        "transport_unknown": [],
+        "integrity_failures": []
+      },
+      "acceptance": {
+        "report": "pytest-full-r2/test_real_routing_quality_seal0/f13-real/f13-routing-acceptance-aabcb8e2c8714d9bb36654aa3f424cf7.json",
+        "sha256": "0e35e44c744e7891efec00b6fcabce7dc4c936cd79d1da1bebc1eaeb711b74bf",
+        "batch_id": "aabcb8e2c8714d9bb36654aa3f424cf7",
+        "corpus_sha256": "4237bab0402c6643560c23354e1b7859351bbf9ec99cdf5e5073849a429c925b",
+        "started_at": "2026-11-03T17:04:28.013478+00:00",
+        "ended_at": "2026-11-03T17:11:40.068146+00:00",
+        "valid": 30,
+        "correct": 30,
+        "confusion_matrix": {
+          "light": {
+            "light": 10,
+            "general": 0,
+            "analysis": 0
+          },
+          "general": {
+            "light": 0,
+            "general": 10,
+            "analysis": 0
+          },
+          "analysis": {
+            "light": 0,
+            "general": 0,
+            "analysis": 10
+          }
+        },
+        "misclassified": [],
+        "fallbacks": [],
+        "classification_failures": [],
+        "end_to_end": {
+          "failed": 4,
+          "completed": 26
+        },
+        "generation_failures": [
+          {
+            "id": "F13-A001",
+            "attempt_no": 2,
+            "error_code": "output_truncated"
+          },
+          {
+            "id": "F13-A001",
+            "attempt_no": 3,
+            "error_code": "output_truncated"
+          },
+          {
+            "id": "F13-A004",
+            "attempt_no": 2,
+            "error_code": "output_truncated"
+          },
+          {
+            "id": "F13-A005",
+            "attempt_no": 2,
+            "error_code": "output_truncated"
+          },
+          {
+            "id": "F13-A008",
+            "attempt_no": 2,
+            "error_code": "output_truncated"
+          },
+          {
+            "id": "F13-A009",
+            "attempt_no": 2,
+            "error_code": "output_truncated"
+          },
+          {
+            "id": "F13-A012",
+            "attempt_no": 2,
+            "error_code": "output_truncated"
+          },
+          {
+            "id": "F13-A012",
+            "attempt_no": 3,
+            "error_code": "output_truncated"
+          },
+          {
+            "id": "F13-A013",
+            "attempt_no": 2,
+            "error_code": "output_truncated"
+          },
+          {
+            "id": "F13-A016",
+            "attempt_no": 2,
+            "error_code": "output_truncated"
+          },
+          {
+            "id": "F13-A022",
+            "attempt_no": 2,
+            "error_code": "output_truncated"
+          },
+          {
+            "id": "F13-A022",
+            "attempt_no": 3,
+            "error_code": "output_truncated"
+          },
+          {
+            "id": "F13-A025",
+            "attempt_no": 2,
+            "error_code": "output_truncated"
+          },
+          {
+            "id": "F13-A026",
+            "attempt_no": 2,
+            "error_code": "output_truncated"
+          },
+          {
+            "id": "F13-A026",
+            "attempt_no": 3,
+            "error_code": "output_truncated"
+          },
+          {
+            "id": "F13-A030",
+            "attempt_no": 2,
+            "error_code": "output_truncated"
+          }
+        ],
+        "transport_unknown": [],
+        "integrity_failures": []
+      }
+    }
+  },
+  "capacity_followup": {
+    "report": "pytest-capacity-followup/test_five_concurrent_sustained0/f13-capacity-followup.json",
+    "sha256": "5340c473a1707ea0beb3a47beb324c24da010e04011ad19cc9f1de40fdda2990",
+    "outcome": "failed",
+    "scope": "user-confirmed lower-concurrency follow-up; original strict gate unchanged",
+    "results": {
+      "concurrency": 5,
+      "started": 1727,
+      "successes": 1725,
+      "success_rate": 0.9988419224088014,
+      "failures": {
+        "request_timeout": 2
+      },
+      "dispatch_seconds": 600,
+      "elapsed_including_drain_seconds": 604.9085203330033,
+      "after": {
+        "observation_errors": 0,
+        "snapshot_at": "2026-11-03T17:30:34.352171+00:00",
+        "active_generations": 0,
+        "subscriptions": 0,
+        "cleanup_tasks": 0,
+        "cancellations": 0,
+        "active_requests": 0,
+        "agent_requests": {},
+        "trace_requests": 1727,
+        "trace_attempts": 2014,
+        "db_bytes": 25663167,
+        "requests": 1727,
+        "events": 3929,
+        "billing_attempts": 2014,
+        "connections": 6,
+        "active_connections": 1,
+        "rss_kb": 207296,
+        "cpu_percent": 1.0,
+        "sampled_at": "2026-11-03T17:30:34.584129+00:00"
+      }
+    },
+    "diagnostic_sql": "diagnostic-final-sql.json",
+    "original_test_source_unchanged": true,
+    "trace_metadata_defect_found_by_independent_review": true
+  },
+  "original_capacity_failures_retained": true,
+  "whole_feature_acceptance": true,
+  "independent_review": {
+    "round": 1,
+    "report": "../review-r1-capacity-followup.md",
+    "previous_report": "../review-r1.md",
+    "verdict": "APPROVED",
+    "open_code_findings": {
+      "P0": 0,
+      "P1": 0,
+      "P2": 0,
+      "P3": 0
+    },
+    "basis": "direct user confirmation plus independent supplemental verification; original strict failures retained"
+  },
+  "human_annotation": false,
+  "maintainer_running_server_restarted": false,
+  "capacity_acceptance": {
+    "criterion": "gateway_outcomes_v1",
+    "user_confirmation": "capacity-criterion-confirmation.json",
+    "reassessment": "capacity-reassessment.json",
+    "phases": 6,
+    "requests": 9785,
+    "new_provider_calls": 0,
+    "original_failed_reports_unchanged": true,
+    "claims_100_percent_stability": false
+  },
+  "latest_test_only_version": {
+    "source_manifest": "source-manifest.json",
+    "source_files": 257,
+    "production_unchanged_from_trace_fix": true,
+    "default_collected_nodes": 2937,
+    "added_acceptance_nodes": 20,
+    "related_test_batch_passed": 130,
+    "overlaps_previous_test_batches": true,
+    "not_a_new_full_2937_run": true
+  },
+  "closure_evidence": "acceptance-closure-evidence.tar.gz",
+  "closure_manifest": "acceptance-closure-manifest.json"
+}

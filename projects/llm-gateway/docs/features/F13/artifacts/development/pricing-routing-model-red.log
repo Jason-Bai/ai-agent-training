@@ -1,0 +1,7 @@
+Traceback (most recent call last):
+  File "/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llmgw-f13-work-eifzl4on/pricing-routing-model-contract.py", line 13, in <module>
+    m.assert_two_stages(trace)
+  File "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/tests/live/test_f13_routing.py", line 64, in assert_two_stages
+    assert all(a['model']==routing['resolved_group'] for a in attempts[1:])
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError

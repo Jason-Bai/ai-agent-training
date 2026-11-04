@@ -1,0 +1,170 @@
+[
+  {
+    "command": [
+      ".venv/bin/python",
+      "-W",
+      "error",
+      "-m",
+      "pytest",
+      "tests/protocol/test_f13_bailian.py",
+      "-q"
+    ],
+    "cwd": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway",
+    "exit_code": 1,
+    "log": "protocol-red.log",
+    "pytest_summary": "1 failed in 0.22s",
+    "executed_by": "f13_bailian_protocol",
+    "timestamp_not_recorded": true,
+    "scope": "owned local HTTP, no real API or credential access"
+  },
+  {
+    "command": [
+      ".venv/bin/python",
+      "-W",
+      "error",
+      "-m",
+      "pytest",
+      "tests/protocol/test_f13_bailian.py",
+      "-q"
+    ],
+    "cwd": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway",
+    "exit_code": 0,
+    "log": "protocol-first-green.log",
+    "pytest_summary": "1 passed in 0.16s",
+    "executed_by": "f13_bailian_protocol",
+    "timestamp_not_recorded": true,
+    "scope": "owned local HTTP, no real API or credential access"
+  },
+  {
+    "command": [
+      ".venv/bin/python",
+      "-W",
+      "error",
+      "-m",
+      "pytest",
+      "tests/protocol/test_f13_bailian.py",
+      "-q"
+    ],
+    "cwd": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway",
+    "exit_code": 1,
+    "log": "protocol-queued-red.log",
+    "pytest_summary": "1 failed, 1 passed in 0.21s",
+    "executed_by": "f13_bailian_protocol",
+    "timestamp_not_recorded": true,
+    "scope": "owned local HTTP, no real API or credential access"
+  },
+  {
+    "command": [
+      ".venv/bin/python",
+      "-W",
+      "error",
+      "-m",
+      "pytest",
+      "tests/protocol/test_f13_bailian.py",
+      "-q"
+    ],
+    "cwd": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway",
+    "exit_code": 0,
+    "log": "protocol-queued-green.log",
+    "pytest_summary": "2 passed in 0.16s",
+    "executed_by": "f13_bailian_protocol",
+    "timestamp_not_recorded": true,
+    "scope": "owned local HTTP, no real API or credential access"
+  },
+  {
+    "command": [
+      ".venv/bin/python",
+      "-W",
+      "error",
+      "-m",
+      "pytest",
+      "tests/protocol/test_f13_bailian.py",
+      "-q"
+    ],
+    "cwd": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway",
+    "exit_code": 1,
+    "log": "protocol-queued-failure-red.log",
+    "pytest_summary": "1 failed, 2 passed in 0.15s",
+    "executed_by": "f13_bailian_protocol",
+    "timestamp_not_recorded": true,
+    "scope": "owned local HTTP, no real API or credential access"
+  },
+  {
+    "command": [
+      ".venv/bin/python",
+      "-W",
+      "error",
+      "-m",
+      "pytest",
+      "tests/protocol/test_f13_bailian.py",
+      "-q"
+    ],
+    "cwd": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway",
+    "exit_code": 0,
+    "log": "protocol-queued-failure-green.log",
+    "pytest_summary": "3 passed in 0.10s",
+    "executed_by": "f13_bailian_protocol",
+    "timestamp_not_recorded": true,
+    "scope": "owned local HTTP, no real API or credential access"
+  },
+  {
+    "command": [
+      ".venv/bin/python",
+      "-W",
+      "error",
+      "-m",
+      "pytest",
+      "tests/protocol/test_f13_bailian.py",
+      "tests/protocol/test_providers.py",
+      "tests/protocol/test_f5_providers.py",
+      "-q"
+    ],
+    "cwd": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway",
+    "exit_code": 0,
+    "log": "protocol-target-green.log",
+    "pytest_summary": "156 passed in 8.93s",
+    "executed_by": "f13_bailian_protocol",
+    "timestamp_not_recorded": true,
+    "scope": "owned local HTTP, no real API or credential access"
+  },
+  {
+    "command": [
+      ".venv/bin/python",
+      "-W",
+      "error",
+      "-m",
+      "pytest",
+      "tests/protocol/test_f13_bailian.py",
+      "tests/protocol/test_providers.py",
+      "tests/protocol/test_f5_providers.py",
+      "-q"
+    ],
+    "cwd": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway",
+    "exit_code": 0,
+    "log": "protocol-final-target.log",
+    "pytest_summary": "165 passed in 9.06s",
+    "executed_by": "f13_bailian_protocol",
+    "timestamp_not_recorded": true,
+    "scope": "owned local HTTP, no real API or credential access"
+  },
+  {
+    "command": [
+      ".venv/bin/python",
+      "-W",
+      "error",
+      "-m",
+      "pytest",
+      "tests/protocol/test_f4_providers.py",
+      "tests/protocol/test_f8_wire_diagnostic_values.py",
+      "tests/protocol/test_f9_stream_usage.py",
+      "-q"
+    ],
+    "cwd": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway",
+    "exit_code": 0,
+    "log": "protocol-related-regression.log",
+    "pytest_summary": "77 passed in 1.14s",
+    "executed_by": "f13_bailian_protocol",
+    "timestamp_not_recorded": true,
+    "scope": "owned local HTTP, no real API or credential access"
+  }
+]

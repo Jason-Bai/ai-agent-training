@@ -1,0 +1,94 @@
+FF....F                                                                  [100%]
+=================================== FAILURES ===================================
+_______________ test_mock_report_round_trip[default-completion] ________________
+
+server = <postgres_support.PostgresServer object at 0x10b81ce00>
+case = ('case_4464edd92e5b42079554b5570bd0a1ec', PosixPath('/private/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/pytest-of-baiyu/pytest-325/test_mock_report_round_trip_de0/config'))
+mode = 'completion'
+expected = {'input_tokens': 10, 'output_tokens': 1, 'total_tokens': 11}
+
+    @pytest.mark.parametrize('mode', ['completion', 'streaming'])
+    @pytest.mark.parametrize('expected', [DEFAULT, CUSTOM, None], ids=['default', 'custom', 'missing'])
+    async def test_mock_report_round_trip(server, case, mode, expected):
+        name, config = case
+        mock = MockProvider()
+        if expected != DEFAULT:
+            usage = Usage(**expected) if expected else None
+            mock = MockProvider(result=ProviderResult(text='ok', usage=usage), stream_events=[
+                ProviderStreamEvent(delta='ok'),
+                ProviderStreamEvent(status='completed', upstream_terminal_received=True, usage=usage),
+            ])
+        async with application(config, mock) as (_, client):
+            if mode == 'completion':
+                response = await client.post('/v1/llm', json=body())
+                assert response.status_code == 200
+                rid = response.headers['x-request-id']
+>               assert response.json()['data']['usage'] == expected
+E               AssertionError: assert None == {'input_tokens': 10, 'output_tokens': 1, 'total_tokens': 11}
+
+tests/integration/test_f8o1_mock_usage.py:33: AssertionError
+________________ test_mock_report_round_trip[default-streaming] ________________
+
+server = <postgres_support.PostgresServer object at 0x10b81ce00>
+case = ('case_2dc45b029f9a4ff1adc054b52ff25867', PosixPath('/private/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/pytest-of-baiyu/pytest-325/test_mock_report_round_trip_de1/config'))
+mode = 'streaming'
+expected = {'input_tokens': 10, 'output_tokens': 1, 'total_tokens': 11}
+
+    @pytest.mark.parametrize('mode', ['completion', 'streaming'])
+    @pytest.mark.parametrize('expected', [DEFAULT, CUSTOM, None], ids=['default', 'custom', 'missing'])
+    async def test_mock_report_round_trip(server, case, mode, expected):
+        name, config = case
+        mock = MockProvider()
+        if expected != DEFAULT:
+            usage = Usage(**expected) if expected else None
+            mock = MockProvider(result=ProviderResult(text='ok', usage=usage), stream_events=[
+                ProviderStreamEvent(delta='ok'),
+                ProviderStreamEvent(status='completed', upstream_terminal_received=True, usage=usage),
+            ])
+        async with application(config, mock) as (_, client):
+            if mode == 'completion':
+                response = await client.post('/v1/llm', json=body())
+                assert response.status_code == 200
+                rid = response.headers['x-request-id']
+                assert response.json()['data']['usage'] == expected
+            else:
+                created = await client.post('/v1/llm/stream', json=body())
+                rid = created.json()['data']['request_id']
+                url = f'/v1/llm/stream/{rid}/events'
+                delta, terminal = frames((await client.get(url)).text)
+                assert delta[1] == 'response.delta' and 'usage' not in delta[2]
+>               assert terminal[1:] == ('response.completed', {'request_id': rid, 'usage': expected})
+E               AssertionError: assert ('response.co...usage': None}) == ('response.co...tokens': 11}})
+E                 
+E                 At index 1 diff: {'request_id': '8d975c68-2154-4b8b-af36-84126f3dd5da', 'usage': None} != {'request_id': '8d975c68-2154-4b8b-af36-84126f3dd5da', 'usage': {'input_tokens': 10, 'output_tokens': 1, 'total_tokens': 11}}
+E                 Use -v to get more diff
+
+tests/integration/test_f8o1_mock_usage.py:40: AssertionError
+________________ test_unknown_failure_and_default_mock_fallback ________________
+
+server = <postgres_support.PostgresServer object at 0x10b81ce00>
+case = ('case_86fed70db0614a14ac38cb0ec526e198', PosixPath('/private/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/pytest-of-baiyu/pytest-325/test_unknown_failure_and_defau0/config'))
+
+    async def test_unknown_failure_and_default_mock_fallback(server, case):
+        name, config = case
+        models = registry(policy=RecoveryPolicy(max_attempts=2, max_attempts_per_model=1))
+        primary = MockProvider(error=ProviderCallError(code='provider_timeout'))
+        async with application(config, primary, MockProvider(), models=models) as (_, client):
+            reply = await client.post('/v1/llm', json=body())
+            assert reply.status_code == 200 and reply.json()['data']['usage'] is None
+            rid = reply.headers['x-request-id']
+            trace = (await client.get(f'/v1/traces/{rid}')).json()['data']
+>           assert trace['usage'] == {'known_subtotal': DEFAULT, 'unknown_attempts': [1]}
+E           AssertionError: assert {'known_subto...mpts': [1, 2]} == {'known_subto...ttempts': [1]}
+E             
+E             Differing items:
+E             {'known_subtotal': None} != {'known_subtotal': {'input_tokens': 10, 'output_tokens': 1, 'total_tokens': 11}}
+E             {'unknown_attempts': [1, 2]} != {'unknown_attempts': [1]}
+E             Use -v to get more diff
+
+tests/integration/test_f8o1_mock_usage.py:62: AssertionError
+=========================== short test summary info ============================
+FAILED tests/integration/test_f8o1_mock_usage.py::test_mock_report_round_trip[default-completion]
+FAILED tests/integration/test_f8o1_mock_usage.py::test_mock_report_round_trip[default-streaming]
+FAILED tests/integration/test_f8o1_mock_usage.py::test_unknown_failure_and_default_mock_fallback
+3 failed, 4 passed in 5.06s

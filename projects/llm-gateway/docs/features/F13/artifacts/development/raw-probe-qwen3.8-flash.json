@@ -1,0 +1,36 @@
+{
+  "metadata": {
+    "scope": "raw supplier probe; not Gateway acceptance",
+    "model": "qwen3.8-flash",
+    "started_at": "2026-11-03T15:04:25.685452+00:00",
+    "http_status": 200,
+    "elapsed_seconds": 2.1649429169483483,
+    "status": "completed",
+    "actual_model": "qwen3.8-flash",
+    "usage": {
+      "input_tokens": 62,
+      "input_tokens_details": {
+        "cache_write_tokens": 0,
+        "cached_tokens": 0
+      },
+      "output_tokens": 1,
+      "output_tokens_details": {
+        "reasoning_tokens": 0
+      },
+      "total_tokens": 63,
+      "x_details": [
+        {
+          "input_tokens": 62,
+          "output_tokens": 1,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "total_tokens": 63,
+          "x_billing_type": "response_api"
+        }
+      ]
+    },
+    "error_code": null
+  },
+  "body": "{\"background\":false,\"completed_at\":1793718267,\"created_at\":1793718267,\"frequency_penalty\":0.0,\"id\":\"resp_0066c7ff-e15c-9250-ace7-890add0f741a\",\"max_output_tokens\":32,\"metadata\":{},\"model\":\"qwen3.8-flash\",\"object\":\"response\",\"output\":[{\"content\":[{\"annotations\":[],\"text\":\"OK\",\"type\":\"output_text\"}],\"id\":\"msg_2316afdd-aa20-4900-ab2c-4540c7d1bd4d\",\"role\":\"assistant\",\"status\":\"completed\",\"type\":\"message\"}],\"parallel_tool_calls\":true,\"presence_penalty\":0.0,\"reasoning\":{\"effort\":\"none\"},\"service_tier\":\"default\",\"status\":\"completed\",\"store\":false,\"temperature\":1.0,\"tool_choice\":\"auto\",\"tools\":[],\"top_logprobs\":0,\"top_p\":1.0,\"usage\":{\"input_tokens\":62,\"input_tokens_details\":{\"cache_write_tokens\":0,\"cached_tokens\":0},\"output_tokens\":1,\"output_tokens_details\":{\"reasoning_tokens\":0},\"total_tokens\":63,\"x_details\":[{\"input_tokens\":62,\"output_tokens\":1,\"prompt_tokens_details\":{\"cached_tokens\":0},\"total_tokens\":63,\"x_billing_type\":\"response_api\"}]}}"
+}

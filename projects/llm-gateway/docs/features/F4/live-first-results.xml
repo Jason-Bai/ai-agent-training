@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="3" time="3.344" timestamp="2026-11-01T14:37:34.800306+08:00" hostname="baiyudeMacBook-Pro-2.local"><testcase classname="tests.live.test_real_providers" name="test_real_provider_case[F4-L01-primary-completion]" file="tests/live/test_real_providers.py" line="64" time="1.005"><properties><property name="request_id" value="0f021c2e-aeef-4455-a921-8ce1816c6c78" /><property name="provider" value="deepseek-main" /><property name="adapter" value="deepseek" /><property name="api_protocol" value="chat_completions" /><property name="upstream_status" value="None" /><property name="upstream_finish_reason" value="stop" /><property name="actual_model" value="deepseek-flash" /><property name="counter_version" value="314113f8a7dadb388215396ba5fbee2c610a04d6:response-schema-v1" /><property name="prompt_fingerprint" value="e17a281a18c58372850707381c6590cf0278e92c475ab92f116d7a4b19c4091b" /><property name="schema_fingerprint" value="None" /><property name="structured_output_mode" value="none" /><property name="local_input_tokens" value="358" /><property name="input_delta" value="0" /><property name="input_tokens" value="358" /><property name="output_tokens" value="13" /><property name="total_tokens" value="371" /><property name="latency_ms" value="761.0028749913909" /></properties></testcase><testcase classname="tests.live.test_real_providers" name="test_real_provider_case[F4-L02-backup-completion]" file="tests/live/test_real_providers.py" line="64" time="1.197"><properties><property name="request_id" value="1043f1ec-93a9-4844-963f-2ec09826f304" /><property name="provider" value="openai-main" /><property name="adapter" value="openai_compatible" /><property name="api_protocol" value="responses" /><property name="upstream_status" value="completed" /><property name="upstream_finish_reason" value="None" /><property name="actual_model" value="deepseek-flash" /><property name="counter_version" value="314113f8a7dadb388215396ba5fbee2c610a04d6:response-schema-v1" /><property name="prompt_fingerprint" value="980afec5fdd5cd3e5fb6733cb12aabd5d7e38b517f2b8dd54f3e5614b4e740b2" /><property name="schema_fingerprint" value="None" /><property name="structured_output_mode" value="none" /><property name="local_input_tokens" value="515" /><property name="input_delta" value="0" /><property name="input_tokens" value="515" /><property name="output_tokens" value="9" /><property name="total_tokens" value="524" /><property name="latency_ms" value="932.594790996518" /></properties></testcase><testcase classname="tests.live.test_real_providers" name="test_real_provider_case[F4-L03-primary-structured]" file="tests/live/test_real_providers.py" line="64" time="1.074"><properties><property name="request_id" value="04818680-5e95-496b-a474-d9c4fdf1e827" /><property name="provider" value="deepseek-main" /><property name="adapter" value="deepseek" /><property name="api_protocol" value="chat_completions" /><property name="upstream_status" value="None" /><property name="upstream_finish_reason" value="stop" /><property name="actual_model" value="deepseek-flash" /><property name="counter_version" value="314113f8a7dadb388215396ba5fbee2c610a04d6:response-schema-v1" /><property name="prompt_fingerprint" value="beb5dc7b755e5872917a6efd6268753eac2c847cad6551c46fd5ce2df189384f" /><property name="schema_fingerprint" value="524c4295f7fbbce035546f0a9f27a22c89050e99e3ac5c67db7a1326114d7a03" /><property name="structured_output_mode" value="json_object" /><property name="local_input_tokens" value="572" /><property name="input_delta" value="22" /><property name="input_tokens" value="594" /><property name="output_tokens" value="27" /><property name="total_tokens" value="621" /><property name="latency_ms" value="821.554666996235" /></properties><failure message="assert 22 == 0">live_server = (&lt;fastapi.applications.FastAPI object at 0x10a8967b0&gt;, &lt;httpx2.AsyncClient object at 0x10a9cf950&gt;)
+model = 'general-primary', version = '1.2.0', is_probe = False
+is_structured = True
+record_property = &lt;function record_property.&lt;locals&gt;.append_property at 0x10ac87480&gt;
+
+    @pytest.mark.parametrize("model,version,is_probe,is_structured", [
+        pytest.param("general-primary", "1.0.0", False, False, id="F4-L01-primary-completion"),
+        pytest.param("general-backup", "1.1.0", False, False, id="F4-L02-backup-completion"),
+        pytest.param("general-primary", "1.2.0", False, True, id="F4-L03-primary-structured"),
+        pytest.param("general-backup", "1.2.0", False, True, id="F4-L04-backup-structured"),
+        pytest.param("general-primary", None, True, False, id="F4-L05-primary-probe"),
+        pytest.param("general-backup", None, True, False, id="F4-L06-backup-probe"),
+    ])
+    async def test_real_provider_case(live_server, model, version, is_probe, is_structured, record_property):
+        app, client = live_server
+        if is_probe:
+            response = await client.post(f"/v1/models/{model}/health")
+        else:
+            payload = {
+                "model": model,
+                "prompt": {"name": "context_answer", "version": version,
+                           "variables": {"context": CONTEXT if is_structured else "调用方提供的资料：订单 A123 的商品为充电器。"}},
+                "messages": [{"role": "user", "content": "订单 A123 的商品是什么？"}],
+                "max_output_tokens": 128 if is_structured else 64,
+                "timeout_seconds": 30,
+            }
+            if is_structured:
+                payload['response_schema'] = deepcopy(SCHEMA)
+                payload['messages'][0]['content'] = '提取订单号、商品信息和备注；备注未知时使用 null。'
+            response = await client.post("/v1/llm", json=payload)
+        assert response.status_code == 200, response.json().get("code")
+        body = response.json()
+        assert set(body) == {"success", "code", "data", "message"}
+        assert body["success"] is True and body["code"] == "ok"
+        request_id = response.headers["X-Request-ID"]
+        trace = app.state.traces.requests[request_id]
+        attempts = [a for a in app.state.traces.attempts if a.request_id == request_id]
+        assert trace.status == "completed" and trace.attempts == len(attempts) == 1
+        attempt = attempts[0]
+        assert attempt.status == "completed" and attempt.finish_reason == "stop"
+        assert attempt.actual_model and attempt.usage is not None
+        assert attempt.adapter == ("deepseek" if model == "general-primary" else "openai_compatible")
+        assert attempt.api_protocol == ("chat_completions" if model == "general-primary" else "responses")
+        if model == 'general-primary':
+            assert attempt.upstream_finish_reason == 'stop'
+            assert attempt.upstream_status is None
+        else:
+            assert attempt.upstream_status == 'completed'
+            assert attempt.upstream_finish_reason is None
+        assert trace.operation == ("provider_probe" if is_probe else "completion")
+        assert trace.counter_version and trace.prompt_fingerprint and trace.input_token_count &gt; 0
+        delta = attempt.usage.input_tokens - trace.input_token_count
+        # Record safe measurements before checking equality so a failed first real
+        # run still provides evidence for diagnosis without another Provider call.
+        for name, value in {
+            "request_id": request_id, "provider": attempt.provider, "adapter": attempt.adapter,
+            "api_protocol": attempt.api_protocol, "upstream_status": attempt.upstream_status,
+            "upstream_finish_reason": attempt.upstream_finish_reason,
+            "actual_model": attempt.actual_model, "counter_version": trace.counter_version,
+            "prompt_fingerprint": trace.prompt_fingerprint, "schema_fingerprint": trace.schema_fingerprint,
+            "structured_output_mode": trace.structured_output_mode,
+            "local_input_tokens": trace.input_token_count, "input_delta": delta,
+            "input_tokens": attempt.usage.input_tokens, "output_tokens": attempt.usage.output_tokens,
+            "total_tokens": attempt.usage.total_tokens, "latency_ms": attempt.latency_ms,
+        }.items():
+            record_property(name, value)
+&gt;       assert delta == 0
+E       assert 22 == 0
+
+tests/live/test_real_providers.py:126: AssertionError</failure></testcase></testsuite></testsuites>

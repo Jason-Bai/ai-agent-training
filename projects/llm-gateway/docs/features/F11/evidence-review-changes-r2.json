@@ -1,0 +1,94 @@
+{
+  "README.md": {
+    "old": "306bf107b9786b906b90483b53550b08e1beb7b3dc6548f624b0ada839e30fa5",
+    "new": "35450e5e0a1668d19adf3cfb0a1c43ad86922618057cce31199ae8260a0509ff"
+  },
+  "docs/1.7-plan.md": {
+    "old": "2fde790f2b086fd06019764ab6d307ba844d9a5dfc5a0824f440e35ef699661b",
+    "new": "56f0aca4039de6c6051f0eb7630aff6abb7a80f36db76cb5a3887456dc04b396"
+  },
+  "docs/contracts.md": {
+    "old": "ea439e55357248ce944bf88d183ad4300264b9327c3a66f8235cdde3a0789a59",
+    "new": "add7852528be819baee90f48bdb46ab4d597be0ce11dc7eb8be52e108009b282"
+  },
+  "docs/features/F11/design.md": {
+    "old": "a69aa9d97b4ac3177dc3342a7f99c6d2dc32bfb0e2a45ff0a65fa4eb4c68cab3",
+    "new": "7929b04878bf721541b7c7e993e5f7001a92ebf91a8d591d6266d2f053b273a9"
+  },
+  "docs/features/F11/diagnosis-20261103.md": {
+    "old": null,
+    "new": "6960dd1fcafad1614f035febef125288818e3d0eb640be36095ef78c9090b55e"
+  },
+  "docs/features/F11/diagnosis-r2-20261103.md": {
+    "old": null,
+    "new": "8548c06d7ce412471a65af22ccdbbc85fbb365c057658ee6e7d03b5c665c661e"
+  },
+  "docs/features/F11/implementation-plan.md": {
+    "old": "ae33c5234ceb95c4caad620446ac13c518737cdadabab056c2e0da3e81f32555",
+    "new": "a3f8683a8ba4c52fdcfa35b24c17420ed5ec02de5c398939aa35d8465ad315bd"
+  },
+  "docs/features/F11/implementation-summary.md": {
+    "old": "84deab1ba839a49bf71eb60889b89cb313dcf72551c05ccfa153c77167e57ead",
+    "new": "a733582c8f2ca2b961e02acc5d74355b0ec2261c8c6ffedf30e5e1a94569526e"
+  },
+  "docs/features/F11/review-material-r2.md": {
+    "old": null,
+    "new": "3417cfb22b82c2633d300bd85d3184e318d25818b22f0aece22e6fbb06b2e70d"
+  },
+  "docs/features/F11/review-prompt-r2.md": {
+    "old": null,
+    "new": "777ba915153dc665c1adea89f35d50a1eaec3f5bc90b39e0893a6045a5a77b67"
+  },
+  "docs/features/F11/review-r1.md": {
+    "old": null,
+    "new": "f1ead55db02a3621bf16cfa54e30c51d3aa647cddbdf332a6515cface2845e82"
+  },
+  "docs/features/F11/test-plan.md": {
+    "old": "af3f062c4865d999ef1bca12d2076e0f4ea33f575ccf5e7725ea96eb00adced6",
+    "new": "f30b250fcac1d829b7703be99a093d6e955fc6d92a398445e9e731ad7502c09c"
+  },
+  "docs/progress.md": {
+    "old": "1e9879c24ebe14ebc898d1ffff09e5b29fbe74f4f5679ae6d825127bb1eaec23",
+    "new": "e0006bca8fbf4d31a7409da3fa986b3ecc106dd579e78ede8d74dcf1e2e1368f"
+  },
+  "tests/f10_metrics.py": {
+    "old": "50d7ab8ba93a6fb50a1c4f53b13150a17cef277cc156f55cc862e2f5a01e91b8",
+    "new": "581a43b7eb53d96b68090d6981ee38e2e5d2b66d7a66f568610204d45cb435bd"
+  },
+  "tests/f10_support.py": {
+    "old": "e08713526a5215730d6b617efdac12dab3fb3f293044b4783001b7bd4acc3b4d",
+    "new": "0eb6c954fe15bc73abea42937ba2066b584882bc00080aef91264a7352d1f69b"
+  },
+  "tests/live/test_f10_capacity.py": {
+    "old": "cc792ea26ed822818f9eb538e0220a1b68f5c122c6782cc791221a90dc16fe91",
+    "new": "99c41531e1067ef32915422d07846e24e8e566bae14c40b6990ce66b818473e3"
+  },
+  "tests/live/test_f5o1_acceptance.py": {
+    "old": "fe652c5848fcd6eabe97242c467abb3b4e94ff4e20968c691e7a847583a790b9",
+    "new": "d2628fe07c281b6c2e56e77f9fcea5c1d1a0c8c7566ad811db8599e93112d291"
+  },
+  "tests/live/test_real_providers.py": {
+    "old": "97a632b0f0f90f6c4c2912d12f18a230c762192ecff9de92ebec7cc83508edc8",
+    "new": "f4b34d323a08faba328ad879c839d7e7498f70aea74490ed6a70b65b11729989"
+  },
+  "tests/unit/test_f10_metrics.py": {
+    "old": "85085b06fcf2efffbc80d9ed604250267d4d8a84c0b02bac719bb267b6f4abd7",
+    "new": "95fb7c27d4c7f7fb21b734577df5caedeb58963a896d73adeb4cc71d769aa378"
+  },
+  "tests/unit/test_f11_upstream_evidence.py": {
+    "old": null,
+    "new": "9555c637eb0ed26d6c28bea672cdaf4a4e8352238ff169cd3573bde8a325eb4b"
+  },
+  "tests/unit/test_f11_upstream_observation.py": {
+    "old": null,
+    "new": "02a379f0b5684e37bc5c849cbbff85f59066c365a500c41963b76e8d5d59b53e"
+  },
+  "tests/upstream_availability.py": {
+    "old": null,
+    "new": "df2a55ee34603ab1a77046b517dd3a174e8fea825852e020c7fdbb2c76b90b27"
+  },
+  "tests/upstream_observation.py": {
+    "old": null,
+    "new": "f577bae960a4cfddd053dfed4e7412b0c0cf78f7d73a52ea498c83d3d9c0b3b8"
+  }
+}

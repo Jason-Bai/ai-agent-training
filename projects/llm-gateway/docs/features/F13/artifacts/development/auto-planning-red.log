@@ -1,0 +1,15 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_________ test_multiple_groups_produce_local_plan_not_a_provider_call __________
+
+    def test_multiple_groups_produce_local_plan_not_a_provider_call():
+        router,req,trace=setup()
+        result=plan_auto_route(router,req,trace)
+>       assert result is not None,'automatic request needs a usable group plan before execution'
+E       AssertionError: automatic request needs a usable group plan before execution
+E       assert None is not None
+
+tests/unit/test_f13_auto_planning.py:35: AssertionError
+=========================== short test summary info ============================
+FAILED tests/unit/test_f13_auto_planning.py::test_multiple_groups_produce_local_plan_not_a_provider_call
+1 failed, 13 deselected in 0.17s

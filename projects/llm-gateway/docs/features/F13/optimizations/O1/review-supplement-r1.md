@@ -1,0 +1,6 @@
+继续 F13-O1 同一首轮的最终复核，不重开轮次，保持只读/不测试/不付费/不读凭据边界。项目路径与原提示词不变。
+最终材料：docs/features/F13/optimizations/O1/test-plan.md、implementation-summary.md、evidence.json。工作目录由 /tmp/llmgw-f13o1-work-path 读取，原始 full.log/xml、final-related.log/xml、verification-final-summary.json、readme-smoke.log/json、readme-sync.log、capacity-current.json、node-coverage.json、integration-checks.json 均可读，不读 verification-project/config/credentials.yaml。
+实际完整批次2972节点：2964通过/8失败/0跳过，104live全通过。8失败为测试迁移：main常量patch目标1项、F11 factory及F5O2 OpenAPI默认配置隔离3项、含糊import conftest取错嵌套模块4项。只修这4份测试文件：test_f5o2_recovery_claim.py、test_f11_ordinary_lifecycle.py、test_f5o2_openapi.py、test_f13o1_configuration.py；业务断言保留。完整目录收集后的相关回归1561通过/1411未选中，原8失败逐项全通过，分批2972唯一节点有通过证据，不称一次全绿；产品源码从完整批次起未变，最终产品与测试和执行副本一致。
+价格示例仅补来源URL/核对日期注释，解析值不变；design图澄清周期补偿与关闭补偿分开，无产品改动。final-review-manifest.json、final-review-changes.json 是当前清单及相较首轮初始差异；变化范围包含上述测试及本项结果文档/示例注释，不覆盖原初始清单。请核对实际源码及哈希，不以本段说明代替证明。
+README22步已通过：真实PG、Uvicorn、curl；uv sync实际执行；Compose采用相同镜像和命令但隔离项目/端口/库，非操作开发库；旧价格全值嵌入后重启真实调用也通过。原驱动错误假定cancel首次必200，保留准备失败，按文档202轮询后通过。固定容量9258笔成功；固定合成标签开发29/30封存30/30，不作生产稳定或业务准确率承诺。
+请完成同轮三维最终报告，明确实际读取和证据边界、独立反例、P0-P3与最终APPROVED/BLOCKED；发现关键证据缺口请具体指出。不要修改文件或重跑测试，原始完整失败回执必须保留。

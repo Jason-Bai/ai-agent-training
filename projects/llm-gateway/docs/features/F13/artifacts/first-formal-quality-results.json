@@ -1,0 +1,253 @@
+{
+  "metric": "fixed synthetic case classification agreement; not real-business accuracy",
+  "reports": {
+    "development": {
+      "report": "pytest-full-r2/test_real_routing_quality_deve0/f13-real/f13-routing-development-ed6ad5075d924f75901cc5d78b3f7e73.json",
+      "sha256": "a84f5bc50716ce904071a9e4cbb16a53eab374b2756b2a157a33a65c3714a40e",
+      "batch_id": "ed6ad5075d924f75901cc5d78b3f7e73",
+      "corpus_sha256": "2f8679f79eea562467b0229310b9bdd7eec3a6561a1530776d72a382872ba589",
+      "started_at": "2026-11-03T16:57:03.398097+00:00",
+      "ended_at": "2026-11-03T17:04:27.895184+00:00",
+      "valid": 30,
+      "correct": 29,
+      "confusion_matrix": {
+        "light": {
+          "light": 9,
+          "general": 1,
+          "analysis": 0
+        },
+        "general": {
+          "light": 0,
+          "general": 10,
+          "analysis": 0
+        },
+        "analysis": {
+          "light": 0,
+          "general": 0,
+          "analysis": 10
+        }
+      },
+      "misclassified": [
+        "F13-D018"
+      ],
+      "fallbacks": [],
+      "classification_failures": [],
+      "end_to_end": {
+        "completed": 23,
+        "failed": 7
+      },
+      "generation_failures": [
+        {
+          "id": "F13-D002",
+          "attempt_no": 2,
+          "error_code": "output_truncated"
+        },
+        {
+          "id": "F13-D002",
+          "attempt_no": 3,
+          "error_code": "output_truncated"
+        },
+        {
+          "id": "F13-D003",
+          "attempt_no": 2,
+          "error_code": "output_truncated"
+        },
+        {
+          "id": "F13-D003",
+          "attempt_no": 3,
+          "error_code": "output_truncated"
+        },
+        {
+          "id": "F13-D010",
+          "attempt_no": 2,
+          "error_code": "output_truncated"
+        },
+        {
+          "id": "F13-D012",
+          "attempt_no": 2,
+          "error_code": "output_truncated"
+        },
+        {
+          "id": "F13-D014",
+          "attempt_no": 2,
+          "error_code": "output_truncated"
+        },
+        {
+          "id": "F13-D014",
+          "attempt_no": 3,
+          "error_code": "output_truncated"
+        },
+        {
+          "id": "F13-D017",
+          "attempt_no": 2,
+          "error_code": "output_truncated"
+        },
+        {
+          "id": "F13-D021",
+          "attempt_no": 2,
+          "error_code": "output_truncated"
+        },
+        {
+          "id": "F13-D021",
+          "attempt_no": 3,
+          "error_code": "output_truncated"
+        },
+        {
+          "id": "F13-D026",
+          "attempt_no": 2,
+          "error_code": "output_truncated"
+        },
+        {
+          "id": "F13-D026",
+          "attempt_no": 3,
+          "error_code": "output_truncated"
+        },
+        {
+          "id": "F13-D027",
+          "attempt_no": 2,
+          "error_code": "output_truncated"
+        },
+        {
+          "id": "F13-D027",
+          "attempt_no": 3,
+          "error_code": "output_truncated"
+        },
+        {
+          "id": "F13-D028",
+          "attempt_no": 2,
+          "error_code": "output_truncated"
+        },
+        {
+          "id": "F13-D028",
+          "attempt_no": 3,
+          "error_code": "output_truncated"
+        },
+        {
+          "id": "F13-D029",
+          "attempt_no": 2,
+          "error_code": "output_truncated"
+        }
+      ],
+      "transport_unknown": [],
+      "integrity_failures": []
+    },
+    "acceptance": {
+      "report": "pytest-full-r2/test_real_routing_quality_seal0/f13-real/f13-routing-acceptance-aabcb8e2c8714d9bb36654aa3f424cf7.json",
+      "sha256": "0e35e44c744e7891efec00b6fcabce7dc4c936cd79d1da1bebc1eaeb711b74bf",
+      "batch_id": "aabcb8e2c8714d9bb36654aa3f424cf7",
+      "corpus_sha256": "4237bab0402c6643560c23354e1b7859351bbf9ec99cdf5e5073849a429c925b",
+      "started_at": "2026-11-03T17:04:28.013478+00:00",
+      "ended_at": "2026-11-03T17:11:40.068146+00:00",
+      "valid": 30,
+      "correct": 30,
+      "confusion_matrix": {
+        "light": {
+          "light": 10,
+          "general": 0,
+          "analysis": 0
+        },
+        "general": {
+          "light": 0,
+          "general": 10,
+          "analysis": 0
+        },
+        "analysis": {
+          "light": 0,
+          "general": 0,
+          "analysis": 10
+        }
+      },
+      "misclassified": [],
+      "fallbacks": [],
+      "classification_failures": [],
+      "end_to_end": {
+        "failed": 4,
+        "completed": 26
+      },
+      "generation_failures": [
+        {
+          "id": "F13-A001",
+          "attempt_no": 2,
+          "error_code": "output_truncated"
+        },
+        {
+          "id": "F13-A001",
+          "attempt_no": 3,
+          "error_code": "output_truncated"
+        },
+        {
+          "id": "F13-A004",
+          "attempt_no": 2,
+          "error_code": "output_truncated"
+        },
+        {
+          "id": "F13-A005",
+          "attempt_no": 2,
+          "error_code": "output_truncated"
+        },
+        {
+          "id": "F13-A008",
+          "attempt_no": 2,
+          "error_code": "output_truncated"
+        },
+        {
+          "id": "F13-A009",
+          "attempt_no": 2,
+          "error_code": "output_truncated"
+        },
+        {
+          "id": "F13-A012",
+          "attempt_no": 2,
+          "error_code": "output_truncated"
+        },
+        {
+          "id": "F13-A012",
+          "attempt_no": 3,
+          "error_code": "output_truncated"
+        },
+        {
+          "id": "F13-A013",
+          "attempt_no": 2,
+          "error_code": "output_truncated"
+        },
+        {
+          "id": "F13-A016",
+          "attempt_no": 2,
+          "error_code": "output_truncated"
+        },
+        {
+          "id": "F13-A022",
+          "attempt_no": 2,
+          "error_code": "output_truncated"
+        },
+        {
+          "id": "F13-A022",
+          "attempt_no": 3,
+          "error_code": "output_truncated"
+        },
+        {
+          "id": "F13-A025",
+          "attempt_no": 2,
+          "error_code": "output_truncated"
+        },
+        {
+          "id": "F13-A026",
+          "attempt_no": 2,
+          "error_code": "output_truncated"
+        },
+        {
+          "id": "F13-A026",
+          "attempt_no": 3,
+          "error_code": "output_truncated"
+        },
+        {
+          "id": "F13-A030",
+          "attempt_no": 2,
+          "error_code": "output_truncated"
+        }
+      ],
+      "transport_unknown": [],
+      "integrity_failures": []
+    }
+  }
+}

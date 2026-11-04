@@ -1,0 +1,10 @@
+{
+  "verified_at": "2026-11-03T17:56:51.735262+00:00",
+  "archive_sha256": "f4dbb0d5f888bf2c3a7f8a9f74a4c0388045b973cc014cc8fcd128b863a5e2f0",
+  "verified_entries": 26722,
+  "archive_bytes": 76043635,
+  "source_files_unchanged": 255,
+  "AGENTS_unchanged": true,
+  "runtime_sensitive_paths_excluded": true,
+  "safe_tracked_wire_price_fixture_included": true
+}

@@ -1,0 +1,93 @@
+{
+  "query-red": {
+    "output_tail": [
+      "",
+      "tests/integration/test_f9_billing_queries.py:10: AssertionError",
+      "=========================== short test summary info ============================",
+      "FAILED tests/integration/test_f9_billing_queries.py::test_billing_summary_is_an_authenticated_gateway_route",
+      "1 failed in 7.04s"
+    ]
+  },
+  "queries": {
+    "output_tail": [
+      "....                                                                     [100%]",
+      "4 passed in 5.47s"
+    ]
+  },
+  "query-integration": {
+    "output_tail": [
+      "............                                                             [100%]",
+      "12 passed in 13.15s"
+    ]
+  },
+  "auth-red2": {
+    "output_tail": [
+      "",
+      "tests/integration/test_f9_identity.py:29: AssertionError",
+      "=========================== short test summary info ============================",
+      "FAILED tests/integration/test_f9_identity.py::test_auth_precedes_http_payload_validation",
+      "1 failed, 1 deselected in 3.49s"
+    ]
+  },
+  "auth-green3": {
+    "output_tail": [
+      "....................................                                     [100%]",
+      "36 passed in 21.53s"
+    ]
+  },
+  "price-red": {
+    "output_tail": [
+      "FAILED tests/unit/test_f9_prices.py::test_split_survives_independently_from_text[None-True-True]",
+      "FAILED tests/unit/test_f9_prices.py::test_split_survives_independently_from_text[None-True-False]",
+      "FAILED tests/unit/test_f9_prices.py::test_split_survives_independently_from_text[None-False-True]",
+      "FAILED tests/unit/test_f9_prices.py::test_split_survives_independently_from_text[None-False-False]",
+      "25 failed in 0.25s"
+    ]
+  },
+  "price-paid-integrated": {
+    "output_tail": [
+      "..............................................                           [100%]",
+      "46 passed in 4.22s"
+    ]
+  },
+  "ledger-red": {
+    "output_tail": [
+      "",
+      "tests/postgres/test_f9_ledger.py:13: AssertionError",
+      "=========================== short test summary info ============================",
+      "FAILED tests/postgres/test_f9_ledger.py::test_migration_preserves_historical_ownerless_requests",
+      "1 failed in 3.54s"
+    ]
+  },
+  "ledger-final": {
+    "output_tail": [
+      "............                                                             [100%]",
+      "12 passed in 10.61s"
+    ]
+  },
+  "paid-int": {
+    "output_tail": [
+      ".....                                                                    [100%]",
+      "5 passed in 4.04s"
+    ]
+  },
+  "stream-budget-v2": {
+    "output_tail": [
+      "...                                                                      [100%]",
+      "3 passed in 4.35s"
+    ]
+  },
+  "historical-wire": {
+    "output_tail": [
+      "........................................................................ [ 69%]",
+      "................................                                         [100%]",
+      "104 passed in 64.30s (0:01:04)"
+    ]
+  },
+  "auth-replay": {
+    "output_tail": [
+      ".....                                                                    [100%]",
+      "5 passed in 5.82s"
+    ]
+  }
+}

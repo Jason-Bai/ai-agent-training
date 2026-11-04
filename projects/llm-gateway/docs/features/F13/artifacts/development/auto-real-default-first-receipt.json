@@ -1,0 +1,22 @@
+{
+  "command": [
+    ".venv/bin/python",
+    "-W",
+    "error",
+    "-m",
+    "pytest",
+    "tests/live/test_f13_default_fallback.py",
+    "tests/unit/test_f13_real_helper.py",
+    "--run-live",
+    "-ra",
+    "-q",
+    "-o",
+    "junit_family=xunit1",
+    "--junitxml=/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llmgw-f13-work-eifzl4on/auto-real-default-first.xml",
+    "--basetemp=/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llmgw-f13-work-eifzl4on/pytest-auto-real-default-first"
+  ],
+  "started_at": "2026-11-03T15:48:58.185859+00:00",
+  "ended_at": "2026-11-03T15:49:04.820558+00:00",
+  "elapsed_seconds": 6.634717958979309,
+  "exit_code": 0
+}

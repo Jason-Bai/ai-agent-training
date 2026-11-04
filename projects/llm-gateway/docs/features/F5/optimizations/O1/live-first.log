@@ -1,0 +1,13 @@
+......                                                                   [100%]
+=============================== warnings summary ===============================
+tests/live/test_f5o1_acceptance.py::test_real_call_and_committed_records[text-general-primary-deepseek-chat_completions]
+tests/live/test_f5o1_acceptance.py::test_real_call_and_committed_records[text-general-backup-openai_compatible-responses]
+tests/live/test_f5o1_acceptance.py::test_real_call_and_committed_records[structured-general-primary-deepseek-chat_completions]
+tests/live/test_f5o1_acceptance.py::test_real_call_and_committed_records[structured-general-backup-openai_compatible-responses]
+tests/live/test_f5o1_acceptance.py::test_real_call_and_committed_records[streaming-general-primary-deepseek-chat_completions]
+tests/live/test_f5o1_acceptance.py::test_real_call_and_committed_records[streaming-general-backup-openai_compatible-responses]
+  tests/live/test_f5o1_acceptance.py:67: PytestWarning: record_property is incompatible with junit_family 'xunit2' (use 'legacy' or 'xunit1')
+    @pytest.mark.parametrize('model,adapter,protocol', [
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+6 passed, 6 warnings in 9.94s

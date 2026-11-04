@@ -1,0 +1,16 @@
+{
+  "command": [
+    "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/.venv/bin/python",
+    "/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llmgw-f12-work-an6u5lyo/review-render-stage-repro.py"
+  ],
+  "cwd": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway",
+  "environment_override": {
+    "PYTHONPATH": "src:tests"
+  },
+  "started_at": "2026-11-03T13:17:50.336866+00:00",
+  "ended_at": "2026-11-03T13:17:50.687141+00:00",
+  "exit_code": 0,
+  "stdout": "{\"exception\": \"GatewayError\", \"code\": \"prompt_too_long\", \"all_disabled\": true, \"primary_calls\": 0, \"backup_calls\": 0, \"attempts\": 0, \"routing\": null, \"error_stage\": null}\n{\"exception\": \"GatewayError\", \"code\": \"prompt_too_long\", \"all_disabled\": false, \"primary_calls\": 0, \"backup_calls\": 0, \"attempts\": 0, \"routing\": null, \"error_stage\": null}\n",
+  "stderr": "",
+  "execution": "root, Mock only, no network"
+}

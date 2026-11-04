@@ -1,0 +1,22 @@
+[
+  "migrations/versions/f9_001.py",
+  "src/api/identity.py",
+  "src/api/routes.py",
+  "src/errors.py",
+  "src/persistence/billing.py",
+  "src/persistence/billing_query.py",
+  "src/persistence/store.py",
+  "src/persistence/tables.py",
+  "src/persistence/trace_query.py",
+  "src/providers/base.py",
+  "src/providers/streaming.py",
+  "src/services/gateway.py",
+  "src/services/prices.py",
+  "src/services/streaming.py",
+  "src/services/trace.py",
+  "tests/integration/test_f9_identity.py",
+  "tests/integration/test_f9_paid_flow.py",
+  "tests/postgres/test_f9_ledger.py",
+  "tests/smoke/test_f9_paid_restart.py",
+  "tests/unit/test_f9_prices.py"
+]

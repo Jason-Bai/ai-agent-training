@@ -1,0 +1,7 @@
+test_actual_recorded_trace (__main__.Contract.test_actual_recorded_trace) ... ok
+test_controlled_registry_is_shared_and_restored (__main__.Contract.test_controlled_registry_is_shared_and_restored) ... ok
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.000s
+
+OK

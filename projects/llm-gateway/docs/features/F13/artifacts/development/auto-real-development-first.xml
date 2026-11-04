@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="4" skipped="0" tests="4" time="450.085" timestamp="2026-11-03T23:30:48.093583+08:00" hostname="baiyudeMacBook-Pro-2.local"><testcase classname="tests.live.test_f13_routing" name="test_real_auto_routing_public_operations[text]" file="tests/live/test_f13_routing.py" line="70" time="6.120"><properties><property name="f13_request_id" value="1ee3f92a-ebdf-4201-b371-4bb359ca1574" /><property name="f13_trace" value="{&quot;request_id&quot;: &quot;1ee3f92a-ebdf-4201-b371-4bb359ca1574&quot;, &quot;operation&quot;: &quot;completion&quot;, &quot;status&quot;: &quot;completed&quot;, &quot;requested_model&quot;: &quot;auto-general&quot;, &quot;prompt_name&quot;: &quot;f13_controlled_case&quot;, &quot;prompt_version&quot;: &quot;1.0.0&quot;, &quot;prompt_fingerprint&quot;: &quot;07d79ca2b7666ef4b32f904cd28e8c0691e83170699777dda5576d04e88b308f&quot;, &quot;schema_fingerprint&quot;: null, &quot;structured_output_mode&quot;: null, &quot;input_token_count&quot;: 981, &quot;counter_version&quot;: &quot;qwen_text_estimate_v1:utf8-json:fixed512:percent10&quot;, &quot;input_token_kind&quot;: &quot;estimated&quot;, &quot;max_output_tokens&quot;: 1024, &quot;timeout_seconds&quot;: 60, &quot;created_at&quot;: &quot;2026-11-03T15:30:50.666828Z&quot;, &quot;started_at&quot;: &quot;2026-11-03T15:30:50.672713Z&quot;, &quot;deadline_at&quot;: &quot;2026-11-03T15:31:50.666807Z&quot;, &quot;ended_at&quot;: &quot;2026-11-03T15:30:54.173217Z&quot;, &quot;error_code&quot;: null, &quot;error_stage&quot;: null, &quot;delivery_error_code&quot;: null, &quot;attempts&quot;: [{&quot;attempt_no&quot;: 1, &quot;model&quot;: &quot;light-endpoint&quot;, &quot;provider&quot;: &quot;bailian-main&quot;, &quot;adapter&quot;: &quot;bailian&quot;, &quot;api_protocol&quot;: &quot;responses&quot;, &quot;configured_model&quot;: &quot;qwen3.8-flash&quot;, &quot;actual_model&quot;: &quot;qwen3.8-flash&quot;, &quot;reason&quot;: &quot;initial&quot;, &quot;status&quot;: &quot;completed&quot;, &quot;finish_reason&quot;: &quot;stop&quot;, &quot;upstream_status&quot;: &quot;completed&quot;, &quot;upstream_finish_reason&quot;: null, &quot;error_code&quot;: null, &quot;provider_error_code&quot;: null, &quot;cleanup_error_code&quot;: null, &quot;started_at&quot;: &quot;2026-11-03T15:30:50.672713Z&quot;, &quot;ended_at&quot;: &quot;2026-11-03T15:30:52.487020Z&quot;, &quot;latency_ms&quot;: 1809.8899169708602, &quot;provider_duration_ms&quot;: 1802.7652089949697, &quot;provider_entered&quot;: true, &quot;prompt_fingerprint&quot;: &quot;eaaaa725c94864396299b50e0cb307f9bb40ad26668f39bd1e0522f930d480d5&quot;, &quot;input_token_count&quot;: 5293, &quot;counter_version&quot;: &quot;qwen_text_estimate_v1:utf8-json:fixed512:percent10&quot;, &quot;input_token_kind&quot;: &quot;estimated&quot;, &quot;max_output_tokens&quot;: 128, &quot;usage&quot;: {&quot;input_tokens&quot;: 885, &quot;output_tokens&quot;: 5, &quot;total_tokens&quot;: 890}, &quot;purpose&quot;: &quot;classification&quot;}, {&quot;attempt_no&quot;: 2, &quot;model&quot;: &quot;light-endpoint&quot;, &quot;provider&quot;: &quot;bailian-main&quot;, &quot;adapter&quot;: &quot;bailian&quot;, &quot;api_protocol&quot;: &quot;responses&quot;, &quot;configured_model&quot;: &quot;qwen3.8-flash&quot;, &quot;actual_model&quot;: &quot;qwen3.8-flash&quot;, &quot;reason&quot;: &quot;initial&quot;, &quot;status&quot;: &quot;completed&quot;, &quot;finish_reason&quot;: &quot;stop&quot;, &quot;upstream_status&quot;: &quot;completed&quot;, &quot;upstream_finish_reason&quot;: null, &quot;error_code&quot;: null, &quot;provider_error_code&quot;: null, &quot;cleanup_error_code&quot;: null, &quot;started_at&quot;: &quot;2026-11-03T15:30:52.500032Z&quot;, &quot;ended_at&quot;: &quot;2026-11-03T15:30:54.157683Z&quot;, &quot;latency_ms&quot;: 1654.4162500067614, &quot;provider_duration_ms&quot;: 1642.075375013519, &quot;provider_entered&quot;: true, &quot;prompt_fingerprint&quot;: &quot;07d79ca2b7666ef4b32f904cd28e8c0691e83170699777dda5576d04e88b308f&quot;, &quot;input_token_count&quot;: 981, &quot;counter_version&quot;: &quot;qwen_text_estimate_v1:utf8-json:fixed512:percent10&quot;, &quot;input_token_kind&quot;: &quot;estimated&quot;, &quot;max_output_tokens&quot;: 256, &quot;usage&quot;: {&quot;input_tokens&quot;: 116, &quot;output_tokens&quot;: 12, &quot;total_tokens&quot;: 128}, &quot;purpose&quot;: &quot;generation&quot;}], &quot;usage&quot;: {&quot;known_subtotal&quot;: {&quot;input_tokens&quot;: 1001, &quot;output_tokens&quot;: 17, &quot;total_tokens&quot;: 1018}, &quot;unknown_attempts&quot;: []}, &quot;timing&quot;: {&quot;request_duration_ms&quot;: 3506.389, &quot;ttft_ms&quot;: null, &quot;generation_duration_ms&quot;: null, &quot;stream_duration_ms&quot;: null}, &quot;recovery&quot;: {&quot;wait_ms&quot;: 0.0, &quot;skipped_candidates&quot;: [], &quot;stop_reason&quot;: null}, &quot;cancellation&quot;: {&quot;requested_at&quot;: null, &quot;ended_at&quot;: null, &quot;cleanup_error_code&quot;: null}, &quot;routing&quot;: {&quot;version&quot;: 1, &quot;strategy&quot;: &quot;ordered&quot;, &quot;config_fingerprint&quot;: &quot;bd9b04bc4f79a7046bce7f0710aa1eebe582ffb4d70f31684ab962df439face8&quot;, &quot;candidates&quot;: [{&quot;endpoint_id&quot;: &quot;light-endpoint&quot;, &quot;status&quot;: &quot;eligible&quot;, &quot;code&quot;: null}], &quot;selected_endpoint&quot;: &quot;light-endpoint&quot;, &quot;reason&quot;: &quot;first_eligible&quot;}, &quot;auto_routing&quot;: {&quot;version&quot;: 1, &quot;profile&quot;: &quot;auto-general&quot;, &quot;candidate_groups&quot;: [{&quot;group&quot;: &quot;light&quot;, &quot;status&quot;: &quot;eligible&quot;, &quot;code&quot;: null}, {&quot;group&quot;: &quot;general&quot;, &quot;status&quot;: &quot;eligible&quot;, &quot;code&quot;: null}, {&quot;group&quot;: &quot;analysis&quot;, &quot;status&quot;: &quot;eligible&quot;, &quot;code&quot;: null}], &quot;resolved_group&quot;: &quot;light&quot;, &quot;source&quot;: &quot;classifier&quot;, &quot;fallback_reason&quot;: null, &quot;classifier_prompt_name&quot;: &quot;task_router&quot;, &quot;classifier_prompt_version&quot;: &quot;1.0.0&quot;, &quot;classification_duration_ms&quot;: 1826.1200829874724}}" /></properties><failure message="AssertionError: assert 'light-endpoint' == 'light'&#10;  &#10;  - light&#10;  + light-endpoint">f13_real_environment = RealEnvironment(client=&lt;starlette.testclient.TestClient object at 0x10fed4fb0&gt;, application=&lt;fastapi.applications.Fast...l21tvpq00000gn/T/llmgw-f13-work-eifzl4on/pytest-auto-real-development-first/test_real_auto_routing_public_0/f13-real'))
+mode = 'text'
+record_property = &lt;function record_property.&lt;locals&gt;.append_property at 0x10ffc3ce0&gt;
+
+    @pytest.mark.parametrize('mode',['text','schema','streaming'])
+    def test_real_auto_routing_public_operations(f13_real_environment,mode,record_property):
+        env=f13_real_environment
+        case=dict(task_role='你是订单字段提取助手，仅根据明确资料提取订单号和商品，不执行任何操作。',
+            context='已确认订单A123，商品为充电器。',message='只输出订单号和商品名称，简短回答。')
+        if mode=='schema':
+            case['response_schema']={'type':'object','properties':{
+                'order_id':{'type':'string','enum':['A123']},'product':{'type':'string','enum':['充电器']}},
+                'required':['order_id','product'],'additionalProperties':False}
+        with controlled_case(env,case) as body:
+            reply=env.client.post('/v1/llm/stream' if mode=='streaming' else '/v1/llm',json=body)
+            rid=reply.headers['x-request-id']
+            if mode=='streaming':
+                assert reply.status_code==202,reply.text
+                pending=env.trace(rid);assert pending['status']=='pending' and pending['attempts']==[]
+                reply=env.client.get('/v1/llm/stream/'+rid+'/events')
+        trace=env.trace(rid)
+        record_property('f13_request_id',rid)
+        record_property('f13_trace',json.dumps(trace,ensure_ascii=False))
+        billing=env.client.get('/v1/billing/requests/'+rid).json()
+        save_evidence(env,rid,trace,billing,dict(mode=mode,response=reply.text))
+        assert reply.status_code==200,reply.text
+        if mode=='streaming':
+            events=events_from(reply.text)
+            assert [seq for _,seq,_ in events]==list(range(1,len(events)+1))
+            assert events[-1][0]=='response.completed'
+            assert sum(e in {'response.completed','response.failed','response.canceled'} for e,_,_ in events)==1
+            text=''.join(data['delta'] for event,_,data in events if event=='response.delta')
+            assert env.client.get('/v1/llm/stream/'+rid+'/events',params={'after_seq':events[-1][1]}).status_code==204
+        else:
+            data=reply.json()['data'];text=data['text']
+            if mode=='schema':assert data['parsed']=={'order_id':'A123','product':'充电器'}
+        assert 'A123' in text and '充电器' in text
+        assert '"group"' not in text and 'candidate_groups' not in text
+        assert trace['status']=='completed'
+&gt;       assert_two_stages(trace)
+
+tests/live/test_f13_routing.py:106: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+trace = {'request_id': '1ee3f92a-ebdf-4201-b371-4bb359ca1574', 'operation': 'completion', 'status': 'completed', 'requested_model': 'auto-general', ...}
+
+    def assert_two_stages(trace):
+        assert trace['requested_model']=='auto-general'
+        attempts=trace['attempts']
+        assert len(attempts)&gt;=2
+        assert attempts[0]['purpose']=='classification'
+        assert all(attempt['purpose']=='generation' for attempt in attempts[1:])
+&gt;       assert attempts[0]['model']=='light'
+E       AssertionError: assert 'light-endpoint' == 'light'
+E         
+E         - light
+E         + light-endpoint
+
+tests/live/test_f13_routing.py:59: AssertionError</failure></testcase><testcase classname="tests.live.test_f13_routing" name="test_real_auto_routing_public_operations[schema]" file="tests/live/test_f13_routing.py" line="70" time="3.355"><properties><property name="f13_request_id" value="d12aefde-b309-4bb0-86e0-debb26b9dc4b" /><property name="f13_trace" value="{&quot;request_id&quot;: &quot;d12aefde-b309-4bb0-86e0-debb26b9dc4b&quot;, &quot;operation&quot;: &quot;completion&quot;, &quot;status&quot;: &quot;completed&quot;, &quot;requested_model&quot;: &quot;auto-general&quot;, &quot;prompt_name&quot;: &quot;f13_controlled_case&quot;, &quot;prompt_version&quot;: &quot;1.0.0&quot;, &quot;prompt_fingerprint&quot;: &quot;d25fd0c2cbc43d09f62562f51e767a14c60156808921fd5e1eb19ec2b1d7f1a7&quot;, &quot;schema_fingerprint&quot;: &quot;a15093dad255a0f6b2842f4d5420c28bc163a509eaac8d741d2f7192f4d7ef1b&quot;, &quot;structured_output_mode&quot;: null, &quot;input_token_count&quot;: 1216, &quot;counter_version&quot;: &quot;qwen_text_estimate_v1:utf8-json:fixed512:percent10&quot;, &quot;input_token_kind&quot;: &quot;estimated&quot;, &quot;max_output_tokens&quot;: 1024, &quot;timeout_seconds&quot;: 60, &quot;created_at&quot;: &quot;2026-11-03T15:30:54.424003Z&quot;, &quot;started_at&quot;: &quot;2026-11-03T15:30:54.429589Z&quot;, &quot;deadline_at&quot;: &quot;2026-11-03T15:31:54.423985Z&quot;, &quot;ended_at&quot;: &quot;2026-11-03T15:30:57.592378Z&quot;, &quot;error_code&quot;: null, &quot;error_stage&quot;: null, &quot;delivery_error_code&quot;: null, &quot;attempts&quot;: [{&quot;attempt_no&quot;: 1, &quot;model&quot;: &quot;light-endpoint&quot;, &quot;provider&quot;: &quot;bailian-main&quot;, &quot;adapter&quot;: &quot;bailian&quot;, &quot;api_protocol&quot;: &quot;responses&quot;, &quot;configured_model&quot;: &quot;qwen3.8-flash&quot;, &quot;actual_model&quot;: &quot;qwen3.8-flash&quot;, &quot;reason&quot;: &quot;initial&quot;, &quot;status&quot;: &quot;completed&quot;, &quot;finish_reason&quot;: &quot;stop&quot;, &quot;upstream_status&quot;: &quot;completed&quot;, &quot;upstream_finish_reason&quot;: null, &quot;error_code&quot;: null, &quot;provider_error_code&quot;: null, &quot;cleanup_error_code&quot;: null, &quot;started_at&quot;: &quot;2026-11-03T15:30:54.429589Z&quot;, &quot;ended_at&quot;: &quot;2026-11-03T15:30:55.788665Z&quot;, &quot;latency_ms&quot;: 1356.1695840326138, &quot;provider_duration_ms&quot;: 1348.9782079705037, &quot;provider_entered&quot;: true, &quot;prompt_fingerprint&quot;: &quot;c7d8b0cde204b9f332c55d5db003a9968639a3a3be97dd15ce6cd3f600b15385&quot;, &quot;input_token_count&quot;: 5561, &quot;counter_version&quot;: &quot;qwen_text_estimate_v1:utf8-json:fixed512:percent10&quot;, &quot;input_token_kind&quot;: &quot;estimated&quot;, &quot;max_output_tokens&quot;: 128, &quot;usage&quot;: {&quot;input_tokens&quot;: 933, &quot;output_tokens&quot;: 5, &quot;total_tokens&quot;: 938}, &quot;purpose&quot;: &quot;classification&quot;}, {&quot;attempt_no&quot;: 2, &quot;model&quot;: &quot;light-endpoint&quot;, &quot;provider&quot;: &quot;bailian-main&quot;, &quot;adapter&quot;: &quot;bailian&quot;, &quot;api_protocol&quot;: &quot;responses&quot;, &quot;configured_model&quot;: &quot;qwen3.8-flash&quot;, &quot;actual_model&quot;: &quot;qwen3.8-flash&quot;, &quot;reason&quot;: &quot;initial&quot;, &quot;status&quot;: &quot;completed&quot;, &quot;finish_reason&quot;: &quot;stop&quot;, &quot;upstream_status&quot;: &quot;completed&quot;, &quot;upstream_finish_reason&quot;: null, &quot;error_code&quot;: null, &quot;provider_error_code&quot;: null, &quot;cleanup_error_code&quot;: null, &quot;started_at&quot;: &quot;2026-11-03T15:30:55.798330Z&quot;, &quot;ended_at&quot;: &quot;2026-11-03T15:30:57.581923Z&quot;, &quot;latency_ms&quot;: 1779.2547499993816, &quot;provider_duration_ms&quot;: 1770.191750023514, &quot;provider_entered&quot;: true, &quot;prompt_fingerprint&quot;: &quot;d25fd0c2cbc43d09f62562f51e767a14c60156808921fd5e1eb19ec2b1d7f1a7&quot;, &quot;input_token_count&quot;: 1216, &quot;counter_version&quot;: &quot;qwen_text_estimate_v1:utf8-json:fixed512:percent10&quot;, &quot;input_token_kind&quot;: &quot;estimated&quot;, &quot;max_output_tokens&quot;: 256, &quot;usage&quot;: {&quot;input_tokens&quot;: 118, &quot;output_tokens&quot;: 23, &quot;total_tokens&quot;: 141}, &quot;purpose&quot;: &quot;generation&quot;}], &quot;usage&quot;: {&quot;known_subtotal&quot;: {&quot;input_tokens&quot;: 1051, &quot;output_tokens&quot;: 28, &quot;total_tokens&quot;: 1079}, &quot;unknown_attempts&quot;: []}, &quot;timing&quot;: {&quot;request_duration_ms&quot;: 3168.375, &quot;ttft_ms&quot;: null, &quot;generation_duration_ms&quot;: null, &quot;stream_duration_ms&quot;: null}, &quot;recovery&quot;: {&quot;wait_ms&quot;: 0.0, &quot;skipped_candidates&quot;: [], &quot;stop_reason&quot;: null}, &quot;cancellation&quot;: {&quot;requested_at&quot;: null, &quot;ended_at&quot;: null, &quot;cleanup_error_code&quot;: null}, &quot;routing&quot;: {&quot;version&quot;: 1, &quot;strategy&quot;: &quot;ordered&quot;, &quot;config_fingerprint&quot;: &quot;bd9b04bc4f79a7046bce7f0710aa1eebe582ffb4d70f31684ab962df439face8&quot;, &quot;candidates&quot;: [{&quot;endpoint_id&quot;: &quot;light-endpoint&quot;, &quot;status&quot;: &quot;eligible&quot;, &quot;code&quot;: null}], &quot;selected_endpoint&quot;: &quot;light-endpoint&quot;, &quot;reason&quot;: &quot;first_eligible&quot;}, &quot;auto_routing&quot;: {&quot;version&quot;: 1, &quot;profile&quot;: &quot;auto-general&quot;, &quot;candidate_groups&quot;: [{&quot;group&quot;: &quot;light&quot;, &quot;status&quot;: &quot;eligible&quot;, &quot;code&quot;: null}, {&quot;group&quot;: &quot;general&quot;, &quot;status&quot;: &quot;eligible&quot;, &quot;code&quot;: null}, {&quot;group&quot;: &quot;analysis&quot;, &quot;status&quot;: &quot;eligible&quot;, &quot;code&quot;: null}], &quot;resolved_group&quot;: &quot;light&quot;, &quot;source&quot;: &quot;classifier&quot;, &quot;fallback_reason&quot;: null, &quot;classifier_prompt_name&quot;: &quot;task_router&quot;, &quot;classifier_prompt_version&quot;: &quot;1.0.0&quot;, &quot;classification_duration_ms&quot;: 1368.3997910120524}}" /></properties><failure message="AssertionError: assert 'light-endpoint' == 'light'&#10;  &#10;  - light&#10;  + light-endpoint">f13_real_environment = RealEnvironment(client=&lt;starlette.testclient.TestClient object at 0x110162270&gt;, application=&lt;fastapi.applications.Fast...l21tvpq00000gn/T/llmgw-f13-work-eifzl4on/pytest-auto-real-development-first/test_real_auto_routing_public_1/f13-real'))
+mode = 'schema'
+record_property = &lt;function record_property.&lt;locals&gt;.append_property at 0x110110040&gt;
+
+    @pytest.mark.parametrize('mode',['text','schema','streaming'])
+    def test_real_auto_routing_public_operations(f13_real_environment,mode,record_property):
+        env=f13_real_environment
+        case=dict(task_role='你是订单字段提取助手，仅根据明确资料提取订单号和商品，不执行任何操作。',
+            context='已确认订单A123，商品为充电器。',message='只输出订单号和商品名称，简短回答。')
+        if mode=='schema':
+            case['response_schema']={'type':'object','properties':{
+                'order_id':{'type':'string','enum':['A123']},'product':{'type':'string','enum':['充电器']}},
+                'required':['order_id','product'],'additionalProperties':False}
+        with controlled_case(env,case) as body:
+            reply=env.client.post('/v1/llm/stream' if mode=='streaming' else '/v1/llm',json=body)
+            rid=reply.headers['x-request-id']
+            if mode=='streaming':
+                assert reply.status_code==202,reply.text
+                pending=env.trace(rid);assert pending['status']=='pending' and pending['attempts']==[]
+                reply=env.client.get('/v1/llm/stream/'+rid+'/events')
+        trace=env.trace(rid)
+        record_property('f13_request_id',rid)
+        record_property('f13_trace',json.dumps(trace,ensure_ascii=False))
+        billing=env.client.get('/v1/billing/requests/'+rid).json()
+        save_evidence(env,rid,trace,billing,dict(mode=mode,response=reply.text))
+        assert reply.status_code==200,reply.text
+        if mode=='streaming':
+            events=events_from(reply.text)
+            assert [seq for _,seq,_ in events]==list(range(1,len(events)+1))
+            assert events[-1][0]=='response.completed'
+            assert sum(e in {'response.completed','response.failed','response.canceled'} for e,_,_ in events)==1
+            text=''.join(data['delta'] for event,_,data in events if event=='response.delta')
+            assert env.client.get('/v1/llm/stream/'+rid+'/events',params={'after_seq':events[-1][1]}).status_code==204
+        else:
+            data=reply.json()['data'];text=data['text']
+            if mode=='schema':assert data['parsed']=={'order_id':'A123','product':'充电器'}
+        assert 'A123' in text and '充电器' in text
+        assert '"group"' not in text and 'candidate_groups' not in text
+        assert trace['status']=='completed'
+&gt;       assert_two_stages(trace)
+
+tests/live/test_f13_routing.py:106: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+trace = {'request_id': 'd12aefde-b309-4bb0-86e0-debb26b9dc4b', 'operation': 'completion', 'status': 'completed', 'requested_model': 'auto-general', ...}
+
+    def assert_two_stages(trace):
+        assert trace['requested_model']=='auto-general'
+        attempts=trace['attempts']
+        assert len(attempts)&gt;=2
+        assert attempts[0]['purpose']=='classification'
+        assert all(attempt['purpose']=='generation' for attempt in attempts[1:])
+&gt;       assert attempts[0]['model']=='light'
+E       AssertionError: assert 'light-endpoint' == 'light'
+E         
+E         - light
+E         + light-endpoint
+
+tests/live/test_f13_routing.py:59: AssertionError</failure></testcase><testcase classname="tests.live.test_f13_routing" name="test_real_auto_routing_public_operations[streaming]" file="tests/live/test_f13_routing.py" line="70" time="0.187"><properties><property name="f13_request_id" value="8505396e-e5fe-4491-885d-74090878e08a" /><property name="f13_trace" value="{&quot;request_id&quot;: &quot;8505396e-e5fe-4491-885d-74090878e08a&quot;, &quot;operation&quot;: &quot;streaming&quot;, &quot;status&quot;: &quot;failed&quot;, &quot;requested_model&quot;: &quot;auto-general&quot;, &quot;prompt_name&quot;: &quot;f13_controlled_case&quot;, &quot;prompt_version&quot;: &quot;1.0.0&quot;, &quot;prompt_fingerprint&quot;: &quot;07d79ca2b7666ef4b32f904cd28e8c0691e83170699777dda5576d04e88b308f&quot;, &quot;schema_fingerprint&quot;: null, &quot;structured_output_mode&quot;: null, &quot;input_token_count&quot;: 981, &quot;counter_version&quot;: &quot;qwen_text_estimate_v1:utf8-json:fixed512:percent10&quot;, &quot;input_token_kind&quot;: &quot;estimated&quot;, &quot;max_output_tokens&quot;: 1024, &quot;timeout_seconds&quot;: 60, &quot;created_at&quot;: &quot;2026-11-03T15:30:57.804305Z&quot;, &quot;started_at&quot;: &quot;2026-11-03T15:30:57.819054Z&quot;, &quot;deadline_at&quot;: &quot;2026-11-03T15:31:57.819054Z&quot;, &quot;ended_at&quot;: &quot;2026-11-03T15:30:57.823963Z&quot;, &quot;error_code&quot;: &quot;execution_configuration_changed&quot;, &quot;error_stage&quot;: null, &quot;delivery_error_code&quot;: null, &quot;attempts&quot;: [], &quot;usage&quot;: {&quot;known_subtotal&quot;: null, &quot;unknown_attempts&quot;: []}, &quot;timing&quot;: {&quot;request_duration_ms&quot;: 19.657999999999998, &quot;ttft_ms&quot;: null, &quot;generation_duration_ms&quot;: null, &quot;stream_duration_ms&quot;: null}, &quot;recovery&quot;: {&quot;wait_ms&quot;: null, &quot;skipped_candidates&quot;: null, &quot;stop_reason&quot;: null}, &quot;cancellation&quot;: {&quot;requested_at&quot;: null, &quot;ended_at&quot;: null, &quot;cleanup_error_code&quot;: null}, &quot;routing&quot;: null, &quot;auto_routing&quot;: {&quot;version&quot;: 1, &quot;profile&quot;: &quot;auto-general&quot;, &quot;candidate_groups&quot;: [{&quot;group&quot;: &quot;light&quot;, &quot;status&quot;: &quot;eligible&quot;, &quot;code&quot;: null}, {&quot;group&quot;: &quot;general&quot;, &quot;status&quot;: &quot;eligible&quot;, &quot;code&quot;: null}, {&quot;group&quot;: &quot;analysis&quot;, &quot;status&quot;: &quot;eligible&quot;, &quot;code&quot;: null}], &quot;resolved_group&quot;: null, &quot;source&quot;: null, &quot;fallback_reason&quot;: null, &quot;classifier_prompt_name&quot;: &quot;task_router&quot;, &quot;classifier_prompt_version&quot;: &quot;1.0.0&quot;, &quot;classification_duration_ms&quot;: null}}" /></properties><failure message="AssertionError: assert 'response.failed' == 'response.completed'&#10;  &#10;  - response.completed&#10;  + response.failed">f13_real_environment = RealEnvironment(client=&lt;starlette.testclient.TestClient object at 0x11020deb0&gt;, application=&lt;fastapi.applications.Fast...l21tvpq00000gn/T/llmgw-f13-work-eifzl4on/pytest-auto-real-development-first/test_real_auto_routing_public_2/f13-real'))
+mode = 'streaming'
+record_property = &lt;function record_property.&lt;locals&gt;.append_property at 0x11022fc40&gt;
+
+    @pytest.mark.parametrize('mode',['text','schema','streaming'])
+    def test_real_auto_routing_public_operations(f13_real_environment,mode,record_property):
+        env=f13_real_environment
+        case=dict(task_role='你是订单字段提取助手，仅根据明确资料提取订单号和商品，不执行任何操作。',
+            context='已确认订单A123，商品为充电器。',message='只输出订单号和商品名称，简短回答。')
+        if mode=='schema':
+            case['response_schema']={'type':'object','properties':{
+                'order_id':{'type':'string','enum':['A123']},'product':{'type':'string','enum':['充电器']}},
+                'required':['order_id','product'],'additionalProperties':False}
+        with controlled_case(env,case) as body:
+            reply=env.client.post('/v1/llm/stream' if mode=='streaming' else '/v1/llm',json=body)
+            rid=reply.headers['x-request-id']
+            if mode=='streaming':
+                assert reply.status_code==202,reply.text
+                pending=env.trace(rid);assert pending['status']=='pending' and pending['attempts']==[]
+                reply=env.client.get('/v1/llm/stream/'+rid+'/events')
+        trace=env.trace(rid)
+        record_property('f13_request_id',rid)
+        record_property('f13_trace',json.dumps(trace,ensure_ascii=False))
+        billing=env.client.get('/v1/billing/requests/'+rid).json()
+        save_evidence(env,rid,trace,billing,dict(mode=mode,response=reply.text))
+        assert reply.status_code==200,reply.text
+        if mode=='streaming':
+            events=events_from(reply.text)
+            assert [seq for _,seq,_ in events]==list(range(1,len(events)+1))
+&gt;           assert events[-1][0]=='response.completed'
+E           AssertionError: assert 'response.failed' == 'response.completed'
+E             
+E             - response.completed
+E             + response.failed
+
+tests/live/test_f13_routing.py:96: AssertionError</failure></testcase><testcase classname="tests.live.test_f13_routing" name="test_real_routing_quality_development_30" file="tests/live/test_f13_routing.py" line="168" time="440.304"><properties><property name="f13_quality_report" value="/private/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llmgw-f13-work-eifzl4on/pytest-auto-real-development-first/test_real_routing_quality_deve0/f13-real/f13-routing-development-0476ca7f03f845ef869d74b10edb7659.json" /><property name="f13_quality_summary" value="{&quot;batch_id&quot;: &quot;0476ca7f03f845ef869d74b10edb7659&quot;, &quot;split&quot;: &quot;development&quot;, &quot;corpus_sha256&quot;: &quot;2f8679f79eea562467b0229310b9bdd7eec3a6561a1530776d72a382872ba589&quot;, &quot;corpus_version&quot;: &quot;1.0.0&quot;, &quot;started_at&quot;: &quot;2026-11-03T15:30:57.957585+00:00&quot;, &quot;confusion_matrix&quot;: {&quot;light&quot;: {&quot;light&quot;: 9, &quot;general&quot;: 1, &quot;analysis&quot;: 0}, &quot;general&quot;: {&quot;light&quot;: 0, &quot;general&quot;: 10, &quot;analysis&quot;: 0}, &quot;analysis&quot;: {&quot;light&quot;: 0, &quot;general&quot;: 0, &quot;analysis&quot;: 10}}, &quot;misclassified&quot;: [&quot;F13-D018&quot;], &quot;fallbacks&quot;: [], &quot;provider_failures&quot;: [{&quot;id&quot;: &quot;F13-D002&quot;, &quot;code&quot;: &quot;output_truncated&quot;, &quot;error_code&quot;: &quot;output_truncated&quot;}, {&quot;id&quot;: &quot;F13-D012&quot;, &quot;code&quot;: &quot;output_truncated&quot;, &quot;error_code&quot;: &quot;output_truncated&quot;}, {&quot;id&quot;: &quot;F13-D014&quot;, &quot;code&quot;: &quot;request_timeout&quot;, &quot;error_code&quot;: null}, {&quot;id&quot;: &quot;F13-D026&quot;, &quot;code&quot;: &quot;output_truncated&quot;, &quot;error_code&quot;: &quot;output_truncated&quot;}, {&quot;id&quot;: &quot;F13-D027&quot;, &quot;code&quot;: &quot;output_truncated&quot;, &quot;error_code&quot;: &quot;output_truncated&quot;}, {&quot;id&quot;: &quot;F13-D028&quot;, &quot;code&quot;: &quot;output_truncated&quot;, &quot;error_code&quot;: &quot;output_truncated&quot;}], &quot;integrity_failures&quot;: [{&quot;id&quot;: &quot;F13-D001&quot;, &quot;error&quot;: &quot;assert 'light-endpoint' == 'light'\n  \n  - light\n  + light-endpoint&quot;}, {&quot;id&quot;: &quot;F13-D003&quot;, &quot;error&quot;: &quot;assert 'light-endpoint' == 'light'\n  \n  - light\n  + light-endpoint&quot;}, {&quot;id&quot;: &quot;F13-D004&quot;, &quot;error&quot;: &quot;assert 'light-endpoint' == 'light'\n  \n  - light\n  + light-endpoint&quot;}, {&quot;id&quot;: &quot;F13-D005&quot;, &quot;error&quot;: &quot;assert 'light-endpoint' == 'light'\n  \n  - light\n  + light-endpoint&quot;}, {&quot;id&quot;: &quot;F13-D006&quot;, &quot;error&quot;: &quot;assert 'light-endpoint' == 'light'\n  \n  - light\n  + light-endpoint&quot;}, {&quot;id&quot;: &quot;F13-D007&quot;, &quot;error&quot;: &quot;assert 'light-endpoint' == 'light'\n  \n  - light\n  + light-endpoint&quot;}, {&quot;id&quot;: &quot;F13-D008&quot;, &quot;error&quot;: &quot;assert 'light-endpoint' == 'light'\n  \n  - light\n  + light-endpoint&quot;}, {&quot;id&quot;: &quot;F13-D009&quot;, &quot;error&quot;: &quot;assert 'light-endpoint' == 'light'\n  \n  - light\n  + light-endpoint&quot;}, {&quot;id&quot;: &quot;F13-D010&quot;, &quot;error&quot;: &quot;assert 'light-endpoint' == 'light'\n  \n  - light\n  + light-endpoint&quot;}, {&quot;id&quot;: &quot;F13-D011&quot;, &quot;error&quot;: &quot;assert 'light-endpoint' == 'light'\n  \n  - light\n  + light-endpoint&quot;}, {&quot;id&quot;: &quot;F13-D013&quot;, &quot;error&quot;: &quot;assert 'light-endpoint' == 'light'\n  \n  - light\n  + light-endpoint&quot;}, {&quot;id&quot;: &quot;F13-D015&quot;, &quot;error&quot;: &quot;assert 'light-endpoint' == 'light'\n  \n  - light\n  + light-endpoint&quot;}, {&quot;id&quot;: &quot;F13-D016&quot;, &quot;error&quot;: &quot;assert 'light-endpoint' == 'light'\n  \n  - light\n  + light-endpoint&quot;}, {&quot;id&quot;: &quot;F13-D017&quot;, &quot;error&quot;: &quot;assert 'light-endpoint' == 'light'\n  \n  - light\n  + light-endpoint&quot;}, {&quot;id&quot;: &quot;F13-D018&quot;, &quot;error&quot;: &quot;assert 'light-endpoint' == 'light'\n  \n  - light\n  + light-endpoint&quot;}, {&quot;id&quot;: &quot;F13-D019&quot;, &quot;error&quot;: &quot;assert 'light-endpoint' == 'light'\n  \n  - light\n  + light-endpoint&quot;}, {&quot;id&quot;: &quot;F13-D020&quot;, &quot;error&quot;: &quot;assert 'light-endpoint' == 'light'\n  \n  - light\n  + light-endpoint&quot;}, {&quot;id&quot;: &quot;F13-D021&quot;, &quot;error&quot;: &quot;assert 'light-endpoint' == 'light'\n  \n  - light\n  + light-endpoint&quot;}, {&quot;id&quot;: &quot;F13-D022&quot;, &quot;error&quot;: &quot;assert 'light-endpoint' == 'light'\n  \n  - light\n  + light-endpoint&quot;}, {&quot;id&quot;: &quot;F13-D023&quot;, &quot;error&quot;: &quot;assert 'light-endpoint' == 'light'\n  \n  - light\n  + light-endpoint&quot;}, {&quot;id&quot;: &quot;F13-D024&quot;, &quot;error&quot;: &quot;assert 'light-endpoint' == 'light'\n  \n  - light\n  + light-endpoint&quot;}, {&quot;id&quot;: &quot;F13-D025&quot;, &quot;error&quot;: &quot;assert 'light-endpoint' == 'light'\n  \n  - light\n  + light-endpoint&quot;}, {&quot;id&quot;: &quot;F13-D029&quot;, &quot;error&quot;: &quot;assert 'light-endpoint' == 'light'\n  \n  - light\n  + light-endpoint&quot;}, {&quot;id&quot;: &quot;F13-D030&quot;, &quot;error&quot;: &quot;assert 'light-endpoint' == 'light'\n  \n  - light\n  + light-endpoint&quot;}], &quot;valid&quot;: 30, &quot;correct&quot;: 29, &quot;ended_at&quot;: &quot;2026-11-03T15:38:17.320412+00:00&quot;}" /></properties><failure message="AssertionError: [{'id': 'F13-D002', 'code': 'output_truncated', 'error_code': 'output_truncated'}, {'id': 'F13-D012', 'code': 'output_...', 'error_code': 'output_truncated'}, {'id': 'F13-D028', 'code': 'output_truncated', 'error_code': 'output_truncated'}]&#10;[+1 more line; full report in element text]">f13_real_environment = RealEnvironment(client=&lt;starlette.testclient.TestClient object at 0x1102ab350&gt;, application=&lt;fastapi.applications.Fast...l21tvpq00000gn/T/llmgw-f13-work-eifzl4on/pytest-auto-real-development-first/test_real_routing_quality_deve0/f13-real'))
+record_property = &lt;function record_property.&lt;locals&gt;.append_property at 0x11032ad40&gt;
+
+        assert public['state']=='released' and Decimal(public['agent_charge'])==0
+&gt;   else:
+
+tests/live/test_f13_routing.py:170: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+env = RealEnvironment(client=&lt;starlette.testclient.TestClient object at 0x1102ab350&gt;, application=&lt;fastapi.applications.Fast...l21tvpq00000gn/T/llmgw-f13-work-eifzl4on/pytest-auto-real-development-first/test_real_routing_quality_deve0/f13-real'))
+split = 'development'
+record_property = &lt;function record_property.&lt;locals&gt;.append_property at 0x11032ad40&gt;
+
+            if mode=='schema':assert data['parsed']=={'order_id':'A123','product':'充电器'}
+        assert 'A123' in text and '充电器' in text
+        assert '"group"' not in text and 'candidate_groups' not in text
+        assert trace['status']=='completed'
+        assert_two_stages(trace)
+        verified=env.verify(rid,trace)
+        save_evidence(env,rid,trace,verified,dict(mode=mode,response=reply.text))
+    
+    
+    def terminal_trace(env,rid):
+        deadline=monotonic()+10
+        trace=env.trace(rid)
+        while trace['status'] not in {'completed','failed','canceled'} and monotonic()&lt;deadline:
+            sleep(.1)
+            trace=env.trace(rid)
+        return trace
+    
+    
+    def verify_quality_lifecycle(env,rid,trace,reply,billing_reply):
+        """Failed generation still owes a terminal state and complete ledger evidence."""
+        assert trace['status'] in {'completed','failed'},trace['status']
+        assert billing_reply.status_code==200,billing_reply.text
+        bill=billing_reply.json()['data'];attempts=trace['attempts']
+        assert all(a['status'] in {'completed','failed'} for a in attempts)
+        assert len(attempts)==len(bill['attempts'])
+        assert all(a['purpose'] in {'classification','generation'} for a in attempts)
+        for attempt in attempts:
+            group='light' if attempt['purpose']=='classification' else trace['auto_routing']['resolved_group']
+            assert attempt['model']==group+'-endpoint' and attempt['configured_model']==MODELS[group]
+            assert attempt['input_token_kind']=='estimated'
+            assert attempt['counter_version'].startswith('qwen_text_estimate_v1:')
+            if attempt['usage'] is not None:
+                assert attempt['input_token_count']&gt;=attempt['usage']['input_tokens']
+        if reply.status_code==200:
+            assert trace['status']=='completed' and trace['error_code'] is None
+        else:
+            assert trace['status']=='failed' and trace['error_code']==reply.json()['code']
+            assert trace['error_code'] in {'output_truncated','provider_timeout','provider_connection_error',
+                'provider_rate_limited','provider_unavailable','request_timeout','provider_refused'},trace['error_code']
+        if all(a['usage'] is not None for a in attempts):
+            env.verify(rid,trace)
+            return
+        # A transport failure can leave consumption unknown. Verify those holds
+        # explicitly, and still independently price every known successful charge.
+        with env.server.connect(env.database_name) as sql:
+            pk,status=sql.execute('SELECT id,status FROM tb_llm_request WHERE request_id=%s',(rid,)).fetchone()
+            rows=sql.execute('SELECT model,status,input_tokens,output_tokens,total_tokens FROM tb_llm_attempt WHERE request_pk=%s ORDER BY attempt_no',(pk,)).fetchall()
+            charges=sql.execute('SELECT state,agent_charge,supplier_cost,quote,cached_input_tokens FROM tb_billing_attempt WHERE request_pk=%s ORDER BY attempt_no',(pk,)).fetchall()
+        assert status==trace['status'] and len(rows)==len(charges)==len(attempts)
+        total=Decimal(0)
+        for attempt,row,charge,public in zip(attempts,rows,charges,bill['attempts']):
+&gt;           assert row[:2]==(attempt['model'],attempt['status'])
+E           AssertionError: [{'id': 'F13-D002', 'code': 'output_truncated', 'error_code': 'output_truncated'}, {'id': 'F13-D012', 'code': 'output_...', 'error_code': 'output_truncated'}, {'id': 'F13-D028', 'code': 'output_truncated', 'error_code': 'output_truncated'}]
+E           assert not [{'id': 'F13-D002', 'code': 'output_truncated', 'error_code': 'output_truncated'}, {'id': 'F13-D012', 'code': 'output_...', 'error_code': 'output_truncated'}, {'id': 'F13-D028', 'code': 'output_truncated', 'error_code': 'output_truncated'}]
+
+tests/live/test_f13_routing.py:162: AssertionError</failure></testcase></testsuite></testsuites>

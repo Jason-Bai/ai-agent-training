@@ -1,0 +1,108 @@
+F....F..                                                                 [100%]
+=================================== FAILURES ===================================
+__________________ test_real_streaming[F5-L01-primary-stream] __________________
+
+live_server = (<fastapi.applications.FastAPI object at 0x10bccf920>, <httpx2.AsyncClient object at 0x10bd00470>)
+model = 'general-primary', adapter = 'deepseek', protocol = 'chat_completions'
+record_property = <function record_property.<locals>.append_property at 0x10be3a020>
+
+    @pytest.mark.parametrize('model,adapter,protocol',[
+        pytest.param('general-primary','deepseek','chat_completions',id='F5-L01-primary-stream'),
+        pytest.param('general-backup','openai_compatible','responses',id='F5-L02-backup-stream'),
+    ])
+    async def test_real_streaming(live_server,model,adapter,protocol,record_property):
+        app,client=live_server
+        payload={
+            'model':model,
+            'prompt':{'name':'context_answer','version':'1.1.0',
+                      'variables':{'context':'订单 A123 的商品为充电器。'}},
+            'messages':[{'role':'user','content':'订单 A123 的商品是什么？请简短回答。'}],
+            'max_output_tokens':128,'timeout_seconds':30,
+        }
+        names=[];texts=[];frame=[];sequences=[];usage=None;first_delta_at=None;started=monotonic()
+        created=await client.post('/v1/llm/stream',json=payload)
+        assert created.status_code==202
+        request_id=created.json()['data']['request_id']
+        assert created.json()['data']['status']=='pending'
+        assert created.headers['x-request-id']==request_id
+        async with client.stream('GET',f'/v1/llm/stream/{request_id}/events') as response:
+            assert response.status_code==200
+            assert response.headers['content-type'].startswith('text/event-stream')
+            assert response.headers['x-request-id']==request_id
+            async for line in response.aiter_lines():
+                if line:
+                    frame.append(line)
+                    continue
+                if not frame:
+                    continue
+                event_line=next(line for line in frame if line.startswith('event: '))
+                data_line=next(line for line in frame if line.startswith('data: '))
+                ids=[line[4:] for line in frame if line.startswith('id: ')]
+                name=event_line[7:];data=json.loads(data_line[6:]);frame=[]
+                if name=='response.heartbeat':
+                    assert ids==[]
+                else:
+                    assert len(ids)==1
+                    sequences.append(int(ids[0]))
+                assert data['request_id']==request_id
+                assert not names or names[-1] not in {'response.completed','response.failed'}
+                names.append(name)
+                if name=='response.delta':
+                    assert set(data)=={'request_id','delta'}
+                    assert isinstance(data['delta'],str) and data['delta']!=''
+                    texts.append(data['delta'])
+                    if first_delta_at is None:first_delta_at=monotonic()
+                elif name=='response.heartbeat':
+                    assert set(data)=={'request_id'}
+                elif name=='response.completed':
+                    assert set(data)=={'request_id','usage'}
+                    usage=data['usage']
+                else:
+                    # Preserve the platform classification without printing model output.
+                    record_property('failure_code',data.get('code'))
+>                   pytest.fail('真实流未正常完成；失败分类见JUnit元信息')
+E                   Failed: 真实流未正常完成；失败分类见JUnit元信息
+
+tests/live/test_f5_streaming.py:68: Failed
+______________ test_real_provider_case[F4-L04-backup-structured] _______________
+
+live_server = (<fastapi.applications.FastAPI object at 0x115279190>, <httpx2.AsyncClient object at 0x11553ff20>)
+model = 'general-backup', version = '1.2.0', is_probe = False
+is_structured = True
+record_property = <function record_property.<locals>.append_property at 0x1155f9300>
+
+    @pytest.mark.parametrize("model,version,is_probe,is_structured", [
+        pytest.param("general-primary", "1.0.0", False, False, id="F4-L01-primary-completion"),
+        pytest.param("general-backup", "1.1.0", False, False, id="F4-L02-backup-completion"),
+        pytest.param("general-primary", "1.2.0", False, True, id="F4-L03-primary-structured"),
+        pytest.param("general-backup", "1.2.0", False, True, id="F4-L04-backup-structured"),
+        pytest.param("general-primary", None, True, False, id="F4-L05-primary-probe"),
+        pytest.param("general-backup", None, True, False, id="F4-L06-backup-probe"),
+    ])
+    async def test_real_provider_case(live_server, model, version, is_probe, is_structured, record_property):
+        app, client = live_server
+        if is_probe:
+            response = await client.post(f"/v1/models/{model}/health")
+        else:
+            payload = {
+                "model": model,
+                "prompt": {"name": "context_answer", "version": version,
+                           "variables": {"context": CONTEXT if is_structured else "调用方提供的资料：订单 A123 的商品为充电器。"}},
+                "messages": [{"role": "user", "content": "订单 A123 的商品是什么？"}],
+                "max_output_tokens": 128 if is_structured else 64,
+                "timeout_seconds": 30,
+            }
+            if is_structured:
+                payload['response_schema'] = deepcopy(SCHEMA)
+                payload['messages'][0]['content'] = '提取订单号、商品信息和备注；备注未知时使用 null。'
+            response = await client.post("/v1/llm", json=payload)
+>       assert response.status_code == 200, response.json().get("code")
+E       AssertionError: request_timeout
+E       assert 504 == 200
+E        +  where 504 = <Response [504 Gateway Timeout]>.status_code
+
+tests/live/test_real_providers.py:93: AssertionError
+=========================== short test summary info ============================
+FAILED tests/live/test_f5_streaming.py::test_real_streaming[F5-L01-primary-stream]
+FAILED tests/live/test_real_providers.py::test_real_provider_case[F4-L04-backup-structured]
+2 failed, 6 passed in 71.64s (0:01:11)

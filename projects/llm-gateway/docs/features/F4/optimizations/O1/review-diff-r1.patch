@@ -1,0 +1,925 @@
+--- baseline/src/api/errors.py
++++ current/src/api/errors.py
+@@ -2,6 +2,7 @@
+ from fastapi.exceptions import RequestValidationError
+ from fastapi.responses import JSONResponse
+ from starlette.exceptions import HTTPException
++from starlette import status as http_status
+ 
+ from contracts import ErrorResponse
+ from errors import GatewayError, ProviderCallError
+@@ -18,7 +19,7 @@
+ def register_error_handlers(app: FastAPI) -> None:
+     @app.exception_handler(RequestValidationError)
+     async def invalid_request(request: Request, exc: RequestValidationError):
+-        return error_response(request.scope["state"], 422, "invalid_request", "请求参数不合法")
++        return error_response(request.scope["state"], http_status.HTTP_422_UNPROCESSABLE_CONTENT, "invalid_request", "请求参数不合法")
+ 
+     @app.exception_handler(GatewayError)
+     async def gateway_error(request: Request, exc: GatewayError):
+@@ -31,7 +32,7 @@
+     @app.exception_handler(HTTPException)
+     async def http_error(request: Request, exc: HTTPException):
+         code, message = {
+-            404: ("not_found", "路径不存在"),
+-            405: ("method_not_allowed", "请求方法不允许"),
++            http_status.HTTP_404_NOT_FOUND: ("not_found", "路径不存在"),
++            http_status.HTTP_405_METHOD_NOT_ALLOWED: ("method_not_allowed", "请求方法不允许"),
+         }.get(exc.status_code, ("http_error", "HTTP 请求失败"))
+         return error_response(request.scope["state"], exc.status_code, code, message, exc.headers)
+--- baseline/src/api/routes.py
++++ current/src/api/routes.py
+@@ -3,11 +3,12 @@
+ from fastapi import APIRouter, Depends, Request
+ from fastapi.responses import Response
+ from fastapi.routing import APIRoute
++from starlette import status as http_status
+ 
+ from api.dependencies import get_gateway
+ from contracts import ErrorResponse, LLMRequest, ProbeResponse, SuccessResponse, StructuredLLMData
+ from errors import GatewayError
+-from json_codec import dumps, loads
++from utils.json_codec import dumps, loads
+ from services.gateway import GatewayService
+ 
+ 
+@@ -37,7 +38,11 @@
+ @router.post("/v1/llm", response_model=SuccessResponse,
+              description='普通文本或经过严格 JSON/Schema 验收的结构化输出。response_schema 使用平台子集；'
+                          '完整关键字、引用和资源规则见项目 docs/response-schema.md；不提供规则查询接口。', responses={
+-    status: {"model": ErrorResponse} for status in (400, 422, 500, 502, 503, 504)
++    status: {"model": ErrorResponse} for status in (
++        http_status.HTTP_400_BAD_REQUEST, http_status.HTTP_422_UNPROCESSABLE_CONTENT,
++        http_status.HTTP_500_INTERNAL_SERVER_ERROR, http_status.HTTP_502_BAD_GATEWAY,
++        http_status.HTTP_503_SERVICE_UNAVAILABLE, http_status.HTTP_504_GATEWAY_TIMEOUT,
++    )
+ })
+ async def complete(
+     body: LLMRequest, request: Request,
+@@ -48,11 +53,15 @@
+ 
+ 
+ @router.post("/v1/models/{model}/health", response_model=ProbeResponse, responses={
+-    status: {"model": ErrorResponse} for status in (400, 422, 500, 502, 503, 504)
++    status: {"model": ErrorResponse} for status in (
++        http_status.HTTP_400_BAD_REQUEST, http_status.HTTP_422_UNPROCESSABLE_CONTENT,
++        http_status.HTTP_500_INTERNAL_SERVER_ERROR, http_status.HTTP_502_BAD_GATEWAY,
++        http_status.HTTP_503_SERVICE_UNAVAILABLE, http_status.HTTP_504_GATEWAY_TIMEOUT,
++    )
+ })
+ async def probe(model: str, request: Request, gateway: Annotated[GatewayService, Depends(get_gateway)]) -> ProbeResponse:
+     if await request.body():
+-        raise GatewayError("invalid_request", "探测接口不接受请求体", 422)
++        raise GatewayError("invalid_request", "探测接口不接受请求体", http_status.HTTP_422_UNPROCESSABLE_CONTENT)
+     return ProbeResponse(data=await gateway.probe(model, request.state.trace))
+ 
+ 
+--- baseline/src/constants.py
++++ current/src/constants.py
+@@ -0,0 +1,10 @@
++MAX_USER_MESSAGE_CHARS = 20_000
++MAX_RENDERED_USER_CHARS = 20_000
++MAX_CONTEXT_VARIABLE_CHARS = 10_000
++MAX_SCHEMA_BYTES = 16_384
++MAX_SCHEMA_RAW_DEPTH = 32
++MAX_SCHEMA_EXPANDED_DEPTH = 8
++MAX_SCHEMA_RAW_NODES = 256
++MAX_SCHEMA_EXPANDED_NODES = 256
++PROVIDER_PROBE_MAX_OUTPUT_TOKENS = 16
++PROVIDER_PROBE_TIMEOUT_SECONDS = 10
+--- baseline/src/contracts.py
++++ current/src/contracts.py
+@@ -2,6 +2,11 @@
+ 
+ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+ from pydantic.json_schema import SkipJsonSchema
++
++from constants import (
++    MAX_SCHEMA_BYTES, MAX_SCHEMA_EXPANDED_DEPTH, MAX_SCHEMA_RAW_DEPTH,
++    MAX_SCHEMA_RAW_NODES, MAX_USER_MESSAGE_CHARS,
++)
+ 
+ 
+ def _model_default(schema):
+@@ -26,7 +31,7 @@
+ 
+ class UserMessage(StrictObject):
+     role: Literal["user"]
+-    content: str = Field(min_length=1, max_length=20_000)
++    content: str = Field(min_length=1, max_length=MAX_USER_MESSAGE_CHARS)
+ 
+     @field_validator("content")
+     @classmethod
+@@ -45,7 +50,9 @@
+     response_schema: dict[str, Any] | SkipJsonSchema[None] = Field(
+         default=None, json_schema_extra=_model_default,
+         description='可选 Draft 2020-12 平台子集，对象根；完整规则见项目 docs/response-schema.md。'
+-                    '省略为文本，显式 null 不合法；最大 16 KiB，结构深度 8，原始深度 32，节点各 256。',
++                    f'省略为文本，显式 null 不合法；最大 {MAX_SCHEMA_BYTES // 1024} KiB，'
++                    f'结构深度 {MAX_SCHEMA_EXPANDED_DEPTH}，原始深度 {MAX_SCHEMA_RAW_DEPTH}，'
++                    f'节点各 {MAX_SCHEMA_RAW_NODES}。',
+     )
+ 
+     @field_validator("max_output_tokens", "timeout_seconds", "response_schema", mode="before")
+--- baseline/src/errors.py
++++ current/src/errors.py
+@@ -1,3 +1,6 @@
++from starlette import status as http_status
++
++
+ class GatewayError(Exception):
+     def __init__(self, code: str, message: str, status_code: int):
+         super().__init__(message)
+@@ -24,7 +27,7 @@
+ 
+ class ProviderCallError(Exception):
+     """Safe classification and confirmed metadata; never retain raw exceptions."""
+-    def __init__(self, raw_message='', *, code='provider_error', status_code=502,
++    def __init__(self, raw_message='', *, code='provider_error', status_code=http_status.HTTP_502_BAD_GATEWAY,
+                  actual_model=None, finish_reason=None, usage=None,
+                  upstream_status=None, upstream_finish_reason=None):
+         self.code = code
+--- baseline/src/json_codec.py
++++ current/src/json_codec.py
+@@ -1,88 +0,0 @@
+-"""JSON numbers stay decimal across HTTP, Schema, counting and Provider wire."""
+-from decimal import Decimal, DecimalException
+-import json
+-
+-
+-def _decimal(value):
+-    number = Decimal(value)
+-    if not number.is_finite():
+-        raise ValueError('JSON numbers must be finite')
+-    return number
+-
+-
+-def _integer(value):
+-    try:
+-        return int(value)
+-    except ValueError:
+-        # Preserve large JSON integer literals without changing Python's global
+-        # security setting or expanding an exponent into a giant binary int.
+-        return _decimal(value)
+-
+-
+-def _object(pairs):
+-    result = {}
+-    for key, value in pairs:
+-        if key in result:
+-            raise ValueError('Duplicate JSON object key')
+-        result[key] = value
+-    return result
+-
+-
+-def _invalid_constant(value):
+-    raise ValueError('Non-standard JSON constant')
+-
+-
+-def loads(value: str | bytes):
+-    try:
+-        return json.loads(value, parse_int=_integer, parse_float=_decimal, parse_constant=_invalid_constant,
+-                          object_pairs_hook=_object)
+-    except (ValueError, UnicodeError, DecimalException, RecursionError):
+-        # FastAPI recognises JSONDecodeError as invalid_request. Do not retain
+-        # private input or the original parser exception in diagnostics.
+-        raise json.JSONDecodeError('Invalid JSON', '', 0) from None
+-
+-
+-def dumps(value, *, sort_keys: bool = False, compact: bool = True) -> str:
+-    comma, colon = (',', ':') if compact else (', ', ': ')
+-    parts = []
+-    stack = [('value', value)]
+-    active = set()
+-    while stack:
+-        kind, item = stack.pop()
+-        if kind == 'raw':
+-            parts.append(item)
+-            continue
+-        if kind == 'close':
+-            token, identity = item
+-            parts.append(token)
+-            active.remove(identity)
+-            continue
+-        if isinstance(item, Decimal):
+-            if not item.is_finite():
+-                raise ValueError('JSON numbers must be finite')
+-            parts.append(str(item))
+-        elif isinstance(item, (dict, list)):
+-            identity = id(item)
+-            if identity in active:
+-                raise ValueError('Circular JSON value')
+-            active.add(identity)
+-            mapping = isinstance(item, dict)
+-            parts.append('{' if mapping else '[')
+-            stack.append(('close', ('}' if mapping else ']', identity)))
+-            if mapping:
+-                if any(not isinstance(key, str) for key in item):
+-                    raise TypeError('JSON object keys must be strings')
+-                keys = sorted(item) if sort_keys else list(item)
+-                for index in range(len(keys) - 1, -1, -1):
+-                    key = keys[index]
+-                    stack.extend([('value', item[key]), ('raw', colon), ('value', key)])
+-                    if index:
+-                        stack.append(('raw', comma))
+-            else:
+-                for index in range(len(item) - 1, -1, -1):
+-                    stack.append(('value', item[index]))
+-                    if index:
+-                        stack.append(('raw', comma))
+-        else:
+-            parts.append(json.dumps(item, ensure_ascii=False, allow_nan=False))
+-    return ''.join(parts)
+--- baseline/src/middleware/request_context.py
++++ current/src/middleware/request_context.py
+@@ -3,6 +3,7 @@
+ 
+ from starlette.datastructures import MutableHeaders
+ from starlette.types import ASGIApp, Receive, Scope, Send
++from starlette import status as http_status
+ 
+ from api.errors import error_response
+ from services.trace import TraceStore
+@@ -43,7 +44,7 @@
+             state["error_code"] = "internal_error"
+             if response_started:
+                 raise
+-            response = error_response(state, 500, "internal_error", "服务内部错误")
++            response = error_response(state, http_status.HTTP_500_INTERNAL_SERVER_ERROR, "internal_error", "服务内部错误")
+             await response(scope, receive, send_with_id)
+         finally:
+             # Interrupted work remains unconfirmed; F6 will define cancellation.
+--- baseline/src/providers/base.py
++++ current/src/providers/base.py
+@@ -1,6 +1,7 @@
+ from typing import Protocol
+ 
+ from pydantic import ValidationError
++from starlette import status as http_status
+ 
+ from contracts import Message, StrictObject, Usage
+ from errors import ProviderCallError
+@@ -80,11 +81,11 @@
+                     or incomplete is not None):
+                 raise ValueError
+             code, status = {
+-                'rate_limit_exceeded': ('provider_rate_limited', 503),
+-                'server_error': ('provider_unavailable', 503),
+-                'invalid_api_key': ('provider_auth_error', 502),
+-                'insufficient_quota': ('provider_quota_exceeded', 503),
+-            }.get(error['code'], ('provider_error', 502))
++                'rate_limit_exceeded': ('provider_rate_limited', http_status.HTTP_503_SERVICE_UNAVAILABLE),
++                'server_error': ('provider_unavailable', http_status.HTTP_503_SERVICE_UNAVAILABLE),
++                'invalid_api_key': ('provider_auth_error', http_status.HTTP_502_BAD_GATEWAY),
++                'insufficient_quota': ('provider_quota_exceeded', http_status.HTTP_503_SERVICE_UNAVAILABLE),
++            }.get(error['code'], ('provider_error', http_status.HTTP_502_BAD_GATEWAY))
+             raise ProviderCallError(code=code, status_code=status, **metadata)
+         if error is not None:
+             raise ValueError
+@@ -136,12 +137,12 @@
+     if reason == 'stop' and result.text.strip():
+         return
+     code, status = {
+-        'length': ('output_truncated', 502),
+-        'content_filter': ('provider_content_filtered', 502),
+-        'refusal': ('provider_refused', 502),
+-        'aborted': ('provider_unavailable', 503),
+-        'insufficient_system_resource': ('provider_unavailable', 503),
+-    }.get(reason, ('provider_invalid_response', 502))
++        'length': ('output_truncated', http_status.HTTP_502_BAD_GATEWAY),
++        'content_filter': ('provider_content_filtered', http_status.HTTP_502_BAD_GATEWAY),
++        'refusal': ('provider_refused', http_status.HTTP_502_BAD_GATEWAY),
++        'aborted': ('provider_unavailable', http_status.HTTP_503_SERVICE_UNAVAILABLE),
++        'insufficient_system_resource': ('provider_unavailable', http_status.HTTP_503_SERVICE_UNAVAILABLE),
++    }.get(reason, ('provider_invalid_response', http_status.HTTP_502_BAD_GATEWAY))
+     raise ProviderCallError(code=code, status_code=status, actual_model=result.actual_model,
+                             finish_reason=reason, usage=result.usage,
+                             upstream_status=result.upstream_status,
+@@ -149,16 +150,16 @@
+ 
+ 
+ def error_for_status(status: int) -> ProviderCallError:
+-    if status == 401:
+-        code, translated = 'provider_auth_error', 502
+-    elif status == 402:
+-        code, translated = 'provider_quota_exceeded', 503
+-    elif status == 429:
+-        code, translated = 'provider_rate_limited', 503
+-    elif status in {400, 404, 422}:
+-        code, translated = 'provider_rejected_request', 502
+-    elif status >= 500:
+-        code, translated = 'provider_unavailable', 503
++    if status == http_status.HTTP_401_UNAUTHORIZED:
++        code, translated = 'provider_auth_error', http_status.HTTP_502_BAD_GATEWAY
++    elif status == http_status.HTTP_402_PAYMENT_REQUIRED:
++        code, translated = 'provider_quota_exceeded', http_status.HTTP_503_SERVICE_UNAVAILABLE
++    elif status == http_status.HTTP_429_TOO_MANY_REQUESTS:
++        code, translated = 'provider_rate_limited', http_status.HTTP_503_SERVICE_UNAVAILABLE
++    elif status in {http_status.HTTP_400_BAD_REQUEST, http_status.HTTP_404_NOT_FOUND, http_status.HTTP_422_UNPROCESSABLE_CONTENT}:
++        code, translated = 'provider_rejected_request', http_status.HTTP_502_BAD_GATEWAY
++    elif status >= http_status.HTTP_500_INTERNAL_SERVER_ERROR:
++        code, translated = 'provider_unavailable', http_status.HTTP_503_SERVICE_UNAVAILABLE
+     else:
+-        code, translated = 'provider_error', 502
++        code, translated = 'provider_error', http_status.HTTP_502_BAD_GATEWAY
+     return ProviderCallError(code=code, status_code=translated)
+--- baseline/src/providers/deepseek.py
++++ current/src/providers/deepseek.py
+@@ -1,4 +1,5 @@
+ import httpx2
++from starlette import status as http_status
+ 
+ from errors import ProviderCallError
+ from providers.base import ProviderResult, error_for_status, parse_response
+@@ -30,7 +31,7 @@
+                 **constraints,
+             }, timeout=timeout_seconds)
+         except httpx2.TimeoutException:
+-            raise ProviderCallError(code='provider_timeout', status_code=504) from None
++            raise ProviderCallError(code='provider_timeout', status_code=http_status.HTTP_504_GATEWAY_TIMEOUT) from None
+         except httpx2.RequestError:
+             raise ProviderCallError(code='provider_connection_error') from None
+         if not response.is_success:
+--- baseline/src/providers/openai_compatible.py
++++ current/src/providers/openai_compatible.py
+@@ -1,9 +1,10 @@
+ from openai import AsyncOpenAI, APIConnectionError, APIStatusError, APITimeoutError, DefaultAsyncHttpx2Client
+ import httpx2
++from starlette import status as http_status
+ 
+ from contracts import Message
+ from errors import ProviderCallError
+-from json_codec import dumps
++from utils.json_codec import dumps
+ from providers.base import ProviderResult, error_for_status, parse_responses_response
+ from services.models import ModelConfig
+ 
+@@ -34,7 +35,7 @@
+                 options={'timeout': timeout_seconds},
+             )
+         except APITimeoutError:
+-            raise ProviderCallError(code='provider_timeout', status_code=504) from None
++            raise ProviderCallError(code='provider_timeout', status_code=http_status.HTTP_504_GATEWAY_TIMEOUT) from None
+         except APIConnectionError:
+             raise ProviderCallError(code='provider_connection_error') from None
+         except APIStatusError as error:
+--- baseline/src/services/gateway.py
++++ current/src/services/gateway.py
+@@ -2,6 +2,9 @@
+ from time import monotonic
+ from typing import Mapping
+ 
++from starlette import status as http_status
++
++from constants import PROVIDER_PROBE_MAX_OUTPUT_TOKENS, PROVIDER_PROBE_TIMEOUT_SECONDS
+ from contracts import LLMData, LLMRequest, ProbeData, StructuredLLMData
+ from errors import GatewayError, ProviderCallError
+ from providers.base import Provider, validate_result
+@@ -29,7 +32,8 @@
+         request = LLMRequest.model_validate({
+             "model": model, "prompt": {"name": "basic_text", "version": "1.0.0"},
+             "messages": [{"role": "user", "content": "请仅回复 OK"}],
+-            "max_output_tokens": 16, "timeout_seconds": 10,
++            "max_output_tokens": PROVIDER_PROBE_MAX_OUTPUT_TOKENS,
++            "timeout_seconds": PROVIDER_PROBE_TIMEOUT_SECONDS,
+         })
+         _, attempt = await self._complete(request, trace)
+         return ProbeData(latency_ms=attempt.latency_ms)
+@@ -45,11 +49,11 @@
+             trace.schema_fingerprint = prepared.fingerprint
+             template = validate_selection(request.prompt, self.prompt_registry)
+             if not template.supports_structured_output:
+-                raise GatewayError('unsupported_capability', 'Prompt 模板不支持结构化输出', 400)
++                raise GatewayError('unsupported_capability', 'Prompt 模板不支持结构化输出', http_status.HTTP_400_BAD_REQUEST)
+             model = self.model_registry.get(request.model)
+             mode = model.structured_output_mode
+             if mode == 'none':
+-                raise GatewayError('unsupported_capability', '所选模型不支持结构化输出', 400)
++                raise GatewayError('unsupported_capability', '所选模型不支持结构化输出', http_status.HTTP_400_BAD_REQUEST)
+             trace.structured_output_mode = mode
+             contract = ('{"mode":"json","schema":' + prepared.canonical + '}'
+                         if mode == 'json_object' else '{"mode":"json"}')
+@@ -64,10 +68,10 @@
+         output = model.default_output_tokens if request.max_output_tokens is None else request.max_output_tokens
+         timeout = model.default_timeout_seconds if request.timeout_seconds is None else request.timeout_seconds
+         if output > model.max_output_tokens:
+-            raise GatewayError("invalid_output_budget", "输出预算超过模型的平台上限", 400)
++            raise GatewayError("invalid_output_budget", "输出预算超过模型的平台上限", http_status.HTTP_400_BAD_REQUEST)
+         trace.max_output_tokens = output
+         if timeout > model.max_timeout_seconds:
+-            raise GatewayError("invalid_timeout", "调用超时超过模型的平台上限", 400)
++            raise GatewayError("invalid_timeout", "调用超时超过模型的平台上限", http_status.HTTP_400_BAD_REQUEST)
+         trace.timeout_seconds = timeout
+         trace.counter_version = self.token_budget.counter_for(model).version
+         count_options = {'response_schema': prepared.schema} if prepared is not None else {}
+@@ -97,7 +101,7 @@
+         except TimeoutError:
+             attempt.status = "failed"
+             attempt.error_code = "provider_timeout"
+-            raise ProviderCallError(code="provider_timeout", status_code=504) from None
++            raise ProviderCallError(code="provider_timeout", status_code=http_status.HTTP_504_GATEWAY_TIMEOUT) from None
+         except ProviderCallError as exc:
+             attempt.status = "failed"
+             attempt.error_code = exc.code
+--- baseline/src/services/models.py
++++ current/src/services/models.py
+@@ -6,6 +6,7 @@
+ 
+ import yaml
+ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
++from starlette import status as http_status
+ 
+ from errors import GatewayError
+ 
+@@ -106,7 +107,7 @@
+         try:
+             return self.models[name]
+         except KeyError:
+-            raise GatewayError('unknown_model', '逻辑模型未注册', 400) from None
++            raise GatewayError('unknown_model', '逻辑模型未注册', http_status.HTTP_400_BAD_REQUEST) from None
+ 
+ 
+ class UniqueKeyLoader(yaml.SafeLoader):
+--- baseline/src/services/prompts.py
++++ current/src/services/prompts.py
+@@ -6,6 +6,9 @@
+ from string import Template
+ from types import MappingProxyType
+ 
++from starlette import status as http_status
++
++from constants import MAX_CONTEXT_VARIABLE_CHARS, MAX_RENDERED_USER_CHARS
+ from contracts import Message, PromptSelection, UserMessage
+ from errors import GatewayError
+ 
+@@ -107,7 +110,7 @@
+     def get(self, name: str, version: str) -> PromptTemplate:
+         template = self.templates.get((name, version))
+         if template is None:
+-            raise GatewayError("unknown_prompt_template", "Prompt 模板或版本未注册", 400)
++            raise GatewayError("unknown_prompt_template", "Prompt 模板或版本未注册", http_status.HTTP_400_BAD_REQUEST)
+         return template
+ 
+ 
+@@ -124,16 +127,16 @@
+     template = registry.get(selection.name, selection.version)
+     values = selection.variables
+     if {"message", "output_contract"} & values.keys():
+-        raise GatewayError("invalid_prompt_variables", "Prompt 变量不符合模板要求", 400)
++        raise GatewayError("invalid_prompt_variables", "Prompt 变量不符合模板要求", http_status.HTTP_400_BAD_REQUEST)
+     missing = template.variable_specs.keys() - values.keys()
+     if missing:
+-        raise GatewayError("missing_prompt_variable", f"缺少 Prompt 变量：{', '.join(sorted(missing))}", 400)
++        raise GatewayError("missing_prompt_variable", f"缺少 Prompt 变量：{', '.join(sorted(missing))}", http_status.HTTP_400_BAD_REQUEST)
+     if values.keys() - template.variable_specs.keys():
+-        raise GatewayError("invalid_prompt_variables", "Prompt 变量不符合模板要求", 400)
++        raise GatewayError("invalid_prompt_variables", "Prompt 变量不符合模板要求", http_status.HTTP_400_BAD_REQUEST)
+     for name, spec in template.variable_specs.items():
+         value = values[name]
+         if not value.strip() or len(value) > spec.max_chars:
+-            raise GatewayError("invalid_prompt_variables", "Prompt 变量不符合模板要求", 400)
++            raise GatewayError("invalid_prompt_variables", "Prompt 变量不符合模板要求", http_status.HTTP_400_BAD_REQUEST)
+     return template
+ 
+ 
+@@ -145,8 +148,8 @@
+     template = validate_selection(selection, registry)
+     controlled = {"output_contract": output_contract or '{"mode":"text"}'} if template.supports_structured_output else {}
+     user = Template(template.user_template).substitute(message=messages[0].content, **selection.variables, **controlled)
+-    if len(user) > 20_000:
+-        raise GatewayError("prompt_too_long", "渲染后的 User 内容超过 20,000 字符", 400)
++    if len(user) > MAX_RENDERED_USER_CHARS:
++        raise GatewayError("prompt_too_long", f"渲染后的 User 内容超过 {MAX_RENDERED_USER_CHARS:,} 字符", http_status.HTTP_400_BAD_REQUEST)
+     result = [Message(role="system", content=template.system_template)]
+     for example in template.few_shots:
+         result.extend([Message(role="user", content=example.user), Message(role="assistant", content=example.assistant)])
+@@ -251,17 +254,17 @@
+     ),
+     PromptTemplate(
+         name="context_answer", version="1.0.0", system_template=CONTEXT_SYSTEM,
+-        user_template=CONTEXT_USER_TEMPLATE, variable_specs={"context": VariableSpec(10_000)},
++        user_template=CONTEXT_USER_TEMPLATE, variable_specs={"context": VariableSpec(MAX_CONTEXT_VARIABLE_CHARS)},
+         change_note="首版受控资料问答模板",
+     ),
+     PromptTemplate(
+         name="context_answer", version="1.1.0", system_template=CONTEXT_SYSTEM,
+-        user_template=CONTEXT_USER_TEMPLATE, variable_specs={"context": VariableSpec(10_000)},
++        user_template=CONTEXT_USER_TEMPLATE, variable_specs={"context": VariableSpec(MAX_CONTEXT_VARIABLE_CHARS)},
+         few_shots=CONTEXT_EXAMPLES, change_note="增加资料充分与不足的边界示例，输入协议不变",
+     ),
+     PromptTemplate(
+         name="context_answer", version="1.2.0", system_template=STRUCTURED_SYSTEM,
+-        user_template=STRUCTURED_USER_TEMPLATE, variable_specs={"context": VariableSpec(10_000)},
++        user_template=STRUCTURED_USER_TEMPLATE, variable_specs={"context": VariableSpec(MAX_CONTEXT_VARIABLE_CHARS)},
+         supports_structured_output=True, change_note="增加受控输出协议，支持文本与结构化输出，不使用示例",
+     ),
+ )
+--- baseline/src/services/token_budget.py
++++ current/src/services/token_budget.py
+@@ -1,5 +1,7 @@
+ from collections.abc import Iterable, Mapping
+ from types import MappingProxyType
++
++from starlette import status as http_status
+ 
+ from contracts import Message
+ from errors import GatewayError
+@@ -47,4 +49,4 @@
+     @staticmethod
+     def check(input_tokens, output_tokens, model):
+         if input_tokens + output_tokens + model.safety_margin_tokens > model.context_window_tokens:
+-            raise GatewayError("context_length_exceeded", "输入与预留输出超过模型上下文预算", 400)
++            raise GatewayError("context_length_exceeded", "输入与预留输出超过模型上下文预算", http_status.HTTP_400_BAD_REQUEST)
+--- baseline/src/services/token_counters/deepseek_v41.py
++++ current/src/services/token_counters/deepseek_v41.py
+@@ -5,7 +5,7 @@
+ from tokenizers import Tokenizer
+ 
+ from contracts import Message
+-from json_codec import dumps
++from utils.json_codec import dumps
+ from services.models import ModelConfig
+ 
+ 
+--- baseline/src/services/validation.py
++++ current/src/services/validation.py
+@@ -11,9 +11,14 @@
+ from jsonschema.validators import extend
+ from referencing import Registry
+ from referencing.exceptions import NoSuchResource
+-
++from starlette import status as http_status
++
++from constants import (
++    MAX_SCHEMA_BYTES, MAX_SCHEMA_EXPANDED_DEPTH, MAX_SCHEMA_EXPANDED_NODES,
++    MAX_SCHEMA_RAW_DEPTH, MAX_SCHEMA_RAW_NODES,
++)
+ from errors import GatewayError
+-from json_codec import dumps, loads
++from utils.json_codec import dumps, loads
+ 
+ 
+ KEYWORDS = frozenset({
+@@ -36,7 +41,7 @@
+ 
+ 
+ def _invalid_schema():
+-    return GatewayError('invalid_response_schema', 'response_schema 不符合平台支持规则', 400)
++    return GatewayError('invalid_response_schema', 'response_schema 不符合平台支持规则', http_status.HTTP_400_BAD_REQUEST)
+ 
+ 
+ def _raw_resources(schema):
+@@ -54,14 +59,14 @@
+         # annotation array or allocating a full serialized copy.
+         lower_bound_bytes += 1
+         if isinstance(value, (dict, list)):
+-            if depth > 32:
++            if depth > MAX_SCHEMA_RAW_DEPTH:
+                 raise ValueError
+             if isinstance(value, dict):
+                 for key in value:
+                     if not isinstance(key, str):
+                         raise ValueError
+                     lower_bound_bytes += len(key.encode('utf-8'))
+-                    if lower_bound_bytes > 16384:
++                    if lower_bound_bytes > MAX_SCHEMA_BYTES:
+                         raise ValueError
+                 children = value.values()
+             else:
+@@ -76,7 +81,7 @@
+             raise ValueError
+         elif value is not None and not isinstance(value, (bool, int, float, Decimal)):
+             raise ValueError
+-        if lower_bound_bytes > 16384:
++        if lower_bound_bytes > MAX_SCHEMA_BYTES:
+             raise ValueError
+ 
+ 
+@@ -105,7 +110,7 @@
+         path, node = stack.pop()
+         if not isinstance(node, dict) or set(node) - KEYWORDS:
+             raise ValueError
+-        if len(nodes) >= 256:
++        if len(nodes) >= MAX_SCHEMA_RAW_NODES:
+             raise ValueError
+         nodes[path] = node
+         if 'type' in node and (not isinstance(node['type'], str) or node['type'] not in TYPES):
+@@ -152,7 +157,7 @@
+             stack.append((references[path], depth, active, counted_here))
+             continue
+         count += 1
+-        if count > 256:
++        if count > MAX_SCHEMA_EXPANDED_NODES:
+             raise ValueError
+         node = nodes[path]
+         # type/properties/items can describe a container without an explicit
+@@ -161,7 +166,7 @@
+         container = bool(node.get('type') in {'object', 'array'} or 'properties' in node or 'items' in node)
+         if container and not counted_here:
+             depth += 1
+-        if depth > 8:
++        if depth > MAX_SCHEMA_EXPANDED_DEPTH:
+             raise ValueError
+         for child_path, _, definition in _children(node, path):
+             if definition:
+@@ -220,7 +225,7 @@
+         _check_meta_schema(schema)
+         canonical = dumps(schema, sort_keys=True)
+         encoded = canonical.encode('utf-8')
+-        if len(encoded) > 16384:
++        if len(encoded) > MAX_SCHEMA_BYTES:
+             raise ValueError
+     except (ValueError, TypeError, UnicodeError, SchemaError, RecursionError):
+         raise _invalid_schema() from None
+@@ -247,8 +252,8 @@
+     try:
+         value = loads(text)
+     except (ValueError, RecursionError):
+-        raise GatewayError('invalid_json', '模型输出不是合法 JSON', 502) from None
++        raise GatewayError('invalid_json', '模型输出不是合法 JSON', http_status.HTTP_502_BAD_GATEWAY) from None
+     validator = ExactValidator(prepared.schema, registry=Registry(retrieve=_no_remote_resource))
+     if not isinstance(value, dict) or not validator.is_valid(value):
+-        raise GatewayError('schema_validation_failed', '模型输出不符合 response_schema', 502)
++        raise GatewayError('schema_validation_failed', '模型输出不符合 response_schema', http_status.HTTP_502_BAD_GATEWAY)
+     return value
+--- baseline/src/utils/json_codec.py
++++ current/src/utils/json_codec.py
+@@ -0,0 +1,88 @@
++"""JSON numbers stay decimal across HTTP, Schema, counting and Provider wire."""
++from decimal import Decimal, DecimalException
++import json
++
++
++def _decimal(value):
++    number = Decimal(value)
++    if not number.is_finite():
++        raise ValueError('JSON numbers must be finite')
++    return number
++
++
++def _integer(value):
++    try:
++        return int(value)
++    except ValueError:
++        # Preserve large JSON integer literals without changing Python's global
++        # security setting or expanding an exponent into a giant binary int.
++        return _decimal(value)
++
++
++def _object(pairs):
++    result = {}
++    for key, value in pairs:
++        if key in result:
++            raise ValueError('Duplicate JSON object key')
++        result[key] = value
++    return result
++
++
++def _invalid_constant(value):
++    raise ValueError('Non-standard JSON constant')
++
++
++def loads(value: str | bytes):
++    try:
++        return json.loads(value, parse_int=_integer, parse_float=_decimal, parse_constant=_invalid_constant,
++                          object_pairs_hook=_object)
++    except (ValueError, UnicodeError, DecimalException, RecursionError):
++        # FastAPI recognises JSONDecodeError as invalid_request. Do not retain
++        # private input or the original parser exception in diagnostics.
++        raise json.JSONDecodeError('Invalid JSON', '', 0) from None
++
++
++def dumps(value, *, sort_keys: bool = False, compact: bool = True) -> str:
++    comma, colon = (',', ':') if compact else (', ', ': ')
++    parts = []
++    stack = [('value', value)]
++    active = set()
++    while stack:
++        kind, item = stack.pop()
++        if kind == 'raw':
++            parts.append(item)
++            continue
++        if kind == 'close':
++            token, identity = item
++            parts.append(token)
++            active.remove(identity)
++            continue
++        if isinstance(item, Decimal):
++            if not item.is_finite():
++                raise ValueError('JSON numbers must be finite')
++            parts.append(str(item))
++        elif isinstance(item, (dict, list)):
++            identity = id(item)
++            if identity in active:
++                raise ValueError('Circular JSON value')
++            active.add(identity)
++            mapping = isinstance(item, dict)
++            parts.append('{' if mapping else '[')
++            stack.append(('close', ('}' if mapping else ']', identity)))
++            if mapping:
++                if any(not isinstance(key, str) for key in item):
++                    raise TypeError('JSON object keys must be strings')
++                keys = sorted(item) if sort_keys else list(item)
++                for index in range(len(keys) - 1, -1, -1):
++                    key = keys[index]
++                    stack.extend([('value', item[key]), ('raw', colon), ('value', key)])
++                    if index:
++                        stack.append(('raw', comma))
++            else:
++                for index in range(len(item) - 1, -1, -1):
++                    stack.append(('value', item[index]))
++                    if index:
++                        stack.append(('raw', comma))
++        else:
++            parts.append(json.dumps(item, ensure_ascii=False, allow_nan=False))
++    return ''.join(parts)
+--- baseline/tests/integration/test_f4o1_boundaries.py
++++ current/tests/integration/test_f4o1_boundaries.py
+@@ -0,0 +1,96 @@
++"""Fixed contract boundaries, independent of the implementation's constants."""
++import json
++
++import pytest
++from fastapi.testclient import TestClient
++
++from contracts import PromptSelection, UserMessage
++from f3_cases import CountingFixture, make_app, primary_provider
++from f4_cases import make_app as make_structured_app
++from providers.mock import MockProvider
++from services.prompts import build_messages, fingerprint_messages
++
++
++def submit(body, expected_status, expected_code):
++    structured = 'response_schema' in body
++    app = make_structured_app(MockProvider(text='{}')) if structured else make_app(counter=CountingFixture())
++    provider = primary_provider(app)
++    with TestClient(app, raise_server_exceptions=False) as client:
++        response = client.post('/v1/llm', json=body)
++    assert response.status_code == expected_status
++    result = response.json()
++    assert set(result) == {'success', 'code', 'data', 'message'}
++    assert result['code'] == expected_code
++    trace = app.state.traces.requests[response.headers['X-Request-ID']]
++    attempts = [a for a in app.state.traces.attempts if a.request_id == trace.request_id]
++    expected_calls = int(expected_status == 200)
++    assert len(provider.calls) == trace.attempts == len(attempts) == expected_calls
++    assert trace.status == ('completed' if expected_calls else 'failed')
++    assert trace.error_code == (None if expected_calls else expected_code)
++    if expected_calls:
++        expected = {'text': '{}', 'parsed': {}, 'usage': None} if structured else {'text': 'MOCK_REPLY', 'usage': None}
++        assert result['data'] == expected
++        assert attempts[0].status == 'completed'
++        assert trace.prompt_fingerprint == fingerprint_messages(provider.calls[0][1])
++        return provider.calls[0][1][-1].content
++    assert result['data'] is None
++
++
++@pytest.mark.parametrize('content', ['问' * 19999, '问' * 20000, '问' * 20001, '', ' \n\t'])
++def test_raw_user_http_boundary(payload, content):
++    payload['messages'][0]['content'] = content
++    valid = bool(content.strip()) and len(content) <= 20000
++    actual = submit(payload, 200 if valid else 422, 'ok' if valid else 'invalid_request')
++    if valid:
++        assert actual == content
++
++
++@pytest.mark.parametrize('version', ['1.0.0', '1.1.0', '1.2.0'])
++@pytest.mark.parametrize('size', [9999, 10000, 10001])
++def test_context_limit_for_every_template_version(payload, version, size):
++    context = '中' * size
++    payload['prompt'] = {'name': 'context_answer', 'version': version, 'variables': {'context': context}}
++    valid = size <= 10000
++    actual = submit(payload, 200 if valid else 400, 'ok' if valid else 'invalid_prompt_variables')
++    if valid:
++        assert context in actual
++
++
++@pytest.mark.parametrize('version', ['1.0.0', '1.1.0', '1.2.0'])
++@pytest.mark.parametrize('size', [19999, 20000, 20001])
++def test_rendered_user_limit_includes_template_and_contract(payload, version, size):
++    payload['prompt'] = {'name': 'context_answer', 'version': version, 'variables': {'context': '中'}}
++    overhead = len(build_messages(PromptSelection.model_validate(payload['prompt']),
++                                 [UserMessage(role='user', content='问')])[-1].content) - 1
++    payload['messages'][0]['content'] = '问' * (size - overhead)
++    valid = size <= 20000
++    actual = submit(payload, 200 if valid else 400, 'ok' if valid else 'prompt_too_long')
++    if valid:
++        assert len(actual) == size
++
++
++@pytest.mark.parametrize('kind,values', [
++    ('bytes', (16383, 16384, 16385)),
++    ('raw_depth', (31, 32, 33)),
++    ('expanded_depth', (7, 8, 9)),
++])
++@pytest.mark.parametrize('index', [0, 1, 2])
++def test_schema_resource_boundaries_reach_the_http_boundary(payload, kind, values, index):
++    value = values[index]
++    schema = {'type': 'object'}
++    if kind == 'bytes':
++        schema['description'] = '中'
++        overhead = len(json.dumps(schema, ensure_ascii=False, sort_keys=True, separators=(',', ':')).encode())
++        schema['description'] += 'a' * (value - overhead)
++    elif kind == 'raw_depth':
++        data = 0
++        for _ in range(value - 1):
++            data = [data]
++        schema['default'] = data
++    else:
++        for _ in range(value - 1):
++            schema = {'type': 'object', 'properties': {'x': schema}}
++    payload['prompt'] = {'name': 'context_answer', 'version': '1.2.0', 'variables': {'context': '订单 A123'}}
++    payload['response_schema'] = schema
++    valid = index < 2
++    submit(payload, 200 if valid else 400, 'ok' if valid else 'invalid_response_schema')
+--- baseline/tests/unit/test_f4_json_codec.py
++++ current/tests/unit/test_f4_json_codec.py
+@@ -3,7 +3,7 @@
+ 
+ import pytest
+ 
+-from json_codec import dumps, loads
++from utils.json_codec import dumps, loads
+ 
+ 
+ @pytest.mark.parametrize('literal',['1.0000000000000001','1e-400','1e999','-0.00','12345678901234567890.1'])
+--- baseline/tests/unit/test_f4_validation.py
++++ current/tests/unit/test_f4_validation.py
+@@ -128,12 +128,15 @@
+     assert e.value.code=='schema_validation_failed'
+ 
+ 
+-def test_size_exact_boundary_and_unicode():
++@pytest.mark.parametrize('size', [16383, 16384, 16385])
++def test_size_exact_boundary_and_unicode(size):
+     schema={'type':'object','description':'中'}
+     overhead=len(json.dumps(schema,ensure_ascii=False,sort_keys=True,separators=(',',':')).encode())
+-    schema['description']+='a'*(16384-overhead)
+-    assert len(prepare_schema(schema).canonical.encode())==16384
+-    schema['description']+='a';rejected(schema)
++    schema['description']+='a'*(size-overhead)
++    if size > 16384:
++        rejected(schema)
++    else:
++        assert len(prepare_schema(schema).canonical.encode())==size
+ 
+ 
+ def nested_objects(depth):
+@@ -142,29 +145,38 @@
+     return result
+ 
+ 
+-def test_structure_depth():
+-    prepare_schema(nested_objects(8));rejected(nested_objects(9))
+-
+-
+-def test_raw_depth():
++@pytest.mark.parametrize('depth', [7, 8, 9])
++def test_structure_depth(depth):
++    schema=nested_objects(depth)
++    rejected(schema) if depth > 8 else prepare_schema(schema)
++
++
++@pytest.mark.parametrize('depth', [31, 32, 33])
++def test_raw_depth(depth):
+     data=0
+-    for _ in range(31):data=[data]
++    for _ in range(depth-1):data=[data]
+     schema={'type':'object','default':data}
+-    prepare_schema(schema)
+-    schema['default']=[data];rejected(schema)
+-
+-
+-def test_raw_nodes():
+-    prepare_schema(obj(**{f'p{i}':{'type':'string'} for i in range(255)}))
+-    rejected(obj(**{f'p{i}':{'type':'string'} for i in range(256)}))
+-
+-
+-def test_expanded_nodes_boundaries():
++    rejected(schema) if depth > 32 else prepare_schema(schema)
++
++
++@pytest.mark.parametrize('nodes', [255, 256, 257])
++def test_raw_nodes(nodes):
++    schema=obj(**{f'p{i}':{'type':'string'} for i in range(nodes-1)})
++    if nodes > 256:
++        rejected(schema)
++    else:
++        assert prepare_schema(schema).raw_nodes==nodes
++
++
++@pytest.mark.parametrize('nodes', [255, 256, 257])
++def test_expanded_nodes_boundaries(nodes):
+     # root1 + definition2 + 126*2 uses + scalar1 == 256
+     schema={'type':'object','$defs':{'X':obj(x={'type':'string'})},'properties':{f'p{i}':{'$ref':'#/$defs/X'} for i in range(126)}}
+-    schema['properties']['extra']={'type':'string'}
+-    assert prepare_schema(schema).expanded_nodes==256
+-    schema['properties']['more']={'type':'string'};rejected(schema)
++    for i in range(nodes-255):schema['properties'][f'extra{i}']={'type':'string'}
++    if nodes > 256:
++        rejected(schema)
++    else:
++        assert prepare_schema(schema).expanded_nodes==nodes
+ 
+ 
+ def test_referenced_structural_depth_and_unused_definition_depth():

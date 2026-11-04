@@ -1,0 +1,23 @@
+{
+  "command": [
+    ".venv/bin/python",
+    "-W",
+    "error",
+    "-m",
+    "pytest",
+    "tests/live/test_f13_models.py",
+    "tests/live/test_f13_precision.py",
+    "tests/live/test_f13_streaming.py",
+    "--run-live",
+    "-ra",
+    "-q",
+    "-o",
+    "junit_family=xunit1",
+    "--junitxml=/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llmgw-f13-work-eifzl4on/stage-a-real-rerun.xml",
+    "--basetemp=/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llmgw-f13-work-eifzl4on/pytest-stage-a-real-rerun"
+  ],
+  "started_at": "2026-11-03T15:13:53.133710+00:00",
+  "ended_at": "2026-11-03T15:15:47.757325+00:00",
+  "elapsed_seconds": 114.62341329199262,
+  "exit_code": 1
+}

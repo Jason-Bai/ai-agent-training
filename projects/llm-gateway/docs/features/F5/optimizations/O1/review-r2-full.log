@@ -1,0 +1,84 @@
+........................................................................ [  5%]
+........................................................................ [ 11%]
+........................................................................ [ 17%]
+........................................................................ [ 23%]
+........................................................................ [ 28%]
+..............................................ssssssssssssss............ [ 34%]
+........................................................................ [ 40%]
+........................................................................ [ 46%]
+.......................................................F................ [ 52%]
+........................................................................ [ 57%]
+........................................................................ [ 63%]
+........................................................................ [ 69%]
+........................................................................ [ 75%]
+........................................................................ [ 81%]
+........................................................................ [ 86%]
+........................................................................ [ 92%]
+........................................................................ [ 98%]
+..................                                                       [100%]
+=================================== FAILURES ===================================
+_ test_owned_database_outage_closes_upstream_and_reconciles_only_stopped_execution[False] _
+
+tmp_path = PosixPath('/private/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/pytest-of-baiyu/pytest-139/test_owned_database_outage_clo0')
+shutdown_while_offline = False
+
+    @pytest.mark.parametrize('shutdown_while_offline', [False, True])
+    def test_owned_database_outage_closes_upstream_and_reconciles_only_stopped_execution(tmp_path,
+                                                                                      shutdown_while_offline):
+        # Destructive outage belongs to this instance, never the shared process_pg fixture.
+        server = PostgresServer().start()
+        # Docker may reassign an ephemeral published port when a stopped container
+        # restarts. Pin the allocated owned port so the running Gateway keeps its DSN.
+        document = yaml.safe_load(server.compose_path.read_text())
+        document['services']['postgres']['ports'] = [f'127.0.0.1:{server.port}:5432']
+        server.compose_path.write_text(yaml.safe_dump(document))
+        try:
+            name = server.create_database()
+            write_config(tmp_path / 'config', server, name, registry())
+            migrate(tmp_path / 'config')
+            (tmp_path / 'f5o1_bootstrap.py').write_text(BOOTSTRAP)
+            with gateway(tmp_path) as (process, client):
+                with client.stream('POST', '/v1/llm/stream', json=body('outage')) as response_a:
+                    id_a = response_a.headers['x-request-id']
+                    events_a = events(response_a)
+                    assert next(events_a)[0] == 'response.delta'
+                    with client.stream('POST', '/v1/llm/stream', json=body('active-b')) as response_b:
+                        id_b = response_b.headers['x-request-id']
+                        events_b = events(response_b)
+                        assert next(events_b)[0] == 'response.delta'
+                        assert observe(server, name, id_a)[0]['status'] == 'running'
+                        assert observe(server, name, id_b)[0]['status'] == 'running'
+                        stopped = server.compose('stop', 'postgres')
+                        assert stopped.returncode == 0, stopped.stderr
+                        (tmp_path / 'release-outage').touch()
+                        wait_for(lambda: ['stream_closed', 'outage'] in observations(tmp_path))
+                        assert ['stream_closed', 'active-b'] not in observations(tmp_path)
+                        if shutdown_while_offline:
+                            # End B while storage is still unavailable; no active HTTP task
+                            # remains to hold Uvicorn's graceful drain indefinitely.
+                            response_b.close()
+                            wait_for(lambda: ['stream_closed', 'active-b'] in observations(tmp_path))
+                            process.terminate()
+                            assert process.wait(timeout=10) == -signal.SIGTERM
+                        else:
+>                           server.start()
+
+tests/smoke/test_f5o1_process.py:433: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <postgres_support.PostgresServer object at 0x10fcf67b0>
+
+    def start(self):
+        result = self.compose('up', '-d', '--wait', '--wait-timeout', '60')
+        if result.returncode:
+            self.close()
+>           raise RuntimeError('isolated test PostgreSQL did not become ready: ' + result.stderr[-1500:])
+E           RuntimeError: isolated test PostgreSQL did not become ready:  Container llmgw-test-1dbe23c6962e-postgres-1  Recreate
+E            Container llmgw-test-1dbe23c6962e-postgres-1  Recreated
+E            Container llmgw-test-1dbe23c6962e-postgres-1  Starting
+E           Error response from daemon: driver failed programming external connectivity on endpoint llmgw-test-1dbe23c6962e-postgres-1 (1cd130170761b6fecca6b24fe93db0037d35d42158d353a97a590570c0cdc243): failed to bind port 127.0.0.1:59844/tcp: listen tcp4 127.0.0.1:59844: bind: address already in use
+
+tests/postgres_support.py:52: RuntimeError
+=========================== short test summary info ============================
+FAILED tests/smoke/test_f5o1_process.py::test_owned_database_outage_closes_upstream_and_reconciles_only_stopped_execution[False]
+1 failed, 1227 passed, 14 skipped in 181.47s (0:03:01)

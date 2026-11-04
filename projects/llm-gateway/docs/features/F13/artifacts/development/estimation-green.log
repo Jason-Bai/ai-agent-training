@@ -1,0 +1,21 @@
+..............F..............................                            [100%]
+=================================== FAILURES ===================================
+_ test_unicode_and_long_content_are_retained_and_estimates_are_positive_integers[x = 3\nprint(x)] _
+
+text = 'x = 3\nprint(x)'
+
+    @pytest.mark.parametrize('text',['订单A123','Hello','中文 English A123','x = 3\nprint(x)',
+                                     '🧑🏽‍💻 café e\u0301','a\x00b','x'*20000])
+    def test_unicode_and_long_content_are_retained_and_estimates_are_positive_integers(text):
+        result=counter();messages=[Message(role='system',content='fixed rules'),
+                                   Message(role='user',content=text)]
+        encoded=result.encode(messages)
+>       assert text.replace('\x00','\\u0000') in encoded
+E       assert 'x = 3\nprint(x)' in '{"messages":[{"content":"fixed rules","role":"system"},{"content":"x = 3\\nprint(x)","role":"user"}]}'
+E        +  where 'x = 3\nprint(x)' = <built-in method replace of str object at 0x10a524530>('\x00', '\\u0000')
+E        +    where <built-in method replace of str object at 0x10a524530> = 'x = 3\nprint(x)'.replace
+
+tests/unit/test_f13_estimation.py:60: AssertionError
+=========================== short test summary info ============================
+FAILED tests/unit/test_f13_estimation.py::test_unicode_and_long_content_are_retained_and_estimates_are_positive_integers[x = 3\nprint(x)]
+1 failed, 44 passed in 0.27s

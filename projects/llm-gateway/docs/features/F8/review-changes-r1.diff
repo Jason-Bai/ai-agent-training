@@ -1,0 +1,1650 @@
+--- baseline/migrations/versions/f8_001.py
++++ current/migrations/versions/f8_001.py
+@@ -0,0 +1,33 @@
++"""Allow metadata-only provider probes and measured Provider durations."""
++from alembic import op
++from sqlalchemy import Column, Double, inspect
++
++revision = 'f8_001'
++down_revision = 'f7_001'
++branch_labels = None
++depends_on = None
++
++TABLE = 'tb_llm_request'
++
++
++def replace_operation_checks(allow_probe):
++    # Both operation checks have PostgreSQL-generated names on an F7 database.
++    checks = inspect(op.get_bind()).get_check_constraints(TABLE)
++    for check in checks:
++        if 'operation' in check['sqltext']:
++            op.drop_constraint(check['name'], TABLE, type_='check')
++    nonstream = "operation IN ('completion','provider_probe')" if allow_probe else "operation = 'completion'"
++    op.create_check_constraint('ck_llm_request_operation', TABLE, f"operation='streaming' OR {nonstream}")
++    op.create_check_constraint('ck_llm_request_event_seq', TABLE,
++        f"(operation='streaming' AND last_event_seq IS NOT NULL) OR ({nonstream} AND last_event_seq IS NULL)")
++
++
++def upgrade():
++    replace_operation_checks(True)
++    op.add_column('tb_llm_attempt', Column('provider_duration_ms', Double))
++
++
++def downgrade():
++    # PostgreSQL refuses the older constraint when incompatible probes exist.
++    replace_operation_checks(False)
++    op.drop_column('tb_llm_attempt', 'provider_duration_ms')
+--- baseline/src/api/routes.py
++++ current/src/api/routes.py
+@@ -1,6 +1,7 @@
+ from typing import Annotated
+ from uuid import UUID
+ import re
++import logging
+ 
+ from fastapi import APIRouter, Depends, Request
+ from fastapi.responses import Response
+@@ -10,6 +11,9 @@
+ from api.dependencies import get_gateway
+ from contracts import ErrorResponse, LLMRequest, ProbeResponse, SuccessResponse, StructuredLLMData, StreamRequest, StreamCreatedData, StreamCreatedResponse, StreamCancelData, StreamCancelResponse
+ from api.sse import EventStreamResponse
++from persistence.database import StorageUnavailable
++from persistence.trace_query import read_trace
++from trace_contracts import TraceResponse
+ from errors import GatewayError
+ from utils.json_codec import dumps, loads
+ from services.gateway import GatewayService
+@@ -137,3 +141,18 @@
+ @router.get("/healthz")
+ async def liveness():
+     return {"success": True, "code": "ok", "data": None, "message": "服务正常"}
++
++
++@router.get('/v1/traces/{request_id}', response_model=TraceResponse,
++            responses={code: {'model': ErrorResponse} for code in (404, 422, 503)},
++            description='读取已提交的请求诊断元数据，按发生顺序列出各次模型尝试。')
++async def trace_by_id(request_id: UUID, request: Request) -> TraceResponse:
++    request.state.generation_request_id = str(request_id)
++    try:
++        data = await read_trace(request.app.state.storage.database, request_id)
++    except StorageUnavailable:
++        logging.getLogger(__name__).error('request_id=%s stage=trace_query code=storage_unavailable', request_id)
++        raise
++    if data is None:
++        raise GatewayError('not_found', '未找到请求记录', http_status.HTTP_404_NOT_FOUND)
++    return TraceResponse(data=data)
+--- baseline/src/main.py
++++ current/src/main.py
+@@ -81,6 +81,7 @@
+                         if trace.error_code:
+                             trace.delivery_error_code = trace.error_code
+                         trace.error_code = None
++                        trace.error_stage = None
+                     if attempt is not None and (attempt.status == 'running' or status == 'completed'):
+                         attempt.status = status
+                         if status == 'completed':
+--- baseline/src/middleware/request_context.py
++++ current/src/middleware/request_context.py
+@@ -32,7 +32,7 @@
+             operation = 'streaming' if is_stream else 'provider_probe' if is_probe else 'completion'
+             trace = self.traces.start_request(request_id, operation=operation)
+             state["trace"] = trace
+-        persisted = trace is not None and not is_probe and self.storage is not None
++        persisted = trace is not None and self.storage is not None
+         if persisted:
+             self.active.add(request_id)
+         response_started = False
+@@ -43,7 +43,9 @@
+             if message["type"] == "http.response.start":
+                 if persisted and state.get('error_code') and not getattr(trace, '_persisted_terminal', False):
+                     attempt = next((a for a in reversed(self.traces.attempts) if a.request_id == request_id), None)
+-                    if state['error_code'] in {'storage_unavailable', 'request_timeout'} or getattr(trace, '_stream_creation', False):
++                    if trace.error_stage is None and not getattr(trace, '_admitted', False):
++                        trace.error_stage = 'storage' if state['error_code'] == 'storage_unavailable' else 'admission'
++                    if state['error_code'] in {'storage_unavailable', 'request_timeout', 'provider_timeout'} or getattr(trace, '_stream_creation', False):
+                         trace.error_code = state['error_code']
+                         self.defer(trace, attempt)
+                     else:
+@@ -55,7 +57,7 @@
+                             trace.error_code = state['error_code']
+                             self.defer(trace, attempt)
+                             logging.getLogger(__name__).warning(
+-                                '请求错误记录待恢复 request_id=%s code=%s', request_id, state['error_code'])
++                                '请求错误记录待恢复 request_id=%s stage=finish code=%s', request_id, state['error_code'])
+                 MutableHeaders(scope=message)["X-Request-ID"] = state.get("generation_request_id", request_id)
+                 response_started = True
+             await send(message)
+--- baseline/src/persistence/database.py
++++ current/src/persistence/database.py
+@@ -11,7 +11,7 @@
+ from constants import DATABASE_POOL_SIZE, DATABASE_MAX_OVERFLOW, DATABASE_OPERATION_TIMEOUT_SECONDS
+ from services.models import Definition, ConfigurationError, read_yaml
+ 
+-REVISION = 'f7_001'
++REVISION = 'f8_001'
+ 
+ 
+ class DatabaseConfig(Definition):
+--- baseline/src/persistence/store.py
++++ current/src/persistence/store.py
+@@ -26,13 +26,16 @@
+     return dumps({'ttft_ms': trace.ttft_ms, 'generation_duration_ms': trace.generation_duration_ms,
+                   'stream_duration_ms': trace.stream_duration_ms,
+                   'delivery_error_code': trace.delivery_error_code,
++                  'cleanup_error_code': trace.cleanup_error_code, 'error_stage': trace.error_stage,
++                  'recovery_wait_ms': trace.recovery_wait_ms,
++                  'skipped_candidates': getattr(trace, '_skipped_candidates', None),
+                   'recovery_stop_reason': getattr(trace, '_recovery_stop_reason', None),
+                   'source': 'process_monotonic_observations'})
+ 
+ 
+ def attempt_values(trace, record):
+     fields = ('actual_model', 'finish_reason', 'upstream_status', 'upstream_finish_reason',
+-              'latency_ms', 'error_code', 'provider_error_code')
++              'latency_ms', 'provider_duration_ms', 'error_code', 'provider_error_code')
+     result = {name: getattr(record, name) for name in fields}
+     result['cleanup_error_code'] = trace.cleanup_error_code
+     result['provider_entered'] = record.provider_entered
+@@ -136,23 +139,23 @@
+                 request_id=UUID(trace.request_id), operation=trace.operation, status='running',
+                 created_at=timestamp, deadline_at=deadline_at,
+                 last_event_seq=0 if trace.operation == 'streaming' else None,
+-                input_snapshot=dumps(snapshot), **request_values(trace)))
++                input_snapshot=None if trace.operation == 'provider_probe' else dumps(snapshot), **request_values(trace)))
+ 
+     async def begin_attempt(self, trace, attempt, *, deadline=None):
+         async with self.database.transaction(deadline=deadline) as session:
+             row = await self._locked(session, trace.request_id)
+-            if row is None or row['status'] != 'running' or row['input_snapshot'] is None:
++            if row is None or row['status'] != 'running' or (row['input_snapshot'] is None and row['operation'] != 'provider_probe'):
+                 raise ValueError('Request is not admitted for execution')
+             timestamp = now()
+             await session.execute(insert(attempt_table).values(
+                 request_pk=row['id'], attempt_no=attempt.number, model=attempt.model,
+                 provider=attempt.provider, adapter=attempt.adapter, api_protocol=attempt.api_protocol,
+                 configured_model=attempt.configured_model, status='running', started_at=timestamp,
+-                input_snapshot=dumps(attempt.input_snapshot) if getattr(attempt, 'input_snapshot', None) is not None else None,
++                input_snapshot=dumps(attempt.input_snapshot) if row['operation'] != 'provider_probe' and getattr(attempt, 'input_snapshot', None) is not None else None,
+                 prompt_fingerprint=attempt.prompt_fingerprint, input_token_count=attempt.input_token_count,
+                 counter_version=attempt.counter_version, max_output_tokens=attempt.max_output_tokens,
+                 reason=attempt.reason, provider_entered=attempt.provider_entered))
+-            await session.execute(update(request).where(request.c.id == row['id']).values(started_at=func.coalesce(request.c.started_at, timestamp)))
++            await session.execute(update(request).where(request.c.id == row['id']).values(started_at=func.coalesce(request.c.started_at, timestamp), timing_snapshot=timing(trace)))
+ 
+     async def finish_attempt(self, trace, attempt, *, deadline=None):
+         """Save one invocation outcome; request termination has a separate owner."""
+--- baseline/src/persistence/tables.py
++++ current/src/persistence/tables.py
+@@ -14,11 +14,11 @@
+     Column('created_at', DateTime(timezone=True), nullable=False),
+     *[Column(name, DateTime(timezone=True)) for name in ('started_at', 'deadline_at', 'ended_at')],
+     Column('last_event_seq', BigInteger),
+-    CheckConstraint("operation IN ('completion','streaming')"),
++    CheckConstraint("operation IN ('completion','streaming','provider_probe')"),
+     CheckConstraint("status IN ('pending','running','canceling','completed','failed','canceled')"),
+     CheckConstraint('input_token_count >= 0'), CheckConstraint('max_output_tokens > 0'),
+     CheckConstraint('timeout_seconds > 0'), CheckConstraint('last_event_seq >= 0'),
+-    CheckConstraint("(operation='streaming' AND last_event_seq IS NOT NULL) OR (operation='completion' AND last_event_seq IS NULL)"),
++    CheckConstraint("(operation='streaming' AND last_event_seq IS NOT NULL) OR (operation IN ('completion','provider_probe') AND last_event_seq IS NULL)"),
+ )
+ Index('ix_tb_llm_request_status', request.c.status)
+ attempt = Table('tb_llm_attempt', metadata,
+@@ -29,7 +29,7 @@
+                                     'error_code','provider_error_code','cleanup_error_code')],
+     *[Column(name, BigInteger) for name in ('input_tokens','output_tokens','total_tokens')],
+     Column('started_at', DateTime(timezone=True), nullable=False),
+-    Column('ended_at', DateTime(timezone=True)), Column('latency_ms', Double),
++    Column('ended_at', DateTime(timezone=True)), Column('latency_ms', Double), Column('provider_duration_ms', Double),
+     *[Column(name, Text) for name in ('input_snapshot', 'prompt_fingerprint', 'counter_version', 'reason')],
+     Column('input_token_count', BigInteger), Column('max_output_tokens', BigInteger),
+     Column('provider_entered', Boolean),
+--- baseline/src/persistence/trace_query.py
++++ current/src/persistence/trace_query.py
+@@ -0,0 +1,82 @@
++"""Read one consistent, metadata-only projection without acquiring lifecycle locks."""
++import json
++
++from sqlalchemy import select, text
++
++from contracts import Usage
++from persistence.tables import attempt, event, request
++from trace_contracts import TraceAttempt, TraceData
++from utils.json_codec import loads
++
++
++_END_REASONS = {'stop', 'length', 'refusal', 'content_filter', 'tool_calls', 'aborted',
++                'insufficient_system_resource', 'max_output_tokens'}
++
++
++def _usage_summary(attempts):
++    known = [a.usage for a in attempts if a.usage is not None]
++    return {
++        'known_subtotal': {key: sum(getattr(u, key) for u in known) for key in Usage.model_fields} if known else None,
++        'unknown_attempts': [a.attempt_no for a in attempts if a.usage is None],
++    }
++
++
++async def read_trace(database, request_id):
++    # PostgreSQL's default READ COMMITTED can mix two commits between these SELECTs.
++    async with database.transaction() as session:
++        await session.execute(text('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY'))
++        summary_columns = [request.c[name] for name in TraceData.model_fields if name in request.c]
++        row = (await session.execute(select(request.c.id, *summary_columns, request.c.timing_snapshot)
++               .where(request.c.request_id == request_id))).mappings().one_or_none()
++        if row is None:
++            return None
++        metrics = json.loads(row['timing_snapshot']) if row['timing_snapshot'] else {}
++        skipped = metrics.get('skipped_candidates')
++        if skipped is None and row['operation'] != 'provider_probe':
++            # PostgreSQL JSON operators reject legal escaped NULs in historical TEXT
++            # snapshots. Decode only when metadata is missing, never project raw data.
++            snapshot = await session.scalar(select(request.c.input_snapshot).where(request.c.id == row['id']))
++            if snapshot:
++                skipped = loads(snapshot).get('skipped_candidates')
++        columns = [attempt.c[name] for name in TraceAttempt.model_fields if name in attempt.c]
++        rows = (await session.execute(select(*columns, attempt.c.input_tokens, attempt.c.output_tokens,
++                    attempt.c.total_tokens).where(attempt.c.request_pk == row['id'])
++                    .order_by(attempt.c.attempt_no))).mappings().all()
++        requested_at = None
++        if row['operation'] == 'streaming' and row['status'] in {'canceling', 'canceled', 'failed'}:
++            requested_at = await session.scalar(select(event.c.created_at).where(
++                event.c.request_pk == row['id'], event.c.event_type == 'response.canceling'
++            ).order_by(event.c.seq.desc()).limit(1))
++
++    attempts = []
++    for item in rows:
++        usage = None if item['total_tokens'] is None else Usage(**{k: item[k] for k in Usage.model_fields})
++        values = {col.name: item[col.name] for col in columns}
++        # Upstream strings may contain arbitrary text even for a rejected reply.
++        for key in ('finish_reason', 'upstream_finish_reason'):
++            if values[key] not in _END_REASONS:
++                values[key] = None
++        if values['upstream_status'] not in {'in_progress', 'completed', 'failed', 'incomplete'}:
++            values['upstream_status'] = None
++        attempts.append(TraceAttempt(**values, usage=usage))
++    elapsed = None
++    if row['ended_at'] is not None:
++        elapsed = (row['ended_at'] - row['created_at']).total_seconds() * 1000
++    stage = metrics.get('error_stage') if row['status'] == 'failed' else None
++    if row['error_code'] == 'execution_interrupted':
++        stage = 'recovery'
++    if row['error_code'] == 'cancel_cleanup_failed':
++        stage = 'cleanup'
++    return TraceData(
++        **{col.name: row[col.name] for col in summary_columns}, error_stage=stage,
++        delivery_error_code=metrics.get('delivery_error_code'), attempts=attempts,
++        usage=_usage_summary(attempts),
++        timing=dict(request_duration_ms=elapsed, ttft_ms=metrics.get('ttft_ms'),
++                    generation_duration_ms=metrics.get('generation_duration_ms'),
++                    stream_duration_ms=metrics.get('stream_duration_ms')),
++        recovery=dict(stop_reason=metrics.get('recovery_stop_reason'), wait_ms=metrics.get('recovery_wait_ms'),
++                      skipped_candidates=None if skipped is None else [
++                          {'model': item['model'], 'code': item['code']} for item in skipped]),
++        cancellation=dict(requested_at=requested_at, ended_at=row['ended_at'] if requested_at else None,
++                          cleanup_error_code=metrics.get('cleanup_error_code')),
++    )
+--- baseline/src/services/gateway.py
++++ current/src/services/gateway.py
+@@ -1,4 +1,5 @@
+ import asyncio
++from contextlib import contextmanager
+ from time import monotonic
+ from typing import Mapping
+ 
+@@ -17,6 +18,15 @@
+ from persistence.database import StorageUnavailable
+ 
+ 
++@contextmanager
++def _storage_write(trace, stage, attempt=None):
++    try:
++        yield
++    except (StorageUnavailable, TimeoutError, asyncio.CancelledError):
++        trace.record_storage_failure(stage, attempt)
++        raise
++
++
+ class GatewayService:
+     def __init__(self, providers: Mapping[str, Provider], traces: TraceStore,
+                  prompt_registry: PromptRegistry, model_registry: ModelRegistry, token_budget: TokenBudget,
+@@ -29,6 +39,10 @@
+         self.storage, self.defer = storage, defer
+ 
+     async def complete(self, request: LLMRequest, trace: RequestTrace) -> LLMData | StructuredLLMData:
++        data, _ = await self._recorded_completion(request, trace)
++        return data
++
++    async def _recorded_completion(self, request, trace):
+         try:
+             data, attempt = await self._complete(request, trace)
+         except BaseException as error:
+@@ -39,14 +53,19 @@
+                 trace.error_code = code
+                 if attempt is not None and attempt.status == 'running':
+                     attempt.status, attempt.error_code = 'failed', code
+-                if isinstance(error, StorageUnavailable) or code == 'request_timeout':
++                # Once the upstream consumes the last of the probe deadline,
++                # persist its observed outcome through the existing deferred writer.
++                expired_probe = (trace.operation == 'provider_probe' and code == 'provider_timeout'
++                                 and asyncio.get_running_loop().time() >= trace._deadline)
++                if isinstance(error, StorageUnavailable) or code == 'request_timeout' or expired_probe:
+                     self.defer(trace, attempt)
+                 elif getattr(trace, '_admitted', False):
+                     try:
+                         deadline = trace._deadline
+-                        async with asyncio.timeout_at(deadline):
+-                            trace.status = await self.storage.finish(trace, attempt, error_code=code,
+-                                                                     deadline=deadline)
++                        with _storage_write(trace, 'finish', attempt):
++                            async with asyncio.timeout_at(deadline):
++                                trace.status = await self.storage.finish(trace, attempt, error_code=code,
++                                                                         deadline=deadline)
+                         trace._persisted_terminal = True
+                     except TimeoutError:
+                         trace.error_code = 'request_timeout'
+@@ -54,11 +73,14 @@
+                         raise GatewayError('request_timeout', '请求处理超时', 504) from None
+                     except StorageUnavailable:
+                         self.defer(trace, attempt)
++                        if trace.operation == 'provider_probe':
++                            raise
+             raise
+         if self.storage is not None:
+             try:
+-                async with asyncio.timeout_at(trace._deadline):
+-                    trace.status = await self.storage.finish(trace, attempt, deadline=trace._deadline)
++                with _storage_write(trace, 'finish', attempt):
++                    async with asyncio.timeout_at(trace._deadline):
++                        trace.status = await self.storage.finish(trace, attempt, deadline=trace._deadline)
+                 trace._persisted_terminal = True
+             except TimeoutError:
+                 trace.error_code = 'request_timeout'
+@@ -70,7 +92,7 @@
+                 raise
+             if trace.status != 'completed':
+                 raise GatewayError('execution_interrupted', '请求执行已中断', http_status.HTTP_503_SERVICE_UNAVAILABLE)
+-        return data
++        return data, attempt
+ 
+     def prepare_stream(self, request: StreamRequest, trace: RequestTrace) -> StreamingExecution:
+         """All deterministic failures precede SSE, its deadline, and an Attempt."""
+@@ -141,7 +163,7 @@
+             "max_output_tokens": PROVIDER_PROBE_MAX_OUTPUT_TOKENS,
+             "timeout_seconds": PROVIDER_PROBE_TIMEOUT_SECONDS,
+         })
+-        _, attempt = await self._complete(request, trace)
++        _, attempt = await self._recorded_completion(request, trace)
+         return ProbeData(latency_ms=attempt.latency_ms)
+ 
+     async def _complete(self, request: LLMRequest, trace: RequestTrace):
+@@ -180,7 +202,7 @@
+         definition = self.model_registry.providers[model.provider]
+         from services.recovery import RecoveryState
+         from services.models import RecoveryPolicy
+-        persist = self.storage is not None and trace.operation != 'provider_probe'
++        persist = self.storage is not None
+         policy = self.model_registry.recovery if trace.operation != 'provider_probe' else RecoveryPolicy(max_attempts=1, max_attempts_per_model=1)
+         state = RecoveryState(policy, request.initial_output_tokens or output, output)
+         candidates = [(request.model, model, definition, messages, measured)]
+@@ -212,17 +234,19 @@
+         try:
+             async with asyncio.timeout_at(deadline):
+                 if persist:
+-                    await self.storage.prepare(trace, snapshot, deadline=deadline)
++                    with _storage_write(trace, 'prepare'):
++                        await self.storage.prepare(trace, snapshot, deadline=deadline)
+                     trace._admitted = True
+                 return await self._ordinary_attempts(candidates, state, prepared, trace, persist, deadline, count_options)
+         except TimeoutError:
+-            error = self._deadline_error(trace)
++            error = self._deadline_error(trace, trace.error_stage)
+             attempt = next((a for a in reversed(self.traces.attempts) if a.request_id == trace.request_id), None)
+             if attempt is not None and attempt.status == 'running':
+                 attempt.status, attempt.error_code = 'failed', error.code
+             raise error from None
+ 
+     async def _ordinary_attempts(self, candidates, state, prepared, trace, persist, deadline, count_options):
++        trace.recovery_wait_ms = 0.0
+         index, reason = 0, 'initial'
+         messages = candidates[0][3]
+         last_error = None
+@@ -240,10 +264,11 @@
+                 trace._recovery_stop_reason = 'retry_wait_exceeds_deadline'
+                 raise last_error
+             if wait:
+-                await asyncio.sleep(wait)
++                await trace.wait_for_recovery(wait)
+             if reason == 'format_repair':
+                 measured = self.token_budget.count(model, messages, **count_options)
+             self.token_budget.check(measured.input_tokens, state.max_output, model)
++            trace.error_stage = None
+             state.start(name)
+             attempt = self.traces.start_attempt(trace, name, provider=model.provider,
+                 adapter=definition.adapter, configured_model=model.model_id, api_protocol=definition.api_protocol)
+@@ -256,20 +281,28 @@
+             error = None
+             try:
+                 if persist:
+-                    await self.storage.begin_attempt(trace, attempt, deadline=deadline)
++                    with _storage_write(trace, 'begin_attempt', attempt):
++                        await self.storage.begin_attempt(trace, attempt, deadline=deadline)
+             finally:
+                 # Authorized input is retained in PostgreSQL, not metadata views.
+                 del attempt.input_snapshot
++            failure_stage = 'admission'
+             try:
+                 remaining = deadline - asyncio.get_running_loop().time()
+                 if remaining <= 0:
+                     raise self._deadline_error(trace)
++                failure_stage = 'provider'
+                 limit = min(model.max_timeout_seconds, remaining)
+                 async with asyncio.timeout(limit):
+                     attempt.provider_entered = True
+-                    result = await self.providers[model.provider].complete(model, messages,
+-                        max_output_tokens=state.current_output, timeout_seconds=limit,
+-                        **({'response_schema': prepared.schema} if prepared else {}))
++                    dispatched = monotonic()
++                    try:
++                        result = await self.providers[model.provider].complete(model, messages,
++                            max_output_tokens=state.current_output, timeout_seconds=limit,
++                            **({'response_schema': prepared.schema} if prepared else {}))
++                    finally:
++                        attempt.provider_duration_ms = (monotonic() - dispatched) * 1000
++                failure_stage = 'output_validation'
+                 for field in ('actual_model', 'finish_reason', 'usage', 'upstream_status', 'upstream_finish_reason'):
+                     setattr(attempt, field, getattr(result, field))
+                 validate_result(result)
+@@ -277,7 +310,7 @@
+                 if asyncio.get_running_loop().time() >= deadline:
+                     raise self._deadline_error(trace)
+             except TimeoutError:
+-                error = (self._deadline_error(trace)
++                error = (self._deadline_error(trace, failure_stage)
+                          if asyncio.get_running_loop().time() >= deadline
+                          else ProviderCallError(code='provider_timeout', status_code=504))
+             except (ProviderCallError, GatewayError) as exc:
+@@ -286,13 +319,21 @@
+                     value = getattr(exc, field, None)
+                     if value is not None:
+                         setattr(attempt, field, value)
++            except asyncio.CancelledError:
++                trace.error_stage = failure_stage
++                raise
+             finally:
+                 attempt.latency_ms = (monotonic() - started) * 1000
++            if error is not None:
++                trace.error_stage = failure_stage
+             attempt.status, attempt.error_code = ('failed', error.code) if error else ('completed', None)
+-            if error is not None and error.code == 'request_timeout':
++            if error is not None and (error.code == 'request_timeout' or
++                    (trace.operation == 'provider_probe' and error.code == 'provider_timeout'
++                     and asyncio.get_running_loop().time() >= deadline)):
+                 raise error
+             if persist:
+-                status = await self.storage.finish_attempt(trace, attempt, deadline=deadline)
++                with _storage_write(trace, 'finish_attempt', attempt):
++                    status = await self.storage.finish_attempt(trace, attempt, deadline=deadline)
+                 if status != 'running':
+                     raise GatewayError('execution_interrupted', '请求执行已中断', 503)
+             if error is None:
+@@ -332,8 +373,8 @@
+                     reason = 'network_retry'
+ 
+     @staticmethod
+-    def _deadline_error(trace):
+-        if trace.operation == 'provider_probe':
++    def _deadline_error(trace, stage=None):
++        if trace.operation == 'provider_probe' and stage == 'provider':
+             return ProviderCallError(code='provider_timeout', status_code=504)
+         return GatewayError('request_timeout', '请求处理超时', 504)
+ 
+--- baseline/src/services/streaming.py
++++ current/src/services/streaming.py
+@@ -47,6 +47,8 @@
+         self.last_sent_at = None
+         self.deadline = None
+         self.storage, self.defer, self.snapshot = storage, defer, snapshot
++        if snapshot is not None:
++            self.trace._skipped_candidates = snapshot.get('skipped_candidates')
+         self.prepared_storage = False
+         self.background = False
+         self.stop_error = None
+@@ -67,6 +69,7 @@
+                 await self.storage.prepare(self.trace, self.snapshot, deadline=self.deadline)
+                 self.trace._admitted = True
+             except StorageUnavailable:
++                self.trace.record_storage_failure('prepare')
+                 self.trace.error_code = 'storage_unavailable'
+                 self.defer(self.trace)
+                 raise
+@@ -197,6 +200,7 @@
+                             raise StreamFailure('execution_interrupted')
+                         self.completed_committed = True
+             except StorageUnavailable as exc:
++                self.trace.record_storage_failure('append_event' if name == 'response.delta' else 'finish', self.attempt)
+                 self.storage_uncertain |= exc.uncertain
+                 if asyncio.current_task().cancelling():
+                     raise asyncio.CancelledError
+@@ -235,6 +239,7 @@
+             raise StreamFailure('client_disconnected')
+         if asyncio.get_running_loop().time() >= self.deadline:
+             raise StreamFailure('request_timeout')
++        self.trace.recovery_wait_ms = 0.0
+         index, self.attempt_reason = 0, 'initial'
+         last_error = None
+         while True:
+@@ -251,11 +256,12 @@
+                 self.trace._recovery_stop_reason = 'retry_wait_exceeds_deadline'
+                 raise StreamFailure(last_error.code)
+             if wait:
+-                await asyncio.sleep(wait)
++                await self.trace.wait_for_recovery(wait)
+             if self.cancel_requested:
+                 return
+             self.prepared = replace(p, max_output_tokens=self.recovery.current_output)
+             self.provider = provider
++            self.trace.error_stage = None
+             self.recovery.start(p.model_name)
+             self.trace.upstream_first_text_at = self.trace.upstream_terminal_at = None
+             self.iterator = self.next_task = None
+@@ -278,6 +284,7 @@
+                 try:
+                     status = await self.storage.finish_attempt(self.trace, self.attempt, deadline=self.deadline)
+                 except StorageUnavailable as exc:
++                    self.trace.record_storage_failure('finish_attempt', self.attempt)
+                     self.storage_uncertain |= exc.uncertain
+                     raise StreamFailure('storage_unavailable') from None
+                 if status == 'canceling':
+@@ -332,6 +339,7 @@
+             try:
+                 await self.storage.begin_attempt(self.trace, self.attempt, deadline=self.deadline)
+             except StorageUnavailable as exc:
++                self.trace.record_storage_failure('begin_attempt', self.attempt)
+                 self.storage_uncertain |= exc.uncertain
+                 if asyncio.current_task().cancelling():
+                     raise asyncio.CancelledError
+@@ -342,20 +350,27 @@
+             del self.attempt.input_snapshot
+         if self.cancel_requested:
+             return
++        self.provider_started_at = None
+         try:
+             if self.provider_admission is None:
+                 await self._start_provider()
+             else:
+                 await self.provider_admission(self._start_provider)
++            if self.cancel_requested:
++                return
++            async with asyncio.timeout_at(self.provider_deadline):
++                usage = await self._read_events()
+         except StorageUnavailable as exc:
++            self.trace.record_storage_failure('admission', self.attempt)
+             self.storage_uncertain |= exc.uncertain
+             raise StreamFailure('storage_unavailable') from None
+-        if self.cancel_requested:
+-            return
+-        # Registration and admission consume only the request deadline. The
+-        # model clock starts at actual Provider entry and ends at its terminal.
+-        async with asyncio.timeout_at(self.provider_deadline):
+-            usage = await self._read_events()
++        except BaseException:
++            if self.trace.error_stage is None:
++                self.trace.error_stage = 'provider' if self.provider_started_at is not None else 'admission'
++            raise
++        finally:
++            if self.provider_started_at is not None and self.attempt.provider_duration_ms is None:
++                self.attempt.provider_duration_ms = (monotonic() - self.provider_started_at) * 1000
+         await self._emit('response.completed', {'usage': usage})
+ 
+     async def _read_events(self):
+@@ -396,6 +411,7 @@
+         if remaining <= 0:
+             raise StreamFailure('request_timeout')
+         self.provider_deadline = asyncio.get_running_loop().time() + remaining
++        self.provider_started_at = monotonic()
+         self.iterator = self.provider.stream(p.model, p.messages,
+                                             max_output_tokens=p.max_output_tokens, timeout_seconds=remaining)
+         self.next_task = asyncio.create_task(anext(self.iterator))
+@@ -418,6 +434,8 @@
+             raise StreamFailure('provider_invalid_response') from None
+ 
+     def _observe(self, event):
++        if event.status != 'running':
++            self.attempt.provider_duration_ms = (monotonic() - self.provider_started_at) * 1000
+         if event.delta and self.trace.upstream_first_text_at is None:
+             self.trace.upstream_first_text_at = monotonic()
+         if event.upstream_terminal_received:
+--- baseline/src/services/trace.py
++++ current/src/services/trace.py
+@@ -1,3 +1,6 @@
++import asyncio
++import logging
++from time import monotonic
+ from dataclasses import dataclass
+ from typing import Literal
+ 
+@@ -29,8 +32,26 @@
+     upstream_first_text_at: float | None = None
+     upstream_terminal_at: float | None = None
+     stream_ended_at: float | None = None
++    recovery_wait_ms: float | None = None
++    error_stage: str | None = None
+     cleanup_error_code: str | None = None
+     delivery_error_code: str | None = None
++
++    def record_storage_failure(self, stage, attempt=None):
++        self.error_stage = stage
++        logging.getLogger(__name__).warning(
++            '持久化失败 request_id=%s stage=%s attempt_no=%s',
++            self.request_id, stage, attempt.number if attempt else None)
++
++    async def wait_for_recovery(self, seconds):
++        started = monotonic()
++        try:
++            await asyncio.sleep(seconds)
++        except BaseException:
++            self.error_stage = 'recovery_wait'
++            raise
++        finally:
++            self.recovery_wait_ms += (monotonic() - started) * 1000
+ 
+     @property
+     def ttft_ms(self) -> float | None:
+@@ -72,6 +93,7 @@
+     counter_version: str | None = None
+     max_output_tokens: int | None = None
+     reason: str | None = None
++    provider_duration_ms: float | None = None
+     provider_entered: bool = False
+ 
+ 
+--- baseline/src/trace_contracts.py
++++ current/src/trace_contracts.py
+@@ -0,0 +1,98 @@
++"""Public metadata allowlist for the request diagnostic endpoint."""
++from datetime import datetime
++from typing import Literal
++from uuid import UUID
++
++from contracts import StrictObject, Usage
++
++
++class TraceAttempt(StrictObject):
++    attempt_no: int
++    model: str
++    provider: str
++    adapter: str
++    api_protocol: str
++    configured_model: str
++    actual_model: str | None
++    reason: str | None
++    status: str
++    finish_reason: str | None
++    upstream_status: str | None
++    upstream_finish_reason: str | None
++    error_code: str | None
++    provider_error_code: str | None
++    cleanup_error_code: str | None
++    started_at: datetime
++    ended_at: datetime | None
++    latency_ms: float | None
++    provider_duration_ms: float | None
++    provider_entered: bool | None
++    prompt_fingerprint: str | None
++    input_token_count: int | None
++    counter_version: str | None
++    max_output_tokens: int | None
++    usage: Usage | None
++
++
++class TraceUsage(StrictObject):
++    known_subtotal: Usage | None
++    unknown_attempts: list[int]
++
++
++class TraceTiming(StrictObject):
++    request_duration_ms: float | None
++    ttft_ms: float | None
++    generation_duration_ms: float | None
++    stream_duration_ms: float | None
++
++
++class SkippedCandidate(StrictObject):
++    model: str
++    code: str
++
++
++class TraceRecovery(StrictObject):
++    wait_ms: float | None
++    skipped_candidates: list[SkippedCandidate] | None
++    stop_reason: str | None
++
++
++class TraceCancellation(StrictObject):
++    requested_at: datetime | None
++    ended_at: datetime | None
++    cleanup_error_code: str | None
++
++
++class TraceData(StrictObject):
++    request_id: UUID
++    operation: str
++    status: str
++    requested_model: str | None
++    prompt_name: str | None
++    prompt_version: str | None
++    prompt_fingerprint: str | None
++    schema_fingerprint: str | None
++    structured_output_mode: str | None
++    input_token_count: int | None
++    counter_version: str | None
++    max_output_tokens: int | None
++    timeout_seconds: int | None
++    created_at: datetime
++    started_at: datetime | None
++    deadline_at: datetime | None
++    ended_at: datetime | None
++    error_code: str | None
++    error_stage: str | None
++    delivery_error_code: str | None
++    attempts: list[TraceAttempt]
++    usage: TraceUsage
++    timing: TraceTiming
++    recovery: TraceRecovery
++    cancellation: TraceCancellation
++
++
++class TraceResponse(StrictObject):
++    success: Literal[True] = True
++    code: Literal['ok'] = 'ok'
++    data: TraceData
++    message: str = '成功'
+--- baseline/tests/conftest.py
++++ current/tests/conftest.py
+@@ -137,7 +137,7 @@
+ @pytest.fixture(autouse=True)
+ def explicit_database_for_historical_tests(request, monkeypatch):
+     """Keep existing fixtures independent from the maintainer's password/YAML."""
+-    if any(name in request.path.name for name in ('f5o1', 'f5o2', 'f6', 'f7')):
++    if any(name in request.path.name for name in ('f5o1', 'f5o2', 'f6', 'f7', 'f8')):
+         yield
+         return
+     import main
+--- baseline/tests/integration/test_f5o1_http.py
++++ current/tests/integration/test_f5o1_http.py
+@@ -251,7 +251,7 @@
+         assert len(provider.stream_calls) == 1 and provider.stream_close_calls == 1
+ 
+ 
+-def test_probe_liveness_and_unknown_paths_do_not_persist_model_requests(pg_server, pg_config):
++def test_probe_is_recorded_but_liveness_and_unknown_paths_are_not(pg_server, pg_config):
+     name, config_dir = pg_config
+     migrate(config_dir)
+     provider = MockProvider(text='OK')
+@@ -261,12 +261,12 @@
+         assert client.get('/v1/llm').status_code == 405
+         assert client.post('/v1/models/general-primary/health').status_code == 200
+         with pg_server.connect(name) as conn:
+-            assert conn.execute('SELECT COUNT(*) FROM tb_llm_request').fetchone()[0] == 0
++            assert conn.execute('SELECT operation FROM tb_llm_request').fetchall() == [('provider_probe',)]
+         assert len(provider.calls) == 1
+         ordinary = client.post('/v1/llm', json=body())
+         assert ordinary.status_code == 200
+         with pg_server.connect(name) as conn:
+-            assert conn.execute('SELECT COUNT(*) FROM tb_llm_request').fetchone()[0] == 1
++            assert conn.execute('SELECT COUNT(*) FROM tb_llm_request').fetchone()[0] == 2
+         assert len(provider.calls) == 2
+ 
+ 
+--- baseline/tests/integration/test_f7_deadline.py
++++ current/tests/integration/test_f7_deadline.py
+@@ -1,4 +1,5 @@
+ """Request's final commit is part of the one shared deadline."""
++import json
+ import asyncio
+ from time import monotonic
+ import pytest
+@@ -29,6 +30,7 @@
+                 await asyncio.sleep(.02)
+         row,attempts,_=observe(server,name,rid)
+         assert row['status']=='failed' and row['error_code']=='request_timeout'
++        assert json.loads(row['timing_snapshot'])['error_stage'] == 'finish'
+         assert attempts[0]['status']=='completed'
+         assert app.state.traces.attempts[-1].status=='completed'
+ 
+@@ -53,6 +55,7 @@
+                 await asyncio.sleep(.02)
+         row,attempts,_=observe(server,name,rid)
+         assert row['status']=='failed'
++        assert json.loads(row['timing_snapshot'])['error_stage'] == stage
+         if stage=='finish_attempt': assert attempts[0]['status']=='completed'
+         else: assert attempts==[]
+ 
+--- baseline/tests/integration/test_f7_review_failure_deadline.py
++++ current/tests/integration/test_f7_review_failure_deadline.py
+@@ -1,4 +1,5 @@
+ """R1 P2#2: error terminal persistence shares the original request deadline."""
++import json
+ import asyncio
+ from time import monotonic
+ 
+@@ -44,6 +45,7 @@
+                 if row['status']=='failed':break
+                 await asyncio.sleep(.02)
+         assert row['error_code']=='request_timeout' and events==[]
++        assert json.loads(row['timing_snapshot'])['error_stage'] == 'finish'
+         assert len(attempts)==1 and attempts[0]['status']=='failed'
+         assert attempts[0]['error_code']=='provider_auth_error'
+         assert len(primary.calls)==1 and not backup.calls
+--- baseline/tests/integration/test_f8_lifecycle.py
++++ current/tests/integration/test_f8_lifecycle.py
+@@ -0,0 +1,139 @@
++"""Cross-check the diagnostic GET against the writer, independent SQL and call counts."""
++import asyncio
++
++import pytest
++
++from contracts import Usage
++from errors import ProviderCallError
++from f6_cases import ControlledProvider, case, server, assert_events, create, observe, poll
++from f7_cases import SequenceProvider, application, body, registry
++from providers.base import ProviderResult, ProviderStreamEvent
++from services.models import RecoveryPolicy
++
++
++async def diagnosis(client, rid):
++    response = await client.get(f'/v1/traces/{rid}')
++    assert response.status_code == 200, response.text
++    envelope = response.json()
++    assert set(envelope) == {'success', 'code', 'message', 'data'}
++    assert envelope['success'] and envelope['code'] == 'ok'
++    assert envelope['data']['request_id'] == rid
++    return envelope['data']
++
++
++@pytest.mark.parametrize('close_error,terminal', [(False, 'canceled'), (True, 'failed')])
++async def test_f8_query_during_cancel_and_after_cleanup(server, case, close_error, terminal):
++    name, config = case
++    provider = ControlledProvider(first=True, close_error=close_error)
++    provider.close_release.clear()
++    async with application(config, provider) as (_, client):
++        rid = await create(client)
++        assert (await diagnosis(client, rid))['status'] == 'pending'
++        assert not provider.stream_calls
++        subscriber = asyncio.create_task(client.get(f'/v1/llm/stream/{rid}/events'))
++        try:
++            await asyncio.wait_for(provider.entered.wait(), 3)
++            assert (await diagnosis(client, rid))['status'] == 'running'
++            accepted = await client.post(f'/v1/llm/stream/{rid}/cancel')
++            assert accepted.status_code == 202
++            await asyncio.wait_for(provider.closing.wait(), 3)
++            assert (await diagnosis(client, rid))['status'] == 'canceling'
++        finally:
++            provider.close_release.set()
++            provider.release.set()
++            await asyncio.wait_for(subscriber, 6)
++        await poll(client, rid, terminal)
++        data = await diagnosis(client, rid)
++        row, attempts, _ = assert_events(server, name, rid, terminal)
++        assert data['status'] == row['status'] == terminal
++        assert data['error_code'] == row['error_code']
++        assert data['attempts'][0]['status'] == attempts[0]['status']
++        assert len(provider.stream_calls) == provider.stream_close_calls == len(data['attempts']) == 1
++
++
++async def test_f8_fallback_preserves_partial_usage_and_ordinary_response(server, case):
++    name, config = case
++    usage = Usage(input_tokens=60, output_tokens=25, total_tokens=85)
++    primary = SequenceProvider([ProviderCallError(code='provider_timeout')])
++    backup = SequenceProvider([ProviderResult(text='private reply', actual_model='actual-backup', usage=usage)])
++    models = registry(policy=RecoveryPolicy(max_attempts=2, max_attempts_per_model=1))
++    async with application(config, primary, backup, models=models) as (_, client):
++        reply = await client.post('/v1/llm', json=body())
++        assert reply.status_code == 200, reply.text
++        assert reply.json()['data'] == {'text': 'private reply', 'usage': None}
++        rid = reply.headers['x-request-id']
++        trace = await diagnosis(client, rid)
++        row, attempts, _ = observe(server, name, rid)
++        assert trace['status'] == row['status'] == 'completed'
++        assert len(primary.calls) == len(backup.calls) == 1
++        assert [(a['status'], a['reason']) for a in trace['attempts']] == [
++            (a['status'], a['reason']) for a in attempts] == [('failed', 'initial'), ('completed', 'fallback')]
++        assert trace['attempts'][1]['actual_model'] == attempts[1]['actual_model'] == 'actual-backup'
++        assert trace['usage']['known_subtotal'] == usage.model_dump()
++        assert trace['usage']['unknown_attempts'] == [1]
++        assert 'private reply' not in str(trace)
++
++
++async def test_f8_two_ids_overlap_and_each_query_returns_its_own_state(server, case):
++    name, config = case
++    stream = ControlledProvider()
++    async with application(config, stream) as (_, client):
++        rid = await create(client)
++        subscriber = asyncio.create_task(client.get(f'/v1/llm/stream/{rid}/events'))
++        try:
++            await asyncio.wait_for(stream.entered.wait(), 3)
++            bad = await client.post('/v1/llm', json=body(max_output_tokens=999999))
++            assert bad.status_code == 400
++            bad_id = bad.headers['x-request-id']
++            running, failed = await asyncio.gather(diagnosis(client, rid), diagnosis(client, bad_id))
++            assert running['status'] == 'running' and len(running['attempts']) == 1
++            assert failed['status'] == 'failed' and failed['attempts'] == []
++            assert failed['error_stage'] and failed['error_code'] == bad.json()['code']
++            assert list(observe(server, name, bad_id)[1]) == []
++        finally:
++            stream.release.set()
++            await subscriber
++        assert (await diagnosis(client, rid))['status'] == 'completed'
++        assert (await diagnosis(client, bad_id)) == failed
++        assert len(stream.stream_calls) == 1 and not stream.calls
++
++
++async def test_f8_diagnostic_bytes_exclude_inputs_outputs_and_errors(server, case, caplog, monkeypatch):
++    from persistence.database import StorageUnavailable
++    from providers.mock import MockProvider
++
++    name, config = case
++    markers = ['PRIVATE-VARIABLE-A123', 'private_schema_field', 'PRIVATE-REPLY-A123',
++               'PRIVATE-DELTA-A123', 'FAKE-KEY-ONLY-TEST', 'PRIVATE-STACK-A123']
++    result = ProviderResult(text='{"private_schema_field":"PRIVATE-REPLY-A123"}')
++    provider = MockProvider(result=result, stream_events=[
++        ProviderStreamEvent(delta=markers[3]),
++        ProviderStreamEvent(status='completed', upstream_terminal_received=True),
++    ])
++    async with application(config, provider) as (app, client):
++        request = body(response_schema={'type': 'object', 'properties': {
++            markers[1]: {'type': 'string'}}, 'required': [markers[1]], 'additionalProperties': False})
++        request['prompt']['variables']['context'] = markers[0]
++        request['messages'][0]['content'] = markers[4]
++        generated = await client.post('/v1/llm', json=request)
++        assert generated.status_code == 200 and markers[2] in generated.text
++        rid = generated.headers['x-request-id']
++        row, _, _ = observe(server, name, rid)
++        assert markers[0] in row['input_snapshot']
++        protected = [await client.get(f'/v1/traces/{rid}')]
++
++        stream_body = body(messages=[{'role': 'user', 'content': markers[3]}])
++        stream_id = (await client.post('/v1/llm/stream', json=stream_body)).json()['data']['request_id']
++        streamed = await client.get(f'/v1/llm/stream/{stream_id}/events')
++        assert streamed.status_code == 200 and markers[3] in streamed.text
++        assert markers[3] in observe(server, name, stream_id)[2][0]['payload']
++        protected.append(await client.get(f'/v1/traces/{stream_id}'))
++        def fail_read():
++            raise StorageUnavailable() from RuntimeError(markers[5])
++        with monkeypatch.context() as m:
++            m.setattr(app.state.storage.database, 'transaction', fail_read)
++            protected.append(await client.get(f'/v1/traces/{rid}'))
++        assert [response.status_code for response in protected] == [200, 200, 503]
++        for marker in markers:
++            assert all(marker.encode() not in response.content for response in protected)
++            assert marker not in caplog.text
+--- baseline/tests/integration/test_f8_probe.py
++++ current/tests/integration/test_f8_probe.py
+@@ -0,0 +1,195 @@
++import json
++from uuid import uuid4
++from pathlib import Path
++
++from alembic import command
++from alembic.config import Config
++
++import pytest
++from fastapi.testclient import TestClient
++
++from errors import ProviderCallError
++from f4_cases import registry
++from main import create_app
++from persistence.database import StorageUnavailable
++from postgres_support import write_config
++from providers.mock import MockProvider
++from settings import Settings
++
++
++@pytest.fixture
++def setup_probe(legacy_postgres_environment, tmp_path):
++    server, template = legacy_postgres_environment
++    name = server.create_database(template=template)
++    directory = write_config(tmp_path, server, name, registry())
++    provider = MockProvider(text='private-probe-response')
++    def app():
++        return create_app(settings=Settings(env='test', _env_file=None), provider=provider,
++                          model_registry=registry(), config_dir=directory)
++    try:
++        yield app, provider, lambda: server.connect(name)
++    finally:
++        server.drop_database(name)
++
++
++def test_probe_success_restart_and_rejections(setup_probe):
++    app, provider, connect = setup_probe
++    with TestClient(app()) as client:
++        response = client.post('/v1/models/general-primary/health')
++        assert response.status_code == 200
++        rid = response.headers['x-request-id']
++        rejected = client.post('/v1/models/missing/health')
++        assert rejected.status_code == 400
++    with TestClient(app()):
++        with connect() as conn:
++            assert conn.execute("""select r.operation,r.status,r.input_snapshot,a.status,a.input_snapshot
++                from tb_llm_request r join tb_llm_attempt a on r.id=a.request_pk
++                where r.request_id=%s""", (rid,)).fetchall() == [('provider_probe','completed',None,'completed',None)]
++            assert conn.execute("""select r.status,count(a.attempt_no) from tb_llm_request r
++                left join tb_llm_attempt a on r.id=a.request_pk where r.request_id=%s group by r.status""",
++                (rejected.headers['x-request-id'],)).fetchall() == [('failed',0)]
++    assert len(provider.calls) == 1
++
++
++@pytest.mark.parametrize('point,committed', [(stage, committed) for stage in
++    ('prepare', 'begin_attempt', 'finish_attempt', 'finish') for committed in (False, True)])
++def test_probe_storage_fault(setup_probe, monkeypatch, caplog, point, committed):
++    app_factory, provider, connect = setup_probe
++    app = app_factory()
++    with TestClient(app) as client:
++        original = getattr(app.state.storage, point)
++        async def fault(*args, **kwargs):
++            if committed:
++                await original(*args, **kwargs)
++            raise StorageUnavailable(uncertain=committed)
++        with monkeypatch.context() as m:
++            m.setattr(app.state.storage, point, fault)
++            response = client.post('/v1/models/general-primary/health')
++            assert response.status_code == 503
++            assert response.json()['code'] == 'storage_unavailable'
++            rid = response.headers['x-request-id']
++            assert rid in caplog.text and f'stage={point} ' in caplog.text
++    after_call = point.startswith('finish')
++    assert len(provider.calls) == int(after_call)
++    with connect() as conn:
++        assert conn.execute('select status from tb_llm_request where request_id=%s',(rid,)).fetchone() == (
++            'completed' if point == 'finish' and committed else 'failed',)
++        assert conn.execute('select count(*) from tb_llm_attempt').fetchone()[0] == int(after_call or (point == 'begin_attempt' and committed))
++
++        if point == 'finish' and committed:
++            timing = json.loads(conn.execute('select timing_snapshot from tb_llm_request where request_id=%s',
++                                             (rid,)).fetchone()[0])
++            assert timing['error_stage'] is None
++            assert timing['delivery_error_code'] == 'storage_unavailable'
++
++
++def test_probe_upstream_timeout(setup_probe):
++    app, provider, connect = setup_probe
++    provider.error = ProviderCallError(code='provider_timeout', status_code=504)
++    with TestClient(app()) as client:
++        response = client.post('/v1/models/general-primary/health')
++        assert response.status_code == 504
++        assert response.json()['code'] == 'provider_timeout'
++        with connect() as conn:
++            assert conn.execute("""select r.status,r.error_code,a.status,a.error_code,a.total_tokens
++                from tb_llm_request r join tb_llm_attempt a on a.request_pk=r.id where r.request_id=%s""",
++                (response.headers['x-request-id'],)).fetchone() == (
++                    'failed','provider_timeout','failed','provider_timeout',None)
++    assert len(provider.calls) == 1
++
++
++def test_f7_requests_survive_upgrade_and_restart(legacy_postgres_environment, tmp_path):
++    server, _ = legacy_postgres_environment
++    name = server.create_database()
++    try:
++        root = Path(__file__).resolve().parents[2]
++        directory = write_config(tmp_path, server, name, registry())
++        config = Config(str(root/'alembic.ini'))
++        config.set_main_option('script_location', str(root/'migrations'))
++        config.attributes['config_dir'] = directory
++        command.upgrade(config, 'f7_001')
++        ids = [uuid4(), uuid4()]
++        with server.connect(name) as conn:
++            for rid, operation, seq in zip(ids, ['completion','streaming'], [None,0], strict=True):
++                pk = conn.execute("""insert into tb_llm_request(request_id,operation,last_event_seq,status,created_at)
++                    values(%s,%s,%s,'completed',now()) returning id""", (rid,operation,seq)).fetchone()[0]
++                conn.execute("""insert into tb_llm_attempt(request_pk,attempt_no,model,provider,adapter,api_protocol,
++                    configured_model,status,started_at) values(%s,1,'model','mock','mock','chat_completions',
++                    'mock','completed',now())""",(pk,))
++        command.upgrade(config,'head')
++        provider = MockProvider()
++        def app():
++            return create_app(settings=Settings(env='test', _env_file=None), provider=provider,
++                              model_registry=registry(), config_dir=directory)
++        with TestClient(app()) as client:
++            response = client.post('/v1/models/general-primary/health')
++            assert response.status_code == 200
++            probe_id = response.headers['x-request-id']
++        with TestClient(app()) as client:
++            for rid in [*ids, probe_id]:
++                result = client.get(f'/v1/traces/{rid}')
++                assert result.status_code == 200
++                assert result.json()['data']['status'] == 'completed'
++            with server.connect(name) as conn:
++                assert conn.execute("""select a.provider_duration_ms from tb_llm_request r
++                    join tb_llm_attempt a on r.id=a.request_pk where r.request_id=any(%s)""",(ids,)).fetchall() == [(None,),(None,)]
++        assert len(provider.calls) == 1
++    finally:
++        server.drop_database(name)
++
++
++def test_probe_upstream_failure_and_terminal_save_failure(setup_probe, monkeypatch):
++    app_factory, provider, connect = setup_probe
++    app = app_factory()
++    provider.error = ProviderCallError(code='provider_timeout', status_code=504)
++    async def failed_save(*args, **kwargs):
++        raise StorageUnavailable()
++    with TestClient(app) as client:
++        with monkeypatch.context() as m:
++            m.setattr(app.state.storage, 'finish', failed_save)
++            response = client.post('/v1/models/general-primary/health')
++            assert response.status_code == 503
++            assert response.json()['code'] == 'storage_unavailable'
++            rid = response.headers['x-request-id']
++    with connect() as conn:
++        assert conn.execute("""select r.error_code,a.error_code from tb_llm_request r
++            join tb_llm_attempt a on a.request_pk=r.id where r.request_id=%s""",(rid,)).fetchone() == (
++                'storage_unavailable','provider_timeout')
++    assert len(provider.calls) == 1
++
++
++def test_probe_invalid_body_records_admission_stage(setup_probe):
++    app, provider, connect = setup_probe
++    with TestClient(app()) as client:
++        rejected = client.post('/v1/models/general-primary/health', json={'invalid':'private'})
++        assert rejected.status_code == 422
++        with connect() as conn:
++            snapshot, = conn.execute('select timing_snapshot from tb_llm_request where request_id=%s',
++                                     (rejected.headers['x-request-id'],)).fetchone()
++            assert json.loads(snapshot)['error_stage'] == 'admission'
++    assert not provider.calls
++
++
++@pytest.mark.parametrize('stage', ['prepare','begin_attempt','finish_attempt','finish'])
++def test_deadline_expires_during_probe_database_write(setup_probe, monkeypatch, stage):
++    import asyncio
++    from services import gateway
++    app_factory, provider, connect = setup_probe
++    app = app_factory()
++    # Shorten only this controlled storage-fault experiment. F3 wire tests use 10s.
++    monkeypatch.setattr(gateway, 'PROVIDER_PROBE_TIMEOUT_SECONDS', 1)
++    with TestClient(app) as client:
++        async def blocked(*args, **kwargs):
++            await asyncio.Event().wait()
++        with monkeypatch.context() as m:
++            m.setattr(app.state.storage, stage, blocked)
++            response = client.post('/v1/models/general-primary/health')
++            assert response.status_code == 504
++            assert response.json()['code'] == 'request_timeout'
++            rid = response.headers['x-request-id']
++    with connect() as conn:
++        code, snapshot = conn.execute('select error_code,timing_snapshot from tb_llm_request where request_id=%s',
++                                      (rid,)).fetchone()
++        assert code == 'request_timeout'
++        assert json.loads(snapshot)['error_stage'] == stage
++    assert len(provider.calls) == int(stage in {'finish_attempt','finish'})
+--- baseline/tests/integration/test_f8_retry_diagnostics.py
++++ current/tests/integration/test_f8_retry_diagnostics.py
+@@ -0,0 +1,70 @@
++import asyncio
++import json
++
++from errors import ProviderCallError
++from f6_cases import case, observe, poll, server
++from f7_cases import application, body, registry, SequenceProvider
++from providers.base import ProviderResult
++from providers.mock import MockProvider
++from services.models import RecoveryPolicy
++from services.trace import RequestTrace
++
++
++async def test_f8_active_retry_sees_first_attempt_time_and_elapsed_backoff(server, case):
++    name, config = case
++    observations = []
++    primary = SequenceProvider([ProviderCallError(code='provider_connection_error'), ProviderResult(text='ok')])
++    models = registry({'general-backup': {'max_output_tokens': 32, 'default_output_tokens': 32}},
++                      policy=RecoveryPolicy(base_delay_seconds=.02, max_delay_seconds=.02))
++
++    def at_second_call():
++        if len(primary.calls) == 2:
++            with server.connect(name) as conn:
++                observations.append(conn.execute(
++                    'select r.status, r.timing_snapshot, a.status, a.provider_duration_ms '
++                    'from tb_llm_request r join tb_llm_attempt a on r.id=a.request_pk '
++                    'where a.attempt_no=1').fetchone())
++
++    primary.before = at_second_call
++    async with application(config, primary, models=models) as (_, client):
++        response = await client.post('/v1/llm', json=body(max_output_tokens=128))
++        assert response.status_code == 200
++        request, attempts, _ = observe(server, name, response.headers['X-Request-ID'])
++        assert len(attempts) == len(primary.calls) == 2
++        assert len(observations) == 1
++        status, snapshot, attempt_status, duration = observations[0]
++        assert (status, attempt_status) == ('running', 'failed')
++        assert duration == attempts[0]['provider_duration_ms'] and duration > 0
++        active, final = json.loads(snapshot), json.loads(request['timing_snapshot'])
++        assert active['skipped_candidates'] == [{'model': 'general-backup', 'code': 'unsupported_capability'}]
++        assert 0 < active['recovery_wait_ms'] == final['recovery_wait_ms']
++        assert final['error_stage'] is None
++
++
++async def test_f8_interrupted_stream_backoff_writes_partial_wait(server, case, monkeypatch):
++    name, config = case
++    waiting = asyncio.Event()
++    original = RequestTrace.wait_for_recovery
++
++    async def observed(self, seconds):
++        waiting.set()
++        await original(self, seconds)
++
++    monkeypatch.setattr(RequestTrace, 'wait_for_recovery', observed)
++    provider = MockProvider(error=ProviderCallError(code='provider_rate_limited', retry_after_seconds=5))
++    async with application(config, provider) as (_, client):
++        rid = (await client.post('/v1/llm/stream', json=body())).json()['data']['request_id']
++        subscriber = asyncio.create_task(client.get(f'/v1/llm/stream/{rid}/events'))
++        try:
++            await asyncio.wait_for(waiting.wait(), 3)
++            await poll(client, rid)
++            await subscriber
++        finally:
++            subscriber.cancel()
++            await asyncio.gather(subscriber, return_exceptions=True)
++        request, attempts, events = observe(server, name, rid)
++        assert request['status'] == 'canceled'
++        assert len(provider.stream_calls) == len(attempts) == 1
++        assert attempts[0]['status'] == 'failed' and attempts[0]['provider_duration_ms'] > 0
++        assert [e['event_type'] for e in events] == ['response.canceling', 'response.canceled']
++        assert 0 < json.loads(request['timing_snapshot'])['recovery_wait_ms'] < 5000
+--- baseline/tests/integration/test_f8_trace_query.py
++++ current/tests/integration/test_f8_trace_query.py
+@@ -0,0 +1,123 @@
++"""Read-side contract checked against PostgreSQL independently of TraceStore."""
++from contextlib import asynccontextmanager
++from uuid import uuid4
++
++from fastapi.testclient import TestClient
++import pytest
++from sqlalchemy import event
++
++from persistence.database import StorageUnavailable
++from providers.mock import MockProvider
++from test_f5o2_http import body, case, make_app, observe, server
++
++
++def get(client, rid):
++    response = client.get(f'/v1/traces/{rid}')
++    assert response.status_code == 200, response.text
++    assert set(response.json()) == {'success', 'code', 'message', 'data'}
++    assert response.json()['data']['request_id'] == rid
++    return response.json()['data']
++
++
++def test_query_readonly_and_storage_errors(case, server, monkeypatch, caplog):
++    name, config = case
++    provider = MockProvider()
++    app = make_app(config, provider)
++    with TestClient(app) as client:
++        rid = client.post('/v1/llm/stream', json=body()).headers['x-request-id']
++        before = observe(server, name, rid)
++        for _ in range(2):
++            data = get(client, rid)
++            assert data['status'] == 'pending'
++            assert data['attempts'] == []
++            assert data['usage'] == {'known_subtotal': None, 'unknown_attempts': []}
++        assert observe(server, name, rid) == before
++        assert not provider.calls and not provider.stream_calls
++        for key, status, code in [('bad', 422, 'invalid_request'), (uuid4(), 404, 'not_found')]:
++            response = client.get(f'/v1/traces/{key}')
++            assert (response.status_code, response.json()['code']) == (status, code)
++
++        @asynccontextmanager
++        async def unavailable(*args, **kwargs):
++            raise StorageUnavailable()
++            yield
++
++        monkeypatch.setattr(app.state.storage.database, 'transaction', unavailable)
++        response = client.get(f'/v1/traces/{rid}')
++        assert (response.status_code, response.json()['code']) == (503, 'storage_unavailable')
++        assert f'request_id={rid} stage=trace_query code=storage_unavailable' in caplog.text
++
++
++@pytest.mark.parametrize('counts', [[None, 85], [85, 85], [None, None], [0]])
++def test_ordered_usage_and_sensitive_projection(case, server, counts):
++    name, config = case
++    marker = 'PRIVATE-DIAGNOSTIC-CONTENT'
++    with TestClient(make_app(config)) as client:
++        rid = client.post('/v1/llm/stream', json=body(messages=[{'role': 'user','content': marker}])).headers['x-request-id']
++        row, _, _ = observe(server, name, rid)
++        with server.connect(name) as conn:
++            conn.execute("UPDATE tb_llm_request SET error_message=%s WHERE id=%s", (marker, row['id']))
++            for i in reversed(range(len(counts))):
++                count = counts[i]
++                inp = None if count is None else min(60, count)
++                out = None if count is None else count-inp
++                conn.execute("""INSERT INTO tb_llm_attempt
++                    (request_pk, attempt_no, model, provider, adapter, api_protocol, configured_model, status,
++                     started_at, input_snapshot, input_tokens, output_tokens, total_tokens)
++                    VALUES (%s,%s,'primary','provider','mock','chat_completions','model','running',
++                            now(),%s,%s,%s,%s)""", (row['id'], i+1, marker, inp, out, count))
++        data = get(client, rid)
++        assert marker not in str(data)
++        assert [a['attempt_no'] for a in data['attempts']] == list(range(1,len(counts)+1))
++        assert all('input_snapshot' not in a for a in data['attempts'])
++        assert 'input_snapshot' not in data and 'error_message' not in data
++        assert data['usage']['unknown_attempts'] == [i for i,c in enumerate(counts,1) if c is None]
++        known = [c for c in counts if c is not None]
++        expected = {'input_tokens':sum(min(60,c) for c in known),'output_tokens':sum(max(0,c-60) for c in known),
++                    'total_tokens':sum(known)} if known else None
++        assert data['usage']['known_subtotal'] == expected
++
++
++def test_reader_keeps_one_snapshot_across_writer_commit(case, server):
++    name, config = case
++    app = make_app(config)
++    with TestClient(app) as client:
++        rid = client.post('/v1/llm/stream', json=body()).headers['x-request-id']
++        engine = app.state.storage.database.engine.sync_engine
++        committed = False
++
++        def advance_after_request_read(conn, cursor, statement, parameters, context, many):
++            nonlocal committed
++            if not committed and 'FROM tb_llm_request' in statement and 'request_id' in statement:
++                committed = True
++                with server.connect(name) as writer:
++                    row = writer.execute("UPDATE tb_llm_request SET status='completed', last_event_seq=1 WHERE request_id=%s RETURNING id",(rid,)).fetchone()
++                    writer.execute("""INSERT INTO tb_llm_attempt (request_pk,attempt_no,model,provider,adapter,
++                       api_protocol,configured_model,status,started_at) VALUES (%s,1,'m','p','mock','chat_completions','m','completed',now())""",row)
++        event.listen(engine, 'after_cursor_execute', advance_after_request_read)
++        try:
++            data = get(client, rid)
++        finally:
++            event.remove(engine, 'after_cursor_execute', advance_after_request_read)
++        assert committed and data['status'] == 'pending' and data['attempts'] == []
++        later = get(client, rid)
++        assert later['status'] == 'completed' and len(later['attempts']) == 1
++
++
++def test_arbitrary_provider_end_metadata_is_not_published(case):
++    from providers.base import ProviderResult
++    marker = 'private provider traceback and content'
++    result = ProviderResult(text='answer', actual_model='model', finish_reason=marker,
++                            upstream_status=marker, upstream_finish_reason=marker)
++    with TestClient(make_app(case[1], MockProvider(result=result))) as client:
++        rid = client.post('/v1/llm', json=body()).headers['x-request-id']
++        data = get(client, rid)
++        assert marker not in str(data)
++        assert data['attempts'][0]['status'] == 'failed'
++
++
++def test_legacy_skip_extraction_accepts_nul_inside_saved_user_message(case):
++    with TestClient(make_app(case[1])) as client:
++        response = client.post('/v1/llm/stream', json=body(messages=[{'role':'user', 'content':'embedded\x00nul'}]))
++        assert response.status_code == 202
++        assert get(client, response.headers['x-request-id'])['recovery']['skipped_candidates'] == []
+--- baseline/tests/live/test_f5o1_acceptance.py
++++ current/tests/live/test_f5o1_acceptance.py
+@@ -130,6 +130,17 @@
+     assert (attempt['adapter'], attempt['api_protocol']) == (adapter, protocol)
+     assert attempt['actual_model'] and attempt['input_tokens'] is not None
+     assert attempt['total_tokens'] == attempt['input_tokens'] + attempt['output_tokens']
++    diagnostic = await client.get(f'/v1/traces/{request_id}')
++    assert diagnostic.status_code == 200, diagnostic.text
++    data = diagnostic.json()['data']
++    assert (data['request_id'], data['operation'], data['status']) == (
++        request_id, record['operation'], record['status'])
++    detail, = data['attempts']
++    assert (detail['attempt_no'], detail['api_protocol'], detail['actual_model']) == (
++        attempt['attempt_no'], protocol, attempt['actual_model'])
++    reported = {field: attempt[field] for field in ('input_tokens', 'output_tokens', 'total_tokens')}
++    assert detail['usage'] == data['usage']['known_subtotal'] == reported
++    assert data['usage']['unknown_attempts'] == []
+     if mode == 'streaming':
+         expected = [(kind, value) for kind, value in received if kind != 'response.heartbeat']
+         assert [(event['event_type'], loads(event['payload'])) for event in events] == expected
+--- baseline/tests/live/test_real_providers.py
++++ current/tests/live/test_real_providers.py
+@@ -9,6 +9,7 @@
+ import pytest
+ import pytest_asyncio
+ import uvicorn
++from sqlalchemy import text
+ 
+ from main import create_app
+ from f4_cases import SCHEMA, CONTEXT, PARSED, registry as fixture_registry
+@@ -131,6 +132,21 @@
+     else:
+         assert trace.schema_fingerprint is None and trace.structured_output_mode == 'none'
+     if is_probe:
++        diagnostic = await client.get(f'/v1/traces/{request_id}')
++        assert diagnostic.status_code == 200, diagnostic.text
++        data = diagnostic.json()['data']
++        async with app.state.storage.database.transaction() as session:
++            row = (await session.execute(text(
++                'SELECT r.operation, r.status, a.attempt_no, a.api_protocol, a.actual_model, a.total_tokens '
++                'FROM tb_llm_request r JOIN tb_llm_attempt a ON a.request_pk = r.id WHERE r.request_id = :rid'
++            ), {'rid': request_id})).mappings().one()
++        assert data['operation'] == row['operation'] == 'provider_probe'
++        assert data['status'] == row['status'] == 'completed'
++        saved, = data['attempts']
++        assert saved['attempt_no'] == row['attempt_no'] == 1
++        assert saved['api_protocol'] == row['api_protocol'] == attempt.api_protocol
++        assert saved['actual_model'] == row['actual_model'] == attempt.actual_model
++        assert data['usage']['known_subtotal']['total_tokens'] == row['total_tokens'] == attempt.usage.total_tokens
+         assert set(body["data"]) == {"latency_ms"}
+         assert body["data"]["latency_ms"] == attempt.latency_ms
+         assert (trace.max_output_tokens, trace.timeout_seconds) == (16, 10)
+--- baseline/tests/postgres/test_f6_storage.py
++++ current/tests/postgres/test_f6_storage.py
+@@ -168,7 +168,7 @@
+         try:await database.start()
+         finally:await database.close()
+         with pg_server.connect(name) as c:
+-            assert c.execute('select version_num from alembic_version').fetchone()==('f7_001',)
++            assert c.execute('select version_num from alembic_version').fetchone()==('f8_001',)
+             assert c.execute('select * from tb_llm_request order by id').fetchall()==original_requests
+             assert [row[:len(original_attempts[0])] for row in c.execute('select * from tb_llm_attempt order by request_pk,attempt_no').fetchall()]==original_attempts
+             assert c.execute('select * from tb_llm_stream_event order by request_pk,seq').fetchall()==original_events
+--- baseline/tests/postgres/test_f7_storage.py
++++ current/tests/postgres/test_f7_storage.py
+@@ -129,7 +129,7 @@
+         try:await db.start()
+         finally:await db.close()
+         with pg_server.connect(name) as c:
+-            assert c.execute('select version_num from alembic_version').fetchone()==('f7_001',)
++            assert c.execute('select version_num from alembic_version').fetchone()==('f8_001',)
+             assert c.execute('select '+','.join(columns)+' from tb_llm_attempt').fetchall()==before
+             assert c.execute('select input_snapshot,reason,provider_entered,input_token_count,max_output_tokens from tb_llm_attempt').fetchone()==(None,None,None,None,None)
+     finally:pg_server.drop_database(name)
+--- baseline/tests/smoke/test_f8_process.py
++++ current/tests/smoke/test_f8_process.py
+@@ -0,0 +1,29 @@
++"""A diagnosed request survives a Gateway process replacement and a database outage."""
++from test_f5o2_process import process_pg, process_case, create, gateway, observations, wait_for
++
++
++def test_f8_query_outage_and_process_replacement(process_case):
++    pg, _, directory = process_case
++    with gateway(directory) as (_, client):
++        rid, stream_url = create(client, 'f8-restart')
++        trace_url = f'/v1/traces/{rid}'
++        assert client.get(trace_url).json()['data']['status'] == 'pending'
++        (directory / 'release-f8-restart').touch()
++        assert 'response.completed' in client.get(stream_url).text
++        def with_delivery_observations():
++            data = client.get(trace_url).json()['data']
++            if all(data['timing'][key] is not None for key in ('ttft_ms', 'stream_duration_ms')):
++                return data
++        saved = wait_for(with_delivery_observations)
++        assert saved['status'] == 'completed' and len(saved['attempts']) == 1
++        assert pg.compose('stop', 'postgres').returncode == 0
++        try:
++            failure = client.get(trace_url)
++            assert failure.status_code == 503 and failure.json()['code'] == 'storage_unavailable'
++        finally:
++            pg.start()
++    with gateway(directory) as (_, client):
++        trace = client.get(trace_url)
++        assert trace.status_code == 200
++        assert trace.json()['data'] == saved
++    assert [item for item in observations(directory) if item[0] == 'stream'] == [['stream', 'f8-restart']]
+--- baseline/tests/unit/test_f8_timing.py
++++ current/tests/unit/test_f8_timing.py
+@@ -0,0 +1,164 @@
++import asyncio
++import json
++
++import pytest
++
++from contracts import StreamRequest
++from persistence.store import attempt_values, timing
++from providers.base import ProviderStreamEvent
++from services.models import RecoveryPolicy
++from test_f7_budget_and_repair import body
++from test_f7_ordinary_edges import SequenceProvider, connection, ok, setup, text_request
++
++
++async def test_f8_dispatch_excludes_registration_and_validation(monkeypatch):
++    clock = [100.0]
++
++    async def generate():
++        clock[0] += 2
++        return ok()
++
++    class Store:
++        async def prepare(self, *args, **options):
++            pass
++
++        async def begin_attempt(self, *args, **options):
++            clock[0] += 10
++
++        async def finish_attempt(self, *args, **options):
++            return 'running'
++
++    service, _, trace = setup(SequenceProvider(generate))
++    service.storage = Store()
++    monkeypatch.setattr('services.gateway.monotonic', lambda: clock[0])
++    monkeypatch.setattr('services.gateway.validate_result', lambda result: clock.__setitem__(0, clock[0] + 3))
++    _, attempt = await service._complete(text_request(), trace)
++    assert attempt.latency_ms == 15000
++    assert attempt_values(trace, attempt).get('provider_duration_ms') == 2000
++    assert json.loads(timing(trace))['recovery_wait_ms'] == 0
++
++
++@pytest.mark.parametrize('failed', [False, True])
++async def test_f8_stream_dispatch_to_terminal_excludes_admission_and_final_commit(monkeypatch, failed):
++    clock = [0.0]
++
++    class Stream:
++        async def stream(self, *args, **options):
++            clock[0] += 2
++            yield ProviderStreamEvent(delta='A')
++            clock[0] += 3
++            if failed:
++                yield ProviderStreamEvent(status='failed', error_code='provider_connection_error')
++            else:
++                yield ProviderStreamEvent(status='completed', upstream_terminal_received=True)
++
++    service, traces, trace = setup(Stream())
++    execution = service.prepare_stream(StreamRequest.model_validate(body()), trace)
++    monkeypatch.setattr('services.streaming.monotonic', lambda: clock[0])
++
++    async def admit(start):
++        clock[0] += 8
++        await start()
++
++    async def send(event, payload):
++        if event in ('response.completed', 'response.failed'):
++            clock[0] += 17
++
++    async def start():
++        pass
++
++    execution.provider_admission = admit
++    await execution.run(start, send, asyncio.Event())
++    assert len(traces.attempts) == 1
++    assert attempt_values(trace, traces.attempts[0]).get('provider_duration_ms') == 5000
++    metrics = json.loads(timing(trace))
++    assert metrics['generation_duration_ms'] == (None if failed else 3000)
++    assert metrics['recovery_stop_reason'] == ('content_committed' if failed else None)
++
++
++async def test_f8_retry_wait_and_skipped_candidate():
++    service, traces, trace = setup(SequenceProvider(connection(), ok()),
++        changes={'general-backup': {'max_output_tokens':64, 'default_output_tokens':64}},
++        policy=RecoveryPolicy(base_delay_seconds=0.02, max_delay_seconds=0.02))
++    await service._complete(text_request(), trace)
++    assert len(traces.attempts) == 2
++    metrics = json.loads(timing(trace))
++    assert metrics.get('recovery_wait_ms', 0) > 0
++    assert metrics['skipped_candidates'] == [{'model': 'general-backup', 'code': 'unsupported_capability'}]
++
++
++async def test_f8_cancel_during_wait_observes_elapsed_not_scheduled(monkeypatch):
++    service, traces, trace = setup(SequenceProvider(connection(), ok()),
++        policy=RecoveryPolicy(base_delay_seconds=5, max_delay_seconds=5))
++    started = asyncio.Event()
++    original = asyncio.sleep
++
++    async def wait(seconds):
++        started.set()
++        await original(seconds)
++
++    monkeypatch.setattr('services.gateway.asyncio.sleep', wait)
++    task = asyncio.create_task(service._complete(text_request(), trace))
++    await asyncio.wait_for(started.wait(), 1)
++    task.cancel()
++    with pytest.raises(asyncio.CancelledError):
++        await task
++    assert len(traces.attempts) == 1
++    measured = json.loads(timing(trace)).get('recovery_wait_ms')
++    assert measured is not None and 0 <= measured < 5000
++
++async def test_f8_observed_failure_stage_and_successful_fallback():
++    service, _, trace = setup(SequenceProvider(connection(), connection()), SequenceProvider(ok()))
++    await service._complete(text_request(), trace)
++    assert json.loads(timing(trace)).get('error_stage') is None
++    from errors import ProviderCallError
++    service, _, trace = setup(SequenceProvider(ProviderCallError(code='provider_auth_error')))
++    with pytest.raises(ProviderCallError):
++        await service._complete(text_request(), trace)
++    assert json.loads(timing(trace)).get('error_stage') == 'provider'
++
++async def test_f8_terminal_with_final_delta_stops_provider_clock_before_output(monkeypatch):
++    clock = [1.0]
++
++    class Stream:
++        async def stream(self, *args, **options):
++            clock[0] += 2
++            yield ProviderStreamEvent(delta='final', status='completed', upstream_terminal_received=True)
++
++    service, traces, trace = setup(Stream())
++    execution = service.prepare_stream(StreamRequest.model_validate(body()), trace)
++    monkeypatch.setattr('services.streaming.monotonic', lambda: clock[0])
++
++    async def start():
++        pass
++
++    async def send(event, payload):
++        if event == 'response.delta':
++            clock[0] += 10
++
++    await execution.run(start, send, asyncio.Event())
++    assert traces.attempts[0].provider_duration_ms == 2000
++
++async def test_f8_stream_db_failure_correlates_request_and_attempt(caplog):
++    from persistence.database import StorageUnavailable
++
++    class Store:
++        async def prepare(self, *args, **kwargs):
++            pass
++
++        async def begin_attempt(self, *args, **kwargs):
++            raise StorageUnavailable()
++
++        async def finish(self, *args, **kwargs):
++            return 'failed'
++
++        async def finish_attempt(self, *args, **kwargs):
++            return 'running'
++
++    service, traces, trace = setup(SequenceProvider())
++    service.storage = Store()
++    service.defer = lambda *args: None
++    execution = service.prepare_stream(StreamRequest.model_validate(body()), trace)
++    await execution.run_background()
++    assert traces.attempts[0].provider_duration_ms is None
++    assert f'request_id={trace.request_id} stage=begin_attempt attempt_no=1' in caplog.text

@@ -1,0 +1,381 @@
+{
+  "runs": [
+    {
+      "phase": "red-http",
+      "command": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "pytest",
+        "tests/integration/test_f2_prompts.py",
+        "-q"
+      ],
+      "exit_code": 1,
+      "output": "FF                                                                       [100%]\n=================================== FAILURES ===================================\n__________________ test_context_version_reaches_provider_once __________________\n\nclient = <starlette.testclient.TestClient object at 0x1085e3620>\napp = <fastapi.applications.FastAPI object at 0x1085e3770>\nprovider = <providers.mock.MockProvider object at 0x1085e38c0>\npayload = {'model': 'general-primary', 'prompt': {'name': 'context_answer', 'version': '1.1.0', 'variables': {'context': '订单 A123 是充电器。'}}, 'messages': [{'role': 'user', 'content': 'Explain TTFT'}]}\n\n    def test_context_version_reaches_provider_once(client, app, provider, payload):\n        payload[\"prompt\"] = {\"name\": \"context_answer\", \"version\": \"1.1.0\", \"variables\": {\"context\": \"订单 A123 是充电器。\"}}\n        response = client.post(\"/v1/llm\", json=payload)\n>       assert response.status_code == 200\nE       assert 422 == 200\nE        +  where 422 = <Response [422 Unprocessable Content]>.status_code\n\ntests/integration/test_f2_prompts.py:7: AssertionError\n________________ test_basic_request_records_message_fingerprint ________________\n\nclient = <starlette.testclient.TestClient object at 0x10860c7d0>\napp = <fastapi.applications.FastAPI object at 0x10868cec0>\npayload = {'model': 'general-primary', 'prompt': {'name': 'basic_text', 'version': '1.0.0'}, 'messages': [{'role': 'user', 'content': 'Explain TTFT'}]}\n\n    def test_basic_request_records_message_fingerprint(client, app, payload):\n        response = client.post(\"/v1/llm\", json=payload)\n        assert response.status_code == 200\n        trace = app.state.traces.requests[response.headers[\"X-Request-ID\"]]\n>       assert getattr(trace, \"prompt_fingerprint\", None) == \"37e862387da7d344b9276e6edaf43c1cd9f6ad5f3ae10be486f0b265a1afb83d\"\nE       AssertionError: assert None == '37e862387da7d344b9276e6edaf43c1cd9f6ad5f3ae10be486f0b265a1afb83d'\nE        +  where None = getattr(RequestTrace(request_id='bef0ebf9-ba07-4d56-89af-61742eafe664', requested_model='general-primary', prompt_name='basic_text', prompt_version='1.0.0', status='completed', attempts=1, error_code=None), 'prompt_fingerprint', None)\n\ntests/integration/test_f2_prompts.py:16: AssertionError\n=========================== short test summary info ============================\nFAILED tests/integration/test_f2_prompts.py::test_context_version_reaches_provider_once\nFAILED tests/integration/test_f2_prompts.py::test_basic_request_records_message_fingerprint\n2 failed in 0.03s\n"
+    },
+    {
+      "phase": "baseline",
+      "command": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "pytest",
+        "-q"
+      ],
+      "exit_code": 0,
+      "output": "........................................................................ [ 62%]\n...........................................                              [100%]\n115 passed in 1.57s\n"
+    },
+    {
+      "phase": "red-registry-hash",
+      "command": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "pytest",
+        "tests/unit/test_prompts.py::test_registry_rejects_duplicate_key",
+        "tests/unit/test_prompts.py::test_fingerprint_matches_independent_golden",
+        "-q"
+      ],
+      "exit_code": 1,
+      "output": "FF                                                                       [100%]\n=================================== FAILURES ===================================\n_____________________ test_registry_rejects_duplicate_key ______________________\n\n    def test_registry_rejects_duplicate_key():\n        template = fixture_template()\n        for duplicate in [template, replace(template, system_template=\"另一个正文\")]:\n>           with pytest.raises(ValueError):\n                 ^^^^^^^^^^^^^^^^^^^^^^^^^\nE           Failed: DID NOT RAISE ValueError\n\ntests/unit/test_prompts.py:37: Failed\n_________________ test_fingerprint_matches_independent_golden __________________\n\n    def test_fingerprint_matches_independent_golden():\n        messages = [Message(role=\"system\", content=SYSTEM_PROMPT), Message(role=\"user\", content=\"Explain TTFT\")]\n>       assert fingerprint_messages(messages) == GOLDEN_HASHES[\"basic_text\"]\nE       AssertionError: assert '' == '37e862387da7...0b265a1afb83d'\nE         \nE         - 37e862387da7d344b9276e6edaf43c1cd9f6ad5f3ae10be486f0b265a1afb83d\n\ntests/unit/test_prompts.py:43: AssertionError\n=========================== short test summary info ============================\nFAILED tests/unit/test_prompts.py::test_registry_rejects_duplicate_key - Fail...\nFAILED tests/unit/test_prompts.py::test_fingerprint_matches_independent_golden\n2 failed in 0.03s\n"
+    },
+    {
+      "phase": "green-core",
+      "command": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "pytest",
+        "tests/unit",
+        "tests/integration",
+        "-q"
+      ],
+      "exit_code": 0,
+      "output": "........................................................................ [ 32%]\n........................................................................ [ 65%]\n........................................................................ [ 98%]\n...                                                                      [100%]\n219 passed in 0.99s\n"
+    },
+    {
+      "phase": "green-all",
+      "command": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "pytest",
+        "-q"
+      ],
+      "exit_code": 0,
+      "output": "........................................................................ [ 32%]\n........................................................................ [ 64%]\n........................................................................ [ 96%]\n.......                                                                  [100%]\n223 passed in 1.59s\n"
+    },
+    {
+      "phase": "green-unit",
+      "command": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "pytest",
+        "tests/unit",
+        "-q"
+      ],
+      "exit_code": 0,
+      "output": "........................................................................ [ 78%]\n....................                                                     [100%]\n92 passed in 0.38s\n"
+    },
+    {
+      "phase": "green-integration",
+      "command": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "pytest",
+        "tests/integration",
+        "-q"
+      ],
+      "exit_code": 0,
+      "output": "........................................................................ [ 56%]\n........................................................                 [100%]\n128 passed in 0.33s\n"
+    },
+    {
+      "phase": "green-smoke",
+      "command": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "pytest",
+        "tests/smoke",
+        "-q"
+      ],
+      "exit_code": 0,
+      "output": "...                                                                      [100%]\n3 passed in 0.74s\n"
+    },
+    {
+      "phase": "pre-review-all",
+      "command": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "pytest",
+        "-q"
+      ],
+      "exit_code": 1,
+      "output": "........................................................F............... [ 32%]\n........................................................................ [ 64%]\n........................................................................ [ 96%]\n.......                                                                  [100%]\n=================================== FAILURES ===================================\n___________ test_interleaved_contexts_and_fingerprints_are_isolated ____________\n\napp_settings = Settings(env='test', provider='mock')\npayload = {'model': 'general-primary', 'prompt': {'name': 'basic_text', 'version': '1.0.0'}, 'messages': [{'role': 'user', 'content': 'Explain TTFT'}]}\n\n    async def test_interleaved_contexts_and_fingerprints_are_isolated(app_settings, payload):\n        class Interleaved(MockProvider):\n            def __init__(self):\n                super().__init__()\n                self.entered = asyncio.Event()\n    \n            async def complete(self, model, messages):\n                self.calls.append((model, list(messages)))\n                first = \"context-first\" in messages[-1].content\n                if first:\n                    await asyncio.wait_for(self.entered.wait(), 2)\n                else:\n                    self.entered.set()\n                return ProviderResult(text=\"first\" if first else \"second\")\n    \n        provider = Interleaved()\n        app = create_app(settings=app_settings, provider=provider)\n        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url=\"http://test\") as client:\n            responses = await asyncio.gather(*[\n                client.post(\"/v1/llm\", json=context_payload(payload, f\"context-{name}\")) for name in (\"first\", \"second\")\n            ])\n        assert [r.json()[\"data\"][\"text\"] for r in responses] == [\"first\", \"second\"]\n        assert len(provider.calls) == 2\n        hashes = []\n        for response, call in zip(responses, provider.calls):\n            trace = assert_trace(app, response, attempts=1)\n>           assert trace.prompt_fingerprint == fingerprint_messages(call[1])\nE           AssertionError: assert '55785cb52da8...58496beee0f20' == '2a6d2dbc127a...495fefe1eae72'\nE             \nE             - 2a6d2dbc127acfe6a1c6387de8db5d9b9dd51786bc53b8a3dda495fefe1eae72\nE             + 55785cb52da837b4969bdf8d33c1da982eecab7b03e36c2557258496beee0f20\n\ntests/integration/test_f2_prompts.py:279: AssertionError\n=========================== short test summary info ============================\nFAILED tests/integration/test_f2_prompts.py::test_interleaved_contexts_and_fingerprints_are_isolated\n1 failed, 222 passed in 1.48s\n"
+    },
+    {
+      "phase": "red-test-correlation",
+      "command": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "pytest",
+        "tests/integration/test_f2_prompts.py::test_interleaved_contexts_and_fingerprints_are_isolated",
+        "-q"
+      ],
+      "exit_code": 1,
+      "output": "F                                                                        [100%]\n=================================== FAILURES ===================================\n___________ test_interleaved_contexts_and_fingerprints_are_isolated ____________\n\napp_settings = Settings(env='test', provider='mock')\npayload = {'model': 'general-primary', 'prompt': {'name': 'basic_text', 'version': '1.0.0'}, 'messages': [{'role': 'user', 'content': 'Explain TTFT'}]}\n\n    async def test_interleaved_contexts_and_fingerprints_are_isolated(app_settings, payload):\n        class Interleaved(MockProvider):\n            def __init__(self):\n                super().__init__()\n                self.entered = asyncio.Event()\n    \n            async def complete(self, model, messages):\n                first = \"context-first\" in messages[-1].content\n                if first:\n                    await asyncio.wait_for(self.entered.wait(), 2)\n                    self.calls.append((model, list(messages)))\n                else:\n                    self.calls.append((model, list(messages)))\n                    self.entered.set()\n                return ProviderResult(text=\"first\" if first else \"second\")\n    \n        provider = Interleaved()\n        app = create_app(settings=app_settings, provider=provider)\n        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url=\"http://test\") as client:\n            responses = await asyncio.gather(*[\n                client.post(\"/v1/llm\", json=context_payload(payload, f\"context-{name}\")) for name in (\"first\", \"second\")\n            ])\n        assert [r.json()[\"data\"][\"text\"] for r in responses] == [\"first\", \"second\"]\n        assert len(provider.calls) == 2\n        hashes = []\n        for response, call in zip(responses, provider.calls):\n            trace = assert_trace(app, response, attempts=1)\n>           assert trace.prompt_fingerprint == fingerprint_messages(call[1])\nE           AssertionError: assert '55785cb52da8...58496beee0f20' == '2a6d2dbc127a...495fefe1eae72'\nE             \nE             - 2a6d2dbc127acfe6a1c6387de8db5d9b9dd51786bc53b8a3dda495fefe1eae72\nE             + 55785cb52da837b4969bdf8d33c1da982eecab7b03e36c2557258496beee0f20\n\ntests/integration/test_f2_prompts.py:280: AssertionError\n=========================== short test summary info ============================\nFAILED tests/integration/test_f2_prompts.py::test_interleaved_contexts_and_fingerprints_are_isolated\n1 failed in 0.05s\n"
+    },
+    {
+      "phase": "green-test-correlation",
+      "command": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "pytest",
+        "tests/integration/test_f2_prompts.py::test_interleaved_contexts_and_fingerprints_are_isolated",
+        "-q"
+      ],
+      "exit_code": 0,
+      "output": ".                                                                        [100%]\n1 passed in 0.03s\n"
+    },
+    {
+      "phase": "final-pre-review",
+      "command": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "pytest",
+        "-q"
+      ],
+      "exit_code": 0,
+      "output": "........................................................................ [ 32%]\n........................................................................ [ 64%]\n........................................................................ [ 96%]\n.......                                                                  [100%]\n223 passed in 1.51s\n"
+    },
+    {
+      "phase": "final-acceptance",
+      "command": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "pytest",
+        "-q"
+      ],
+      "exit_code": 0,
+      "output": "........................................................................ [ 32%]\n........................................................................ [ 64%]\n........................................................................ [ 96%]\n.......                                                                  [100%]\n223 passed in 1.53s\n"
+    }
+  ],
+  "reviews": [
+    {
+      "round": 1,
+      "tool": "native Claude Code CLI",
+      "command": "CLAUDE_CODE_INLINE_TOOLS=false claude --print --tools Read --allowedTools Read --no-session-persistence --output-format stream-json --verbose < review-prompt.txt > review-round1.jsonl",
+      "exit_code": 0,
+      "subtype": "success",
+      "is_error": false,
+      "stop_reason": "end_turn",
+      "verdict": "APPROVED",
+      "read_calls": 38,
+      "read_results": 38,
+      "read_errors": 0,
+      "read_inputs": [
+        {
+          "file_path": "/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llm-gateway-f2-jm5av8lu/changes.diff"
+        },
+        {
+          "file_path": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/docs/features/F2/design.md"
+        },
+        {
+          "file_path": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/docs/features/F2/test-plan.md"
+        },
+        {
+          "file_path": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/src/services/prompts.py"
+        },
+        {
+          "file_path": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/src/contracts.py"
+        },
+        {
+          "file_path": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/src/services/gateway.py"
+        },
+        {
+          "file_path": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/src/services/trace.py"
+        },
+        {
+          "file_path": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/src/main.py"
+        },
+        {
+          "file_path": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/src/errors.py"
+        },
+        {
+          "file_path": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/src/api/errors.py"
+        },
+        {
+          "file_path": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/src/api/routes.py"
+        },
+        {
+          "file_path": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/src/api/dependencies.py"
+        },
+        {
+          "file_path": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/src/middleware/request_context.py"
+        },
+        {
+          "file_path": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/src/providers/base.py"
+        },
+        {
+          "file_path": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/src/providers/factory.py"
+        },
+        {
+          "file_path": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/src/providers/mock.py"
+        },
+        {
+          "file_path": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/src/settings.py"
+        },
+        {
+          "file_path": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/tests/conftest.py"
+        },
+        {
+          "file_path": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/tests/integration/test_http.py"
+        },
+        {
+          "file_path": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/tests/unit/test_app_factory.py"
+        },
+        {
+          "file_path": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/tests/unit/test_core.py"
+        },
+        {
+          "file_path": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/tests/unit/test_request_context.py"
+        },
+        {
+          "file_path": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/tests/unit/test_settings.py"
+        },
+        {
+          "file_path": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/tests/smoke/conftest.py"
+        },
+        {
+          "file_path": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/tests/smoke/test_http_server.py"
+        },
+        {
+          "file_path": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/tests/integration/test_trace_integrity.py"
+        },
+        {
+          "file_path": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/tests/prompt_cases.py"
+        },
+        {
+          "file_path": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/tests/unit/test_prompts.py"
+        },
+        {
+          "file_path": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/tests/integration/test_f2_prompts.py"
+        },
+        {
+          "file_path": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/docs/features/F2/evidence.json"
+        },
+        {
+          "file_path": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/README.md"
+        },
+        {
+          "file_path": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/docs/contracts.md"
+        },
+        {
+          "file_path": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/docs/architecture.md"
+        },
+        {
+          "file_path": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/docs/progress.md"
+        },
+        {
+          "file_path": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/pyproject.toml"
+        },
+        {
+          "file_path": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/docs/templates/功能测试方案模板.md"
+        },
+        {
+          "file_path": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/docs/features/F1/design.md"
+        },
+        {
+          "file_path": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/uv.lock",
+          "limit": 60
+        }
+      ],
+      "reviewed_file_sha256": {
+        "src/api/dependencies.py": "30b43514303943e2d22e10590cb69ca0a7792dd1908c03bf8b24319afd6ac450",
+        "src/api/errors.py": "85e7d4d160528a44cf91066360dd0493b48cd698f5d323732d7bbb64d63bb5d5",
+        "src/api/routes.py": "e3ab0889b8cc60db35caaec708d5c87d2dd8512a634fb407b8e2327eb1cc4b35",
+        "src/contracts.py": "23f927df0168ee78cfa8ac6aa13ece2523b222ba8c0a41728501a6aa2acc2d28",
+        "src/errors.py": "d4cf3036d5b0aedbf64cc1c4837c640ee094e1f194188f999b0ecc602f7602f3",
+        "src/main.py": "79f4a4abb550b28fd397e09fd542b736635360beb36abca2c3ca7ccfdaeea2f3",
+        "src/middleware/request_context.py": "8ff5b1b1f6315388fd1b655e51ab80b99223868ef5b5155144664ed7794c169a",
+        "src/providers/base.py": "cfe44c86e94550c8f4a375dd6243e9ae45709135848293b17a42bbab7fa25e85",
+        "src/providers/factory.py": "b0d8def9ce124c70a60766ad29687bdd59062f1c8ff5d2bac55800f9645e1dca",
+        "src/providers/mock.py": "42d8973971399cc24e25e8a9a3ab743ddf515c21eccf300e715bdaa382e1d581",
+        "src/services/gateway.py": "9d539b262b51fea68f06a90f4400444a02becc8232de86521d00f8aade24c54d",
+        "src/services/prompts.py": "3f9cbf57d97541e12ffbc4ea590e2478b828420bf4cd3598c616173b4df8d3dc",
+        "src/services/trace.py": "7faabb7b5a1a0317d51df30905a2f37e87bbbad6bb63189cd373c7d6589ca7f9",
+        "src/settings.py": "cefccfaf1b3d2dac22180c7ff37f278e4f8c151c88fea64c9ad0f10c020438d6",
+        "tests/conftest.py": "989cdb040cd16334c3648d8c45ab093f0485202172ea0706750d39f4c3b15ea6",
+        "tests/integration/test_f2_prompts.py": "7a4142701e5b3ed860be0701fba0921d132279126a3eda735b5da82ed940ace8",
+        "tests/integration/test_http.py": "0f60eea08188eb69ed47c31c6a46049456c57e97416c2b80656077fc95fd82d2",
+        "tests/integration/test_trace_integrity.py": "17d5810f8c5523cfa8551db8179d1fd5219249f454da8c7892b249ebbed32d2b",
+        "tests/prompt_cases.py": "97358e859d739935dfc669615eb72fb9ff388c2e1f2131285d464609683db9fb",
+        "tests/smoke/conftest.py": "de484151edcf1408db7f6a747da907c23d8da88d28932c8f2a43afb427292f01",
+        "tests/smoke/test_http_server.py": "cf89c35c992a03102f88ebd2cb19c40f771834282f8413693d4afaea68fa5ce4",
+        "tests/unit/test_app_factory.py": "28107ce1f88cdec45543f950199a9dbe8f041c264527ccf9a64d0b119cc09cee",
+        "tests/unit/test_core.py": "88af6d8777e9618d3b13df929ee6e7867061601796dc37ac62b620ce71cf0f38",
+        "tests/unit/test_prompts.py": "2efa808ff5452a1fc82f12ef0a212735cce1d4d874aaf8cb9b8d47b1fc8de2a2",
+        "tests/unit/test_request_context.py": "ef5dbe315d11f154435f916bc717f727f33b09e6c4bc6122aac957900a099ebe",
+        "tests/unit/test_settings.py": "3d1c6fd77a7adef67c46cfe6b9ab6a4acd646493b98a02ea6386877dfe64b6be",
+        "pyproject.toml": "6b0b5bbdd2a850cb4e08d2fbdf6c82e14f80c693540958c09e1b28235f5716b0",
+        "uv.lock": "6a2cf6b32235fc031ff1772c64742709b1898a7a555f9bcc245e165fab600fae",
+        ".env.example": "495faa2325213c68147cdff9db854ca22c741876412c018485c789f86d138c6a",
+        ".gitignore": "d4af9084a60262e26bdb805143877ff785a9dc39f78b51b660889b4605b75e05"
+      },
+      "final_report_sha256": "b0bde24a23b3485aef38ad001fa4bf2552e682eaf66ba61a5bb1145eaf5e986b",
+      "reviewer_ran_tests": false,
+      "findings": {
+        "P0": 0,
+        "P1": 0,
+        "P2": 0,
+        "P3": 2
+      }
+    }
+  ],
+  "compatibility_probes": [
+    {
+      "command": [
+        "/Users/baiyu/.local/share/uv/python/cpython-3.12-macos-aarch64-none/bin/python3.12",
+        "-c",
+        "import sys\nfrom dataclasses import dataclass\nfrom types import MappingProxyType\nfrom string import Template\n@dataclass(frozen=True)\nclass VariableSpec:\n    max_chars: int\nassert MappingProxyType({\"context\": VariableSpec(10000)}) == {\"context\": VariableSpec(10000)}\nassert MappingProxyType({\"context\": VariableSpec(10000)}).keys() - {\"context\": \"x\"}.keys() == set()\nparser=Template(\"${message} ${context}\")\nassert parser.is_valid()\nassert set(parser.get_identifiers()) == {\"message\", \"context\"}\nprint(sys.version.split()[0], \"mappingproxy equality/key views and string.Template validation APIs passed; not a full F2 suite run.\")\n"
+      ],
+      "exit_code": 0,
+      "output": "3.12.13 mappingproxy equality/key views and string.Template validation APIs passed; not a full F2 suite run.\n",
+      "scope": "Standard-library primitives only; not the F2 application or complete test suite."
+    }
+  ],
+  "final_audit": {
+    "reviewed_source_test_and_dependency_hashes_unchanged": true,
+    "reviewed_file_count": 30,
+    "protected_f1_and_config_files_unchanged": 11,
+    "actual_env_unchanged": true,
+    "original_test_functions_preserved": 46,
+    "original_asserts_preserved_in_order": 132,
+    "documentation_files_checked": 12,
+    "local_document_links_checked": 72,
+    "markdown_fences_balanced": true,
+    "current_status_consistent": true,
+    "final_full_suite_exit_code": 0,
+    "final_full_suite_result": "223 passed in 1.53s"
+  }
+}

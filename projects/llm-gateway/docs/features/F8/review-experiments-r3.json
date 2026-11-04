@@ -1,0 +1,59 @@
+{
+  "script": "\"\"\"Database-safe diagnostic facts also apply to injected Provider errors and rejected input.\"\"\"\nimport pytest\n\nfrom contracts import Usage\nfrom errors import ProviderCallError\nfrom f6_cases import server, case, observe\nfrom f7_cases import application\nfrom providers.mock import MockProvider\n\n\nasync def test_f8_known_subtotal_can_exceed_single_attempt_bigint(server, case):\n    from f7_cases import body, registry, SequenceProvider\n    from providers.base import ProviderResult\n    from services.models import RecoveryPolicy\n\n    name, config = case\n    maximum = 2**63\n    usage = Usage(input_tokens=maximum, output_tokens=0, total_tokens=maximum)\n    primary = SequenceProvider([ProviderCallError(code='provider_timeout', usage=usage)])\n    backup = SequenceProvider([ProviderResult(text='ok', usage=Usage(input_tokens=1,output_tokens=0,total_tokens=1))])\n    models = registry(policy=RecoveryPolicy(max_attempts=2, max_attempts_per_model=1))\n    async with application(config, primary, backup, models=models) as (_, client):\n        reply = await client.post('/v1/llm', json=body())\n        assert reply.status_code == 200\n        rid = reply.headers['x-request-id']\n        row,attempts,_=observe(server,name,rid)\n        trace=(await client.get(f'/v1/traces/{rid}')).json()['data']\n        print('HTTP',reply.status_code,reply.json()['data']['usage'],'query',trace['usage'],'SQL',[a['total_tokens'] for a in attempts], 'calls',len(primary.calls),len(backup.calls))\n",
+  "conclusive": "r3-injected-rollup-explicit-db",
+  "fixture_note": "First experiment selected the historical database override because of the temporary filename. Its SQL result read a different database. Only the explicit-db run supports SQL conclusions.",
+  "r3-injected-rollup-explicit-db": {
+    "receipt": {
+      "command": [
+        "uv",
+        "run",
+        "--python",
+        "3.12",
+        "python",
+        "-W",
+        "error",
+        "-m",
+        "pytest",
+        "-c",
+        "pyproject.toml",
+        "-p",
+        "conftest",
+        "-s",
+        "-q",
+        "/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llmgw-f8-nguavuqz/test_f8_r3_error_rollup.py"
+      ],
+      "start": "2026-11-02T14:29:45.626391+00:00",
+      "end": "2026-11-02T14:29:50.049563+00:00",
+      "elapsed": 4.423082957975566,
+      "exit_code": 0
+    },
+    "log": "HTTP 200 {'input_tokens': 9223372036854775809, 'output_tokens': 0, 'total_tokens': 9223372036854775809} query {'known_subtotal': {'input_tokens': 1, 'output_tokens': 0, 'total_tokens': 1}, 'unknown_attempts': [1]} SQL [None, 1] calls 1 1\n.\n1 passed in 3.56s\n"
+  },
+  "r3-injected-rollup": {
+    "receipt": {
+      "command": [
+        "uv",
+        "run",
+        "--python",
+        "3.12",
+        "python",
+        "-W",
+        "error",
+        "-m",
+        "pytest",
+        "-c",
+        "pyproject.toml",
+        "-p",
+        "conftest",
+        "-s",
+        "-q",
+        "/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llmgw-f8-nguavuqz/test_r3_error_rollup.py"
+      ],
+      "start": "2026-11-02T14:29:23.653220+00:00",
+      "end": "2026-11-02T14:29:31.900843+00:00",
+      "elapsed": 8.247536917042453,
+      "exit_code": 0
+    },
+    "log": "HTTP 200 {'input_tokens': 9223372036854775809, 'output_tokens': 0, 'total_tokens': 9223372036854775809} query {'known_subtotal': {'input_tokens': 1, 'output_tokens': 0, 'total_tokens': 1}, 'unknown_attempts': [1]} SQL [] calls 1 1\n.\n1 passed in 7.01s\n"
+  }
+}

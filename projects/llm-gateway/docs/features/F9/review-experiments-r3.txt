@@ -1,0 +1,4 @@
+stream False state settled complete True cost 0.00028
+.stream True state pending complete False cost None
+.
+2 passed in 3.70s

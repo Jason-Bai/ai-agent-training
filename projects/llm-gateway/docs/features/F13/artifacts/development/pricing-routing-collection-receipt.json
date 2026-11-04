@@ -1,0 +1,13 @@
+{
+  "command": [
+    "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/.venv/bin/python",
+    "-m",
+    "pytest",
+    "tests/live/test_f13_routing.py",
+    "--collect-only",
+    "-q"
+  ],
+  "returncode": 0,
+  "seconds": 0.6232860088348389,
+  "scope": "collect only; no PG, Provider or sealed corpus reads"
+}

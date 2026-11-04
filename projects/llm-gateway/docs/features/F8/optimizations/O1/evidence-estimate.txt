@@ -1,0 +1,9 @@
+test_mock_report_round_trip[default-completion] stored_input_token_count=236
+.test_mock_report_round_trip[default-streaming] stored_input_token_count=236
+.test_mock_report_round_trip[custom-completion] stored_input_token_count=236
+.test_mock_report_round_trip[custom-streaming] stored_input_token_count=236
+.test_mock_report_round_trip[missing-completion] stored_input_token_count=236
+.test_mock_report_round_trip[missing-streaming] stored_input_token_count=236
+.test_unknown_failure_and_default_mock_fallback stored_input_token_count=236
+.
+7 passed in 5.08s

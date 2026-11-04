@@ -1,0 +1,25 @@
+services:
+  postgres:
+    image: postgres:18.6-bookworm
+    environment:
+      POSTGRES_USER: llm_gateway
+      POSTGRES_DB: llm_gateway
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+    secrets:
+      - postgres_password
+    ports:
+      - "127.0.0.1:15432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U llm_gateway -d llm_gateway"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+secrets:
+  postgres_password:
+    file: ./config/postgres.password
+
+volumes:
+  postgres_data:

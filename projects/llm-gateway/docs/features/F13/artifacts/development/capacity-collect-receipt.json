@@ -1,0 +1,19 @@
+{
+  "command": [
+    ".venv/bin/python",
+    "-W",
+    "error",
+    "-m",
+    "pytest",
+    "tests/live/test_f10_capacity.py",
+    "--collect-only",
+    "-q"
+  ],
+  "exit_code": 0,
+  "at": "2026-11-03T15:38:05.387611+00:00",
+  "baseline_sha256": "99c41531e1067ef32915422d07846e24e8e566bae14c40b6990ce66b818473e3",
+  "files": {
+    "tests/f13_capacity_support.py": "5c8f4e0180e151955d6f075d8c0971f1c3351545681627a0ce6cbae2a601a012",
+    "tests/live/test_f10_capacity.py": "80debb32e7eca3cb109521434bb4c79a45555cd7bca6901cc4eed818c894e8cd"
+  }
+}

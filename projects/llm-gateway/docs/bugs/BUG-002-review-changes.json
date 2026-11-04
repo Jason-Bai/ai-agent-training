@@ -1,0 +1,90 @@
+{
+  "README.md": {
+    "old": "a7a5b75ebf558d9845c43a7da3e5621c13c68f1db4e479a05e65e901c2aab011",
+    "new": "8c7cc5b355a84ee2682896f2054f9c04af08fa0862869ddb5fe235f78483f3d9"
+  },
+  "docs/1.7-plan.md": {
+    "old": "fe344c660898e5ee28fa29dad16e34bb228dcf0a8b0ea38f1be1451d51b0f2fb",
+    "new": "c517ca9efeed86eba8095bc1c9feea45d10df33c8500f916e43fde02d367e5e8"
+  },
+  "docs/bugs/BUG-002-acceptance-report.md": {
+    "old": null,
+    "new": "29b89231d20002b17ad0c8683410f2946c2eaa37f2a2a753fc1e59b5570fe009"
+  },
+  "docs/bugs/BUG-002-implementation-plan.md": {
+    "old": null,
+    "new": "66406ff4494df31c0aa62cc4ad455c9c998cf4ad4c8b8a070cbffcd07c621b4e"
+  },
+  "docs/bugs/BUG-002-implementation-summary.md": {
+    "old": null,
+    "new": "01dd65e5128ea9b31ee528110f13c176720e0f2f02f513e54de0804810493e69"
+  },
+  "docs/bugs/BUG-002-offline-config-isolation.md": {
+    "old": "41e1dc4ff3beefa53c4d97ecc7eba41004449d4b95164fdc44c58879c6d116e4",
+    "new": "529791d3882546a295d4673e51c69f84af6016f9074c7f89b600ed0a7f5755d5"
+  },
+  "docs/progress.md": {
+    "old": "10e2c5010a089324170bef2f6ac1e09e0deeb801a48703274b7eec3430834314",
+    "new": "cfb251758865fd71e9c497171c7cec0c9d5740b559885562ddcbdd29e2ed6738"
+  },
+  "docs/test-plan.md": {
+    "old": "a7498853eb46db23fd18bd587638e9fb06d44e9ecc84af9f1b3bb2140888ff22",
+    "new": "a270faa15490f127ed0976fa0f4ace9269281d084e857f31462abdfc3c59225d"
+  },
+  "tests/bug002_cases.py": {
+    "old": null,
+    "new": "7e90813d5a524392ef52804bb6fdfdf557879b9728898ca40cf2ac792069707e"
+  },
+  "tests/bug002_scenarios.py": {
+    "old": null,
+    "new": "d717fcd1e50bf58521446a56027ec3e6398bd68e96f87cf9622ab1c7257c250d"
+  },
+  "tests/conftest.py": {
+    "old": "5d5636ac9c3b879048cd91124231e72b166e8b90473b7bd1988d9b36bfc08142",
+    "new": "47a4c4bf8a26a0b58b243992b9e6483dac080d770518f35b387da742a3ac98ce"
+  },
+  "tests/f10_support.py": {
+    "old": "bbd7c894ac1b71d39bd39ad32b94d65723441cf0a32e8e30463c5c5e174e4c48",
+    "new": "46fad49013077dff30f8681f7d01c9e5e24a8052d73e26d6a29d260ad8f9d152"
+  },
+  "tests/integration/test_bug002_common.py": {
+    "old": null,
+    "new": "4d0e0f58c58e498c1fa47556cb71587cf97a4aa4e85c4100e6e3bdfd7cab5c0c"
+  },
+  "tests/live/test_f10_acceptance.py": {
+    "old": "af097f35a102b525f0bcf2b283681d5c1b0ca0746cc2946839ea050ccdbe78c3",
+    "new": "728441f45469862f171d497745c8d9be93d0f89df03b54e84fa763dc6234a11f"
+  },
+  "tests/protocol/test_f3_prompt_wire.py": {
+    "old": "322137241104a2c928cb8b7619f78356680493ced26ba6643d8cc3caf07bfc55",
+    "new": "1a197e8b19bd58756f4a2e3cdd054da316ecb65c9513a13bd8b2397bb1edcf36"
+  },
+  "tests/protocol/test_f8_wire_diagnostic_values.py": {
+    "old": "75f426060579aadbca00c111b54a494e668d4158eae44eddc958aaacf9667bc0",
+    "new": "1ff8fa80f2a1bb1e61b8667490db584faba9d27cd74d350917b78dfa9aad05c5"
+  },
+  "tests/protocol/test_providers.py": {
+    "old": "128d25a857d26d2bc8def29361e58e01d2046a7f4b42ddddc6ad348530dd2b3c",
+    "new": "32bfe266da63d56af48e06b5204d1c84724ead55d89b479d58db3b924a83623a"
+  },
+  "tests/unit/test_bug002_common_observation.py": {
+    "old": null,
+    "new": "7e4236bf4bc12e8fd5a9d8742d8d1d9e1768a6f60139ce36c2bd2314fa60fd7e"
+  },
+  "tests/unit/test_bug002_isolation.py": {
+    "old": null,
+    "new": "328df719c492118877ab84bd3acca15e63c63597393ed11fac31f5111c7327a3"
+  },
+  "tests/unit/test_bug002_registry.py": {
+    "old": null,
+    "new": "9099fd299e8d265f43e8b7d942ee5c699a84464696a1deb5a2ff51583a162507"
+  },
+  "tests/unit/test_core.py": {
+    "old": "033b671bd102e2d60348952f8d2b0e56816d778b421d6a49a208a65e9cab44bc",
+    "new": "27826d8d77d39b4e917b839bf4e7440dfc512573527bb39e895dfb560f97e297"
+  },
+  "tests/unit/test_f3_config.py": {
+    "old": "60d08c609696d78df0225fca295acd5ce60e049d9d0876c5a302d5f28023f2bf",
+    "new": "daaafbfaa034af6e3d591e1358e8a2d12eb1ae09c3ca1512c6ce99c1105099cc"
+  }
+}

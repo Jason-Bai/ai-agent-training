@@ -1,0 +1,14 @@
+{
+  "command": [
+    ".venv/bin/python",
+    "-W",
+    "error",
+    "-m",
+    "pytest",
+    "tests/unit/test_f13_estimation.py",
+    "tests/unit/test_f3o1_counters.py",
+    "-q"
+  ],
+  "exit_code": 0,
+  "at": "2026-11-03T15:01:24.074110+00:00"
+}

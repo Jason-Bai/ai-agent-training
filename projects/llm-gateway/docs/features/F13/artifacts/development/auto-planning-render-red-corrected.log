@@ -1,0 +1,24 @@
+F.                                                                       [100%]
+=================================== FAILURES ===================================
+_______ test_shared_render_overflow_keeps_prompt_error_before_any_count ________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10cb986b0>
+
+    def test_shared_render_overflow_keeps_prompt_error_before_any_count(monkeypatch):
+        router,req,trace=setup()
+        req=request(model='auto-general',
+            prompt={'name':'context_answer','version':'1.1.0','variables':{'context':'C'*10000}},
+            messages=[{'role':'user','content':'M'*10000}])
+        def forbidden(*args,**kwargs):pytest.fail('invalid shared text must not reach token counting')
+        monkeypatch.setattr(router.budget,'count',forbidden)
+        with pytest.raises(GatewayError) as caught:plan_auto_route(router,req,trace)
+>       assert caught.value.code=='prompt_too_long'
+E       AssertionError: assert 'no_available_group' == 'prompt_too_long'
+E         
+E         - prompt_too_long
+E         + no_available_group
+
+tests/unit/test_f13_auto_planning.py:143: AssertionError
+=========================== short test summary info ============================
+FAILED tests/unit/test_f13_auto_planning.py::test_shared_render_overflow_keeps_prompt_error_before_any_count
+1 failed, 1 passed, 14 deselected in 0.25s

@@ -1,0 +1,188 @@
+--- before/tests/live/test_f10_capacity.py
++++ after/tests/live/test_f10_capacity.py
+@@ -6,7 +6,8 @@
+ 
+ import pytest
+ 
+-from f10_metrics import summarize, validate_records, validate_sustained, sustained_supported
++from f10_metrics import summarize, validate_records
++from f13_capacity_metrics import validate_gateway_outcomes
+ from f13_capacity_support import f13_capacity_environment
+ 
+ 
+@@ -102,23 +103,21 @@
+ async def test_real_capacity_and_ten_minute_sustained(f13_capacity_environment, record_property):
+     env = f13_capacity_environment
+     report = {'scope': 'single Gateway worker; DeepSeek Chat/Responses, three Bailian models and auto routing',
+-              'environment': env.metadata(), 'phase_seconds': 60, 'sustained_seconds': 600, 'phases': [], 'sustained': None}
++              'environment': env.metadata(), 'phase_seconds': 60, 'sustained_seconds': 600, 'phases': [], 'sustained': None,
++              'acceptance_criterion': 'gateway_outcomes_v1', 'claims_100_percent_stability': False}
+     try:
+         for concurrency in (1, 5, 10, 20):
+             result = {}
+             report['phases'].append(result)
+             await phase(env, concurrency, 60, result)
+             (env.directory/'f10-capacity-progress.json').write_text(json.dumps(report, ensure_ascii=False))
+-            # A one-slot business baseline is required, even if higher tiers
+-            # reach a measured provider or local resource boundary.
+-            if concurrency == 1:
+-                validate_sustained(result)
+-        stable = [item['concurrency'] for item in report['phases'] if sustained_supported(item)]
+-        assert stable, 'no stable tier available for sustained run'
+-        report['selected_concurrency'] = max(stable)
++            validate_gateway_outcomes(result, timeout_seconds=report['environment']['request_timeout_seconds'])
++        measured = [item['concurrency'] for item in report['phases']]
++        report['selected_concurrency'] = max(measured)
++        report['selection_criterion'] = 'highest_measured_tier_with_correct_gateway_handling'
+         report['sustained'] = {}
+-        await phase(env, max(stable), 600, report['sustained'])
+-        validate_sustained(report['sustained'])
++        await phase(env, max(measured), 600, report['sustained'])
++        validate_gateway_outcomes(report['sustained'], timeout_seconds=report['environment']['request_timeout_seconds'])
+         report['outcome'] = 'passed'
+     finally:
+         report.setdefault('outcome', 'failed')
+
+--- before/tests/f13_capacity_followup.py
++++ after/tests/f13_capacity_followup.py
+@@ -8,7 +8,7 @@
+ import pytest
+ 
+ from f13_capacity_support import f13_capacity_environment
+-from f10_metrics import validate_sustained
++from f13_capacity_metrics import validate_gateway_outcomes
+ from live.test_f10_capacity import phase
+ 
+ 
+@@ -33,7 +33,8 @@
+     bootstrap.write_text(source)
+     await env.start()
+     report = dict(scope='user-confirmed five-concurrent follow-up; original failures retained',
+-                  environment=env.metadata(), sustained_seconds=600, sustained={})
++                  environment=env.metadata(), sustained_seconds=600, sustained={},
++                  acceptance_criterion='gateway_outcomes_v1', claims_100_percent_stability=False)
+     try:
+         await phase(env, 5, 600, report['sustained'])
+         observations = {}
+@@ -44,7 +45,7 @@
+             assert len(document['attempts']) == report['sustained']['verified'][rid]['attempts']
+             observations[rid] = document
+         report['transport_observations'] = observations
+-        validate_sustained(report['sustained'])
++        validate_gateway_outcomes(report['sustained'], timeout_seconds=report['environment']['request_timeout_seconds'])
+         report['outcome'] = 'passed'
+     finally:
+         report.setdefault('outcome', 'failed')
+
+--- before/tests/unit/test_f13_capacity_acceptance.py
++++ after/tests/unit/test_f13_capacity_acceptance.py
+@@ -0,0 +1,68 @@
++"""The confirmed capacity boundary accepts correct handling, not hidden failure."""
++from copy import deepcopy
++
++import pytest
++
++
++def report(code='request_timeout'):
++    success=dict(request_id='ok',status='completed',error_code=None,elapsed_ms=100)
++    failure=dict(request_id='late',status='failed',error_code=code,elapsed_ms=30005)
++    def observed(row):
++        return dict(status=row['status'],error_code=row['error_code'],attempts=1,
++                    bill_states=['pending' if row['status']=='failed' else 'settled'],
++                    server_timing=dict(error_stage='provider' if row['status']=='failed' else None,
++                                       cleanup_error_code=None,delivery_error_code=None),
++                    external_failure_evidence=None)
++    return dict(records=[success,failure],verified={r['request_id']:observed(r) for r in [success,failure]},
++                after=dict(active_requests=0,active_generations=0,subscriptions=0,
++                           cancellations=0,cleanup_tasks=0,agent_requests={},observation_errors=0))
++
++
++def validate(value):
++    import f13_capacity_metrics
++    checker=getattr(f13_capacity_metrics,'validate_gateway_outcomes',None)
++    assert callable(checker), 'missing confirmed layered capacity acceptance'
++    checker(value,timeout_seconds=30)
++
++
++@pytest.mark.parametrize('code',['request_timeout','provider_timeout','provider_unavailable'])
++def test_correct_terminal_accounting_and_cleanup_accepts_reported_call_failure(code):
++    value=report(code);original=deepcopy(value)
++    validate(value)
++    assert value==original, 'acceptance must not rewrite failures or attribute supplier fault'
++
++
++@pytest.mark.parametrize('code',['storage_unavailable','internal_error','provider_auth_error'])
++def test_local_or_unexpected_failure_still_blocks(code):
++    with pytest.raises(AssertionError):validate(report(code))
++
++
++@pytest.mark.parametrize('elapsed_ms',[5000,33000])
++def test_premature_or_overrun_global_deadline_still_blocks(elapsed_ms):
++    value=report();value['records'][1]['elapsed_ms']=elapsed_ms
++    with pytest.raises(AssertionError):validate(value)
++
++
++@pytest.mark.parametrize('field,value',[
++    ('active_requests',1),('cleanup_tasks',1),('agent_requests',{'a':1}),('observation_errors',1)])
++def test_unreleased_resource_or_missing_observation_still_blocks(field,value):
++    evidence=report();evidence['after'][field]=value
++    with pytest.raises(AssertionError):validate(evidence)
++
++
++@pytest.mark.parametrize('mutation',['terminal','error_code','error_stage','cleanup','delivery','reserved','missing_bill'])
++def test_corrupt_terminal_or_billing_evidence_still_blocks(mutation):
++    value=report();observed=value['verified']['late']
++    if mutation=='terminal':observed['status']='running'
++    elif mutation=='error_code':observed['error_code']='different'
++    elif mutation=='error_stage':observed['server_timing']['error_stage']='admission'
++    elif mutation=='cleanup':observed['server_timing']['cleanup_error_code']='close_failed'
++    elif mutation=='delivery':observed['server_timing']['delivery_error_code']='send_failed'
++    elif mutation=='reserved':observed['bill_states']=['reserved']
++    else:observed['bill_states']=[]
++    with pytest.raises(AssertionError):validate(value)
++
++
++def test_total_outage_cannot_be_reported_as_usable_capacity():
++    value=report();value['records']=value['records'][1:];value['verified'].pop('ok')
++    with pytest.raises(AssertionError):validate(value)
+
+--- before/tests/f13_capacity_metrics.py
++++ after/tests/f13_capacity_metrics.py
+@@ -0,0 +1,37 @@
++"""F13 capacity acceptance, after the phase's SQL/price/event verification."""
++import math
++
++from f10_metrics import UPSTREAM_AVAILABILITY, validate_records
++
++
++def validate_gateway_outcomes(report, *, timeout_seconds):
++    """Verify handling without certifying the cause of dependency failures.
++
++    The caller retains the phase's raw forwarding, SQL, independent pricing,
++    account and event checks. Availability failures stay in the original report.
++    """
++    rows, observed = report['records'], report['verified']
++    validate_records(rows, observed)
++    assert any(row['status']=='completed' for row in rows), 'no completed capacity baseline'
++    after = report['after']
++    assert after['observation_errors']==0, 'capacity observation failed'
++    assert not after['agent_requests'], 'Agent permits were not released'
++    for field in ('active_requests','active_generations','subscriptions','cancellations','cleanup_tasks'):
++        assert after[field]==0, 'capacity resources were not released'
++    for row in rows:
++        evidence = observed[row['request_id']]
++        timing = evidence['server_timing']
++        assert evidence['error_code']==row['error_code'], 'response/database error mismatch'
++        assert timing['cleanup_error_code'] is None, 'provider cleanup failed'
++        assert timing['delivery_error_code'] is None, 'response delivery failed'
++        assert evidence['attempts']>=1 and len(evidence['bill_states'])==evidence['attempts'], 'missing billing attempt'
++        assert all(state in {'settled','pending'} for state in evidence['bill_states']), 'unsettled billing attempt'
++        elapsed = row['elapsed_ms']-(row.get('create_ms') or 0)
++        assert math.isfinite(elapsed) and 0<=elapsed<=timeout_seconds*1000+2000, 'request exceeded total deadline'
++        if row['status']=='completed':
++            assert row['error_code'] is None and timing['error_stage'] is None, 'inconsistent success'
++        else:
++            assert row['error_code'] in UPSTREAM_AVAILABILITY | {'request_timeout'}, 'unexpected capacity failure'
++            assert timing['error_stage']=='provider', 'Gateway-local failure'
++            if row['error_code']=='request_timeout':
++                assert elapsed>=timeout_seconds*1000-1000, 'premature total deadline'

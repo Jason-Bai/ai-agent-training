@@ -1,0 +1,167 @@
+{
+  "full_batch": {
+    "executed": 2972,
+    "passed": 2964,
+    "failed": 8,
+    "live": 104,
+    "skipped": 0
+  },
+  "final_related_batch": {
+    "executed": 1561,
+    "passed": 1561,
+    "deselected": 1411,
+    "all_original_8_failures_passed": true
+  },
+  "combined_unique_cases_with_passing_result": 2972,
+  "claims_single_all_green_batch": false,
+  "production_source_equal": true,
+  "test_source_equal": true,
+  "readme_smoke": {
+    "passed": true,
+    "receipts": [
+      {
+        "step": "uv sync --python 3.12 --locked",
+        "ok": true
+      },
+      {
+        "step": "docker compose up -d --wait",
+        "ok": true,
+        "isolation": "same PostgreSQL image, separate Compose project, random loopback port and owned test database"
+      },
+      {
+        "step": "alembic upgrade head",
+        "ok": true
+      },
+      {
+        "step": "create-agent / issue / deposit",
+        "ok": true
+      },
+      {
+        "path": "/healthz",
+        "status": 200
+      },
+      {
+        "path": "/v1/llm",
+        "status": 200
+      },
+      {
+        "path": "/v1/llm",
+        "status": 200
+      },
+      {
+        "path": "/v1/llm",
+        "status": 200
+      },
+      {
+        "path": "/v1/llm/stream",
+        "status": 202
+      },
+      {
+        "path": "/v1/llm/stream/f3b75873-77bc-494e-96a3-0652b931a1ff/events",
+        "status": 200
+      },
+      {
+        "path": "/v1/llm/stream/f3b75873-77bc-494e-96a3-0652b931a1ff/events?after_seq=102",
+        "status": 204
+      },
+      {
+        "path": "/v1/traces/f3b75873-77bc-494e-96a3-0652b931a1ff",
+        "status": 200
+      },
+      {
+        "path": "/v1/billing/summary",
+        "status": 200
+      },
+      {
+        "path": "/v1/billing/requests?limit=20",
+        "status": 200
+      },
+      {
+        "path": "/v1/billing/requests/f3b75873-77bc-494e-96a3-0652b931a1ff",
+        "status": 200
+      },
+      {
+        "path": "/v1/llm/stream",
+        "status": 202
+      },
+      {
+        "path": "/v1/llm/stream/a79f13ff-2ae0-4d2c-a70a-db1397eb0f37/cancel",
+        "status": 202
+      },
+      {
+        "path": "/v1/llm/stream/a79f13ff-2ae0-4d2c-a70a-db1397eb0f37/cancel",
+        "status": 200
+      },
+      {
+        "path": "/v1/models/general/health",
+        "status": 200
+      },
+      {
+        "path": "/healthz",
+        "status": 200
+      },
+      {
+        "path": "/v1/llm",
+        "status": 200
+      },
+      {
+        "step": "legacy price nesting, all values equal, restart and real completion",
+        "ok": true
+      }
+    ],
+    "uses_readme_request_bodies": true,
+    "deployment": "owned PostgreSQL plus actual Uvicorn and curl, real Bailian"
+  },
+  "cleanup": [
+    {
+      "project": "llmgw-test-e83a96ebf565",
+      "exit_code": 0
+    },
+    {
+      "project": "llmgw-test-117f0893824e",
+      "exit_code": 0
+    }
+  ],
+  "invocation_boundary": {
+    "full_actual_entry": "project .venv/bin/python -W error <work>/run_full.py; wrapper prepares isolated PostgreSQL/config then pytest.main([--run-live,-q,-o,junit_family=xunit1,--junitxml=<work>/full.xml])",
+    "full_result_command_field": "full-result.json command is the equivalent pytest selector, not the literal wrapper launch",
+    "final_actual_entry": "project .venv/bin/python -W error <work>/run_related.py; subprocess invokes python -W error -m pytest tests -k \"unit or f13o1 or f5o2_recovery_claim\" -m \"not live\" -q -o junit_family=xunit1 --junitxml=<work>/final-related.xml"
+  },
+  "raw_evidence_directory": "/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llmgw-f13o1-n0t72dvw",
+  "raw_sha256": {
+    "full.log": "fee39ac5b7ab18247f1a50836d765aa13f4265b4bf69e8653e679498448b3d5e",
+    "full.xml": "39d1b97fec16a19ce34be6d1c012fc37298ccff3f8db1506970f14aac005a8dd",
+    "final-related.log": "8b8b015e6b932e5888ea2908d08f29009cd80003be6e1a01e8051fc43d7fa32f",
+    "final-related.xml": "a9c0236e1ac53efb451979ad401b9fdb02751a2b6bcf0998f8783c69a4b367e6",
+    "readme-smoke.json": "ad9c673978b5387810294c75a4d247782ee5fa5afde58e5d0b54e2ff33a7a728",
+    "capacity-current.json": "f74aef82b1e8f94422e58396c5038b303a58b43256ff887628130996f36202dd",
+    "characterization-baseline.txt": "2a90d6320f5e5f95c7802671d4db2609c26fc7e489c78e76f20f334d9b4ee1c6",
+    "characterization-final.txt": "9ba3b609b01928bf21efd9377872d501c54b627081cf61c1d883c002be9376c0"
+  },
+  "capacity": {
+    "short_phases_requests": 1418,
+    "sustained_requests": 7840,
+    "all_successful": true,
+    "scope": "this fixed workload only"
+  },
+  "classification": {
+    "development": {
+      "matches": 29,
+      "total": 30
+    },
+    "sealed": {
+      "matches": 30,
+      "total": 30
+    },
+    "labels": "fixed synthetic examples; not real business accuracy"
+  },
+  "review": {
+    "verdict": "APPROVED",
+    "round": 1,
+    "P0": 0,
+    "P1": 0,
+    "P2": 0,
+    "P3": 0,
+    "report": "review-r1.md"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "source_files_unchanged_after_review": 213,
+  "historical_feature_documents_unchanged": 130,
+  "agents_files_unchanged": 2,
+  "private_files_unchanged": true,
+  "markdown_file_links_checked": 14,
+  "missing_file_links": 0,
+  "raw_r2_artifact_hashes_verified": 37966,
+  "review_rounds": 2,
+  "verdict": "APPROVED",
+  "blockers": 0,
+  "post_review_changes": "status, documentation links and parameterized-node mapping only; no source, test or runtime configuration changes"
+}

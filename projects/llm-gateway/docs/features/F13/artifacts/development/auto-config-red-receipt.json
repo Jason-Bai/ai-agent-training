@@ -1,0 +1,15 @@
+{
+  "command": [
+    ".venv/bin/python",
+    "-W",
+    "error",
+    "-m",
+    "pytest",
+    "tests/unit/test_f13_auto_config.py",
+    "-k",
+    "valid_automatic_alias",
+    "-q"
+  ],
+  "exit_code": 1,
+  "at": "2026-11-03T15:20:17.100638+00:00"
+}

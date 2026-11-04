@@ -1,0 +1,14 @@
+{
+  "command": [
+    ".venv/bin/python",
+    "-W",
+    "error",
+    "-m",
+    "pytest",
+    "tests/unit/test_f13_auto_planning.py",
+    "tests/unit/test_f13_auto_routing.py::test_pending_auto_snapshot_restores_omitted_optional_fields_without_calls",
+    "-q"
+  ],
+  "exit_code": 0,
+  "at": "2026-11-03T15:29:45.910541+00:00"
+}

@@ -1,0 +1,14 @@
+{
+  "command": [
+    "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/.venv/bin/python",
+    "-W",
+    "error",
+    "-m",
+    "pytest",
+    "tests/unit/test_f13_configuration.py",
+    "-ra",
+    "-q"
+  ],
+  "started_at": "2026-11-03T14:57:15.209828+00:00",
+  "exit_code": 1
+}

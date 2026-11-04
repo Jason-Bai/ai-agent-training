@@ -1,0 +1,53 @@
+{
+  "request_count": 16935,
+  "attempt_counts": {
+    "1": 16935
+  },
+  "raw_usage_totals": {
+    "input_tokens": 4284302,
+    "output_tokens": 152294,
+    "total_tokens": 4436596
+  },
+  "account_usage_totals": {
+    "input_tokens": 4284302,
+    "output_tokens": 152294,
+    "total_tokens": 4436596
+  },
+  "unknown_raw_requests": [
+    "7e937bbd-4aaf-4d08-8761-db1235a2a442"
+  ],
+  "upstream_failures": [
+    {
+      "request_id": "7e937bbd-4aaf-4d08-8761-db1235a2a442",
+      "model": "general-backup",
+      "mode": "text",
+      "code": "provider_unavailable",
+      "raw_http": {
+        "status": 520,
+        "code": "provider_unavailable"
+      },
+      "persisted": {
+        "request_id": "7e937bbd-4aaf-4d08-8761-db1235a2a442",
+        "status": "failed",
+        "error_code": "provider_unavailable",
+        "attempts": 1,
+        "events": 0,
+        "bill_states": [
+          "pending"
+        ],
+        "server_timing": {
+          "ttft_ms": null,
+          "generation_duration_ms": null,
+          "stream_duration_ms": null,
+          "delivery_error_code": null,
+          "cleanup_error_code": null,
+          "error_stage": "provider",
+          "recovery_wait_ms": 0.0,
+          "skipped_candidates": [],
+          "recovery_stop_reason": "nonrecoverable_error",
+          "source": "process_monotonic_observations"
+        }
+      }
+    }
+  ]
+}

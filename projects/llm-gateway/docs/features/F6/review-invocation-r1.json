@@ -1,0 +1,9 @@
+{
+  "agent": "/root/f6_independent_review",
+  "fork_turns": "none",
+  "input_path": "/Users/baiyu/workspaces/githubs/ai-agent-training/projects/llm-gateway/docs/features/F6/review-prompt-r1.md",
+  "input_sha256": "4d742c0491f8d884d0893a4410d632e3a06ddcfb30aaf37238a653cec7a76edb",
+  "input_matches_archived_file": true,
+  "read_only": "task instruction; general tool access is not OS-enforced read-only",
+  "scope": "F6 full three-dimension independent review, round 1"
+}

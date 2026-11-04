@@ -1,0 +1,54 @@
+{
+  "outcome": "passed",
+  "selected_concurrency": 20,
+  "phases": [
+    {
+      "concurrency": 1,
+      "started": 58,
+      "successes": 58,
+      "success_rate": 1.0,
+      "failures": {}
+    },
+    {
+      "concurrency": 5,
+      "started": 346,
+      "successes": 346,
+      "success_rate": 1.0,
+      "failures": {}
+    },
+    {
+      "concurrency": 10,
+      "started": 693,
+      "successes": 693,
+      "success_rate": 1.0,
+      "failures": {}
+    },
+    {
+      "concurrency": 20,
+      "started": 1420,
+      "successes": 1420,
+      "success_rate": 1.0,
+      "failures": {}
+    }
+  ],
+  "sustained": {
+    "concurrency": 20,
+    "started": 14267,
+    "successes": 14267,
+    "success_rate": 1.0,
+    "failures": {},
+    "dispatch_seconds": 600,
+    "verified": 14267,
+    "after": {
+      "active_requests": 0,
+      "agent_requests": {},
+      "active_generations": 0,
+      "subscriptions": 0,
+      "cleanup_tasks": 0,
+      "cancellations": 0,
+      "observation_errors": 0,
+      "connections": 6
+    }
+  },
+  "total_requests": 16784
+}

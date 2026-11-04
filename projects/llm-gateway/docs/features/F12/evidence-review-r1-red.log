@@ -1,0 +1,177 @@
+F..F..FFFFF                                                              [100%]
+=================================== FAILURES ===================================
+_______ test_probe_fixed_timeout_is_not_reduced_to_endpoint_cap[False-9] _______
+
+endpoint_timeout = 9, disabled_prefix = False
+
+    @pytest.mark.parametrize('endpoint_timeout',[9,10,11])
+    @pytest.mark.parametrize('disabled_prefix',[False,True])
+    async def test_probe_fixed_timeout_is_not_reduced_to_endpoint_cap(endpoint_timeout,disabled_prefix):
+        selected='responses-b' if disabled_prefix else 'chat-a'
+        changes={selected:{'max_timeout_seconds':endpoint_timeout}}
+        if disabled_prefix:changes['chat-a']={'enabled':False}
+        svc,trace,a,b,traces=service(registry(changes))
+        trace.operation='provider_probe'
+        if endpoint_timeout<10:
+>           with pytest.raises(GatewayError) as caught:await svc.probe('general-primary',trace)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE GatewayError
+
+tests/unit/test_f12_recovery.py:113: Failed
+_______ test_probe_fixed_timeout_is_not_reduced_to_endpoint_cap[True-9] ________
+
+endpoint_timeout = 9, disabled_prefix = True
+
+    @pytest.mark.parametrize('endpoint_timeout',[9,10,11])
+    @pytest.mark.parametrize('disabled_prefix',[False,True])
+    async def test_probe_fixed_timeout_is_not_reduced_to_endpoint_cap(endpoint_timeout,disabled_prefix):
+        selected='responses-b' if disabled_prefix else 'chat-a'
+        changes={selected:{'max_timeout_seconds':endpoint_timeout}}
+        if disabled_prefix:changes['chat-a']={'enabled':False}
+        svc,trace,a,b,traces=service(registry(changes))
+        trace.operation='provider_probe'
+        if endpoint_timeout<10:
+>           with pytest.raises(GatewayError) as caught:await svc.probe('general-primary',trace)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE GatewayError
+
+tests/unit/test_f12_recovery.py:113: Failed
+__ test_render_overflow_obeys_route_stage_and_persists_rejection[False-False] __
+
+f12_case = ('case_5c9b6a39ebd24c0dbedbad82f5069664', PosixPath('/private/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/pytest-o..., recovery=RecoveryPolicy(max_attempts=3, max_attempts_per_endpoint=2, base_delay_seconds=0.0, max_delay_seconds=0.0)))
+f12_pg = <postgres_support.PostgresServer object at 0x10f520ce0>
+streaming = False, disabled = False
+
+    @pytest.mark.parametrize('streaming',[False,True])
+    @pytest.mark.parametrize('disabled',[False,True])
+    def test_render_overflow_obeys_route_stage_and_persists_rejection(f12_case,f12_pg,streaming,disabled):
+        name,config,_=f12_case
+        definition=registry({n:{'enabled':not disabled} for n in ('chat-a','responses-b')})
+        a,b=MockProvider(),MockProvider()
+        application=app(config,definition,a,b)
+        with TestClient(application,headers=HEADERS) as client:
+            body=request(streaming=streaming,
+                prompt={'name':'context_answer','version':'1.1.0','variables':{'context':'C'*10000}},
+                messages=[{'role':'user','content':'M'*10000}]).model_dump(exclude_none=True)
+            response=client.post('/v1/llm/stream' if streaming else '/v1/llm',json=body)
+            code='no_available_endpoint' if disabled else 'prompt_too_long'
+            assert response.status_code==(503 if disabled else 400)
+            assert set(response.json())=={'success','code','data','message'}
+            assert response.json()['success'] is False and response.json()['code']==code
+            assert response.json()['data'] is None
+            rid=response.headers['x-request-id'];diagnostic=trace(client,rid)
+>           assert diagnostic['status']=='failed' and diagnostic['error_stage']=='routing'
+E           AssertionError: assert ('failed' == 'failed'
+E             
+E               failed and 'admission' == 'routing'
+E             
+E             - routing
+E             + admission)
+
+tests/integration/test_f12_review_boundaries.py:29: AssertionError
+__ test_render_overflow_obeys_route_stage_and_persists_rejection[False-True] ___
+
+f12_case = ('case_4f678387bb8e4e47a6159071e7804ccd', PosixPath('/private/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/pytest-o..., recovery=RecoveryPolicy(max_attempts=3, max_attempts_per_endpoint=2, base_delay_seconds=0.0, max_delay_seconds=0.0)))
+f12_pg = <postgres_support.PostgresServer object at 0x10f520ce0>
+streaming = True, disabled = False
+
+    @pytest.mark.parametrize('streaming',[False,True])
+    @pytest.mark.parametrize('disabled',[False,True])
+    def test_render_overflow_obeys_route_stage_and_persists_rejection(f12_case,f12_pg,streaming,disabled):
+        name,config,_=f12_case
+        definition=registry({n:{'enabled':not disabled} for n in ('chat-a','responses-b')})
+        a,b=MockProvider(),MockProvider()
+        application=app(config,definition,a,b)
+        with TestClient(application,headers=HEADERS) as client:
+            body=request(streaming=streaming,
+                prompt={'name':'context_answer','version':'1.1.0','variables':{'context':'C'*10000}},
+                messages=[{'role':'user','content':'M'*10000}]).model_dump(exclude_none=True)
+            response=client.post('/v1/llm/stream' if streaming else '/v1/llm',json=body)
+            code='no_available_endpoint' if disabled else 'prompt_too_long'
+            assert response.status_code==(503 if disabled else 400)
+            assert set(response.json())=={'success','code','data','message'}
+            assert response.json()['success'] is False and response.json()['code']==code
+            assert response.json()['data'] is None
+            rid=response.headers['x-request-id'];diagnostic=trace(client,rid)
+>           assert diagnostic['status']=='failed' and diagnostic['error_stage']=='routing'
+E           AssertionError: assert ('failed' == 'failed'
+E             
+E               failed and 'admission' == 'routing'
+E             
+E             - routing
+E             + admission)
+
+tests/integration/test_f12_review_boundaries.py:29: AssertionError
+__ test_render_overflow_obeys_route_stage_and_persists_rejection[True-False] ___
+
+f12_case = ('case_8ffeffb57be94a5ba574671a86ad8042', PosixPath('/private/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/pytest-o..., recovery=RecoveryPolicy(max_attempts=3, max_attempts_per_endpoint=2, base_delay_seconds=0.0, max_delay_seconds=0.0)))
+f12_pg = <postgres_support.PostgresServer object at 0x10f520ce0>
+streaming = False, disabled = True
+
+    @pytest.mark.parametrize('streaming',[False,True])
+    @pytest.mark.parametrize('disabled',[False,True])
+    def test_render_overflow_obeys_route_stage_and_persists_rejection(f12_case,f12_pg,streaming,disabled):
+        name,config,_=f12_case
+        definition=registry({n:{'enabled':not disabled} for n in ('chat-a','responses-b')})
+        a,b=MockProvider(),MockProvider()
+        application=app(config,definition,a,b)
+        with TestClient(application,headers=HEADERS) as client:
+            body=request(streaming=streaming,
+                prompt={'name':'context_answer','version':'1.1.0','variables':{'context':'C'*10000}},
+                messages=[{'role':'user','content':'M'*10000}]).model_dump(exclude_none=True)
+            response=client.post('/v1/llm/stream' if streaming else '/v1/llm',json=body)
+            code='no_available_endpoint' if disabled else 'prompt_too_long'
+>           assert response.status_code==(503 if disabled else 400)
+E           assert 400 == 503
+E            +  where 400 = <Response [400 Bad Request]>.status_code
+
+tests/integration/test_f12_review_boundaries.py:24: AssertionError
+___ test_render_overflow_obeys_route_stage_and_persists_rejection[True-True] ___
+
+f12_case = ('case_798276ca8b934b598f979eaffa9ccc70', PosixPath('/private/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/pytest-o..., recovery=RecoveryPolicy(max_attempts=3, max_attempts_per_endpoint=2, base_delay_seconds=0.0, max_delay_seconds=0.0)))
+f12_pg = <postgres_support.PostgresServer object at 0x10f520ce0>
+streaming = True, disabled = True
+
+    @pytest.mark.parametrize('streaming',[False,True])
+    @pytest.mark.parametrize('disabled',[False,True])
+    def test_render_overflow_obeys_route_stage_and_persists_rejection(f12_case,f12_pg,streaming,disabled):
+        name,config,_=f12_case
+        definition=registry({n:{'enabled':not disabled} for n in ('chat-a','responses-b')})
+        a,b=MockProvider(),MockProvider()
+        application=app(config,definition,a,b)
+        with TestClient(application,headers=HEADERS) as client:
+            body=request(streaming=streaming,
+                prompt={'name':'context_answer','version':'1.1.0','variables':{'context':'C'*10000}},
+                messages=[{'role':'user','content':'M'*10000}]).model_dump(exclude_none=True)
+            response=client.post('/v1/llm/stream' if streaming else '/v1/llm',json=body)
+            code='no_available_endpoint' if disabled else 'prompt_too_long'
+>           assert response.status_code==(503 if disabled else 400)
+E           assert 400 == 503
+E            +  where 400 = <Response [400 Bad Request]>.status_code
+
+tests/integration/test_f12_review_boundaries.py:24: AssertionError
+________ test_probe_timeout_rejection_has_no_attempt_or_fee_reservation ________
+
+f12_case = ('case_8755224e128c4dfe8155e40ade9f868c', PosixPath('/private/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/pytest-o..., recovery=RecoveryPolicy(max_attempts=3, max_attempts_per_endpoint=2, base_delay_seconds=0.0, max_delay_seconds=0.0)))
+f12_pg = <postgres_support.PostgresServer object at 0x10f520ce0>
+
+    def test_probe_timeout_rejection_has_no_attempt_or_fee_reservation(f12_case,f12_pg):
+        name,config,_=f12_case
+        a,b=MockProvider(),MockProvider()
+        application=app(config,registry({'chat-a':{'max_timeout_seconds':9}}),a,b)
+        with TestClient(application,headers=HEADERS) as client:
+            response=client.post('/v1/models/general-primary/health')
+>           assert response.status_code==400
+E           assert 200 == 400
+E            +  where 200 = <Response [200 OK]>.status_code
+
+tests/integration/test_f12_review_boundaries.py:47: AssertionError
+=========================== short test summary info ============================
+FAILED tests/unit/test_f12_recovery.py::test_probe_fixed_timeout_is_not_reduced_to_endpoint_cap[False-9]
+FAILED tests/unit/test_f12_recovery.py::test_probe_fixed_timeout_is_not_reduced_to_endpoint_cap[True-9]
+FAILED tests/integration/test_f12_review_boundaries.py::test_render_overflow_obeys_route_stage_and_persists_rejection[False-False]
+FAILED tests/integration/test_f12_review_boundaries.py::test_render_overflow_obeys_route_stage_and_persists_rejection[False-True]
+FAILED tests/integration/test_f12_review_boundaries.py::test_render_overflow_obeys_route_stage_and_persists_rejection[True-False]
+FAILED tests/integration/test_f12_review_boundaries.py::test_render_overflow_obeys_route_stage_and_persists_rejection[True-True]
+FAILED tests/integration/test_f12_review_boundaries.py::test_probe_timeout_rejection_has_no_attempt_or_fee_reservation
+7 failed, 4 passed, 13 deselected in 4.73s

@@ -1,0 +1,44 @@
+{
+  "outcome": "passed",
+  "selected_concurrency": 20,
+  "phases": [
+    {
+      "concurrency": 1,
+      "started": 66,
+      "successes": 66,
+      "success_rate": 1.0,
+      "failures": {}
+    },
+    {
+      "concurrency": 5,
+      "started": 330,
+      "successes": 330,
+      "success_rate": 1.0,
+      "failures": {}
+    },
+    {
+      "concurrency": 10,
+      "started": 680,
+      "successes": 680,
+      "success_rate": 1.0,
+      "failures": {}
+    },
+    {
+      "concurrency": 20,
+      "started": 1380,
+      "successes": 1380,
+      "success_rate": 1.0,
+      "failures": {}
+    }
+  ],
+  "sustained": {
+    "concurrency": 20,
+    "started": 13430,
+    "successes": 13430,
+    "success_rate": 1.0,
+    "failures": {},
+    "dispatch_seconds": 600,
+    "elapsed_including_drain_seconds": 600.9977045829874
+  },
+  "total_requests": 15886
+}

@@ -1,0 +1,64 @@
+{
+  "command": "uv run --python 3.12 python -W error -m pytest --run-live --basetemp=/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llmgw-f11-diagnosis-r2-nz404qhe/pytest-full -o junit_family=xunit1 --junitxml=/var/folders/1x/3lv86fj56zjgm8txl21tvpq00000gn/T/llmgw-f11-diagnosis-r2-nz404qhe/full.xml -ra -q",
+  "exit_code": 1,
+  "tests": 2265,
+  "passed": 2242,
+  "failed": 23,
+  "errors": 0,
+  "skipped": 0,
+  "live_nodes": 34,
+  "nonlive_passed": 2231,
+  "elapsed_seconds": 1953.2,
+  "frozen_file_count": 217,
+  "source_drift": [],
+  "scope": "raw pytest result; not an acceptance verdict",
+  "raw_artifact_files": 1115,
+  "capacity": {
+    "phases": [
+      {
+        "concurrency": 1,
+        "started": 18,
+        "successes": 17,
+        "failures": {
+          "request_timeout": 1
+        }
+      },
+      {
+        "concurrency": 5,
+        "started": 76,
+        "successes": 66,
+        "failures": {
+          "request_timeout": 10
+        }
+      },
+      {
+        "concurrency": 10,
+        "started": 158,
+        "successes": 144,
+        "failures": {
+          "request_timeout": 14
+        }
+      },
+      {
+        "concurrency": 20,
+        "started": 122,
+        "successes": 110,
+        "failures": {
+          "request_timeout": 12
+        }
+      }
+    ],
+    "sustained": {
+      "concurrency": 1,
+      "started": 50,
+      "successes": 12,
+      "success_rate": 0.24,
+      "failures": {
+        "provider_unavailable": 25,
+        "request_timeout": 13
+      },
+      "dispatch_seconds": 600,
+      "elapsed_including_drain_seconds": 610.884045334009
+    }
+  }
+}

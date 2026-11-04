@@ -1,0 +1,13 @@
+{
+  "agent": "/root/f8_independent_review",
+  "round": 3,
+  "outcome": "APPROVED",
+  "P0": 0,
+  "P1": 0,
+  "P2": 0,
+  "P3": 1,
+  "readonly": "instruction",
+  "before_after_manifest_equal": true,
+  "manifest_sha256": "0038a04366e20f1d6c54de28ed87c0fbd6d037728377e2ac8f0cb3a9d3044bb3",
+  "prompt_sha256": "a5e80fe949a2cf11b2b99392ef6810c4fdbf7e4fa561242b9b1fd65ec624149d"
+}

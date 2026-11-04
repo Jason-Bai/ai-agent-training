@@ -1,0 +1,700 @@
+{
+  "scope": "post-run read-only scene audit; original 23 pytest failures retained",
+  "saved_scene_count": 16,
+  "classified_scenes": 15,
+  "unresolved_scenes": [
+    "717f7259-544e-49f4-9386-1f351584f6db"
+  ],
+  "scenes": [
+    {
+      "directory": "test_real_provider_case_F4_L040",
+      "request_id": "470b34f6-9c6c-4e2b-8031-71849fab3343",
+      "proof": {
+        "request_id": "470b34f6-9c6c-4e2b-8031-71849fab3343",
+        "attempt_no": 2,
+        "protocol": "responses",
+        "error_code": "provider_unavailable",
+        "upstream_http_status": 503,
+        "provider_elapsed_ms": 106.31366702727973,
+        "kind": "upstream_http_error",
+        "attempt_count": 2,
+        "attempts": [
+          {
+            "request_id": "470b34f6-9c6c-4e2b-8031-71849fab3343",
+            "attempt_no": 1,
+            "protocol": "responses",
+            "error_code": "provider_unavailable",
+            "upstream_http_status": 503,
+            "provider_elapsed_ms": 250.8838750072755,
+            "kind": "upstream_http_error",
+            "attempt_count": 1
+          },
+          {
+            "request_id": "470b34f6-9c6c-4e2b-8031-71849fab3343",
+            "attempt_no": 2,
+            "protocol": "responses",
+            "error_code": "provider_unavailable",
+            "upstream_http_status": 503,
+            "provider_elapsed_ms": 106.31366702727973,
+            "kind": "upstream_http_error",
+            "attempt_count": 1
+          }
+        ]
+      }
+    },
+    {
+      "directory": "test_real_call_and_committed_r0",
+      "request_id": "06573470-c5ef-40d7-8547-1f15db91a1f7",
+      "proof": {
+        "request_id": "06573470-c5ef-40d7-8547-1f15db91a1f7",
+        "attempt_no": 2,
+        "protocol": "chat_completions",
+        "error_code": "provider_unavailable",
+        "upstream_http_status": 503,
+        "provider_elapsed_ms": 114.22987497644499,
+        "kind": "upstream_http_error",
+        "attempt_count": 2,
+        "attempts": [
+          {
+            "request_id": "06573470-c5ef-40d7-8547-1f15db91a1f7",
+            "attempt_no": 1,
+            "protocol": "chat_completions",
+            "error_code": "provider_unavailable",
+            "upstream_http_status": 503,
+            "provider_elapsed_ms": 166.3592499680817,
+            "kind": "upstream_http_error",
+            "attempt_count": 1
+          },
+          {
+            "request_id": "06573470-c5ef-40d7-8547-1f15db91a1f7",
+            "attempt_no": 2,
+            "protocol": "chat_completions",
+            "error_code": "provider_unavailable",
+            "upstream_http_status": 503,
+            "provider_elapsed_ms": 114.22987497644499,
+            "kind": "upstream_http_error",
+            "attempt_count": 1
+          }
+        ]
+      }
+    },
+    {
+      "directory": "test_real_two_stage_stream_dis0",
+      "request_id": "30e5ef59-e89c-42c8-8230-4a092bd08b8f",
+      "proof": {
+        "request_id": "30e5ef59-e89c-42c8-8230-4a092bd08b8f",
+        "attempt_no": 2,
+        "protocol": "chat_completions",
+        "error_code": "provider_unavailable",
+        "upstream_http_status": 503,
+        "provider_elapsed_ms": 341.7565419804305,
+        "kind": "upstream_http_error",
+        "attempt_count": 2,
+        "attempts": [
+          {
+            "request_id": "30e5ef59-e89c-42c8-8230-4a092bd08b8f",
+            "attempt_no": 1,
+            "protocol": "chat_completions",
+            "error_code": "provider_unavailable",
+            "upstream_http_status": 503,
+            "provider_elapsed_ms": 240.8562499913387,
+            "kind": "upstream_http_error",
+            "attempt_count": 1
+          },
+          {
+            "request_id": "30e5ef59-e89c-42c8-8230-4a092bd08b8f",
+            "attempt_no": 2,
+            "protocol": "chat_completions",
+            "error_code": "provider_unavailable",
+            "upstream_http_status": 503,
+            "provider_elapsed_ms": 341.7565419804305,
+            "kind": "upstream_http_error",
+            "attempt_count": 1
+          }
+        ]
+      }
+    },
+    {
+      "directory": "test_real_provider_case_F4_L030",
+      "request_id": "36bdc943-2924-4c59-8340-2cb8f7601786",
+      "proof": {
+        "request_id": "36bdc943-2924-4c59-8340-2cb8f7601786",
+        "attempt_no": 2,
+        "protocol": "chat_completions",
+        "error_code": "provider_unavailable",
+        "upstream_http_status": 503,
+        "provider_elapsed_ms": 125.09579199831933,
+        "kind": "upstream_http_error",
+        "attempt_count": 2,
+        "attempts": [
+          {
+            "request_id": "36bdc943-2924-4c59-8340-2cb8f7601786",
+            "attempt_no": 1,
+            "protocol": "chat_completions",
+            "error_code": "provider_unavailable",
+            "upstream_http_status": 503,
+            "provider_elapsed_ms": 279.0064999717288,
+            "kind": "upstream_http_error",
+            "attempt_count": 1
+          },
+          {
+            "request_id": "36bdc943-2924-4c59-8340-2cb8f7601786",
+            "attempt_no": 2,
+            "protocol": "chat_completions",
+            "error_code": "provider_unavailable",
+            "upstream_http_status": 503,
+            "provider_elapsed_ms": 125.09579199831933,
+            "kind": "upstream_http_error",
+            "attempt_count": 1
+          }
+        ]
+      }
+    },
+    {
+      "directory": "test_real_two_stage_stream_dis1",
+      "request_id": "4fdd189a-10f2-4fed-9c2e-f617c71fdf78",
+      "proof": {
+        "request_id": "4fdd189a-10f2-4fed-9c2e-f617c71fdf78",
+        "attempt_no": 2,
+        "protocol": "responses",
+        "error_code": "provider_unavailable",
+        "upstream_http_status": 503,
+        "provider_elapsed_ms": 109.37158396700397,
+        "kind": "upstream_http_error",
+        "attempt_count": 2,
+        "attempts": [
+          {
+            "request_id": "4fdd189a-10f2-4fed-9c2e-f617c71fdf78",
+            "attempt_no": 1,
+            "protocol": "responses",
+            "error_code": "provider_unavailable",
+            "upstream_http_status": 503,
+            "provider_elapsed_ms": 147.9509170167148,
+            "kind": "upstream_http_error",
+            "attempt_count": 1
+          },
+          {
+            "request_id": "4fdd189a-10f2-4fed-9c2e-f617c71fdf78",
+            "attempt_no": 2,
+            "protocol": "responses",
+            "error_code": "provider_unavailable",
+            "upstream_http_status": 503,
+            "provider_elapsed_ms": 109.37158396700397,
+            "kind": "upstream_http_error",
+            "attempt_count": 1
+          }
+        ]
+      }
+    },
+    {
+      "directory": "test_real_call_and_committed_r1",
+      "request_id": "03c61417-d1da-4378-b406-d9dd4d6831ed",
+      "proof": {
+        "request_id": "03c61417-d1da-4378-b406-d9dd4d6831ed",
+        "attempt_no": 2,
+        "protocol": "responses",
+        "error_code": "provider_unavailable",
+        "upstream_http_status": 503,
+        "provider_elapsed_ms": 108.89579198556021,
+        "kind": "upstream_http_error",
+        "attempt_count": 2,
+        "attempts": [
+          {
+            "request_id": "03c61417-d1da-4378-b406-d9dd4d6831ed",
+            "attempt_no": 1,
+            "protocol": "responses",
+            "error_code": "provider_unavailable",
+            "upstream_http_status": 503,
+            "provider_elapsed_ms": 301.6337499720976,
+            "kind": "upstream_http_error",
+            "attempt_count": 1
+          },
+          {
+            "request_id": "03c61417-d1da-4378-b406-d9dd4d6831ed",
+            "attempt_no": 2,
+            "protocol": "responses",
+            "error_code": "provider_unavailable",
+            "upstream_http_status": 503,
+            "provider_elapsed_ms": 108.89579198556021,
+            "kind": "upstream_http_error",
+            "attempt_count": 1
+          }
+        ]
+      }
+    },
+    {
+      "directory": "test_real_provider_case_F4_L010",
+      "request_id": "2e6020ba-d889-485b-b2c4-947b3ebaf09e",
+      "proof": {
+        "request_id": "2e6020ba-d889-485b-b2c4-947b3ebaf09e",
+        "attempt_no": 2,
+        "protocol": "chat_completions",
+        "error_code": "provider_unavailable",
+        "upstream_http_status": 503,
+        "provider_elapsed_ms": 107.86591697251424,
+        "kind": "upstream_http_error",
+        "attempt_count": 2,
+        "attempts": [
+          {
+            "request_id": "2e6020ba-d889-485b-b2c4-947b3ebaf09e",
+            "attempt_no": 1,
+            "protocol": "chat_completions",
+            "error_code": "provider_unavailable",
+            "upstream_http_status": 503,
+            "provider_elapsed_ms": 166.48520802846178,
+            "kind": "upstream_http_error",
+            "attempt_count": 1
+          },
+          {
+            "request_id": "2e6020ba-d889-485b-b2c4-947b3ebaf09e",
+            "attempt_no": 2,
+            "protocol": "chat_completions",
+            "error_code": "provider_unavailable",
+            "upstream_http_status": 503,
+            "provider_elapsed_ms": 107.86591697251424,
+            "kind": "upstream_http_error",
+            "attempt_count": 1
+          }
+        ]
+      }
+    },
+    {
+      "directory": "test_real_streaming_F5_L01_pri0",
+      "request_id": "f5543d4f-01c6-4482-8c70-b9a6b94fe1f1",
+      "proof": {
+        "request_id": "f5543d4f-01c6-4482-8c70-b9a6b94fe1f1",
+        "attempt_no": 2,
+        "protocol": "chat_completions",
+        "error_code": "provider_unavailable",
+        "upstream_http_status": 503,
+        "provider_elapsed_ms": 249.03029104461893,
+        "kind": "upstream_http_error",
+        "attempt_count": 2,
+        "attempts": [
+          {
+            "request_id": "f5543d4f-01c6-4482-8c70-b9a6b94fe1f1",
+            "attempt_no": 1,
+            "protocol": "chat_completions",
+            "error_code": "provider_unavailable",
+            "upstream_http_status": 503,
+            "provider_elapsed_ms": 282.68854098860174,
+            "kind": "upstream_http_error",
+            "attempt_count": 1
+          },
+          {
+            "request_id": "f5543d4f-01c6-4482-8c70-b9a6b94fe1f1",
+            "attempt_no": 2,
+            "protocol": "chat_completions",
+            "error_code": "provider_unavailable",
+            "upstream_http_status": 503,
+            "provider_elapsed_ms": 249.03029104461893,
+            "kind": "upstream_http_error",
+            "attempt_count": 1
+          }
+        ]
+      }
+    },
+    {
+      "directory": "test_real_provider_case_F4_L020",
+      "request_id": "672ee590-3f84-4baa-8363-08b5e9e8d083",
+      "proof": {
+        "request_id": "672ee590-3f84-4baa-8363-08b5e9e8d083",
+        "attempt_no": 2,
+        "protocol": "responses",
+        "error_code": "provider_unavailable",
+        "upstream_http_status": 503,
+        "provider_elapsed_ms": 106.75687500042841,
+        "kind": "upstream_http_error",
+        "attempt_count": 2,
+        "attempts": [
+          {
+            "request_id": "672ee590-3f84-4baa-8363-08b5e9e8d083",
+            "attempt_no": 1,
+            "protocol": "responses",
+            "error_code": "provider_unavailable",
+            "upstream_http_status": 503,
+            "provider_elapsed_ms": 259.3072919989936,
+            "kind": "upstream_http_error",
+            "attempt_count": 1
+          },
+          {
+            "request_id": "672ee590-3f84-4baa-8363-08b5e9e8d083",
+            "attempt_no": 2,
+            "protocol": "responses",
+            "error_code": "provider_unavailable",
+            "upstream_http_status": 503,
+            "provider_elapsed_ms": 106.75687500042841,
+            "kind": "upstream_http_error",
+            "attempt_count": 1
+          }
+        ]
+      }
+    },
+    {
+      "directory": "test_real_streaming_F5_L02_bac0",
+      "request_id": "75c8f974-9120-4eec-bb70-512b73373cc0",
+      "proof": {
+        "request_id": "75c8f974-9120-4eec-bb70-512b73373cc0",
+        "attempt_no": 2,
+        "protocol": "responses",
+        "error_code": "provider_unavailable",
+        "upstream_http_status": 503,
+        "provider_elapsed_ms": 258.4599169786088,
+        "kind": "upstream_http_error",
+        "attempt_count": 2,
+        "attempts": [
+          {
+            "request_id": "75c8f974-9120-4eec-bb70-512b73373cc0",
+            "attempt_no": 1,
+            "protocol": "responses",
+            "error_code": "provider_unavailable",
+            "upstream_http_status": 503,
+            "provider_elapsed_ms": 224.22187501797453,
+            "kind": "upstream_http_error",
+            "attempt_count": 1
+          },
+          {
+            "request_id": "75c8f974-9120-4eec-bb70-512b73373cc0",
+            "attempt_no": 2,
+            "protocol": "responses",
+            "error_code": "provider_unavailable",
+            "upstream_http_status": 503,
+            "provider_elapsed_ms": 258.4599169786088,
+            "kind": "upstream_http_error",
+            "attempt_count": 1
+          }
+        ]
+      }
+    },
+    {
+      "directory": "test_real_call_and_committed_r3",
+      "request_id": "7448e066-c3e8-4f22-b8a6-5f08a989c181",
+      "proof": {
+        "request_id": "7448e066-c3e8-4f22-b8a6-5f08a989c181",
+        "attempt_no": 2,
+        "protocol": "responses",
+        "error_code": "provider_unavailable",
+        "upstream_http_status": 503,
+        "provider_elapsed_ms": 144.43816704442725,
+        "kind": "upstream_http_error",
+        "attempt_count": 2,
+        "attempts": [
+          {
+            "request_id": "7448e066-c3e8-4f22-b8a6-5f08a989c181",
+            "attempt_no": 1,
+            "protocol": "responses",
+            "error_code": "provider_unavailable",
+            "upstream_http_status": 503,
+            "provider_elapsed_ms": 412.22504200413823,
+            "kind": "upstream_http_error",
+            "attempt_count": 1
+          },
+          {
+            "request_id": "7448e066-c3e8-4f22-b8a6-5f08a989c181",
+            "attempt_no": 2,
+            "protocol": "responses",
+            "error_code": "provider_unavailable",
+            "upstream_http_status": 503,
+            "provider_elapsed_ms": 144.43816704442725,
+            "kind": "upstream_http_error",
+            "attempt_count": 1
+          }
+        ]
+      }
+    },
+    {
+      "directory": "test_real_call_and_committed_r4",
+      "request_id": "484bb712-34c6-4977-8e99-e4be7a743469",
+      "proof": {
+        "request_id": "484bb712-34c6-4977-8e99-e4be7a743469",
+        "attempt_no": 2,
+        "protocol": "chat_completions",
+        "error_code": "provider_unavailable",
+        "upstream_http_status": 503,
+        "provider_elapsed_ms": 246.65308301337063,
+        "kind": "upstream_http_error",
+        "attempt_count": 2,
+        "attempts": [
+          {
+            "request_id": "484bb712-34c6-4977-8e99-e4be7a743469",
+            "attempt_no": 1,
+            "protocol": "chat_completions",
+            "error_code": "provider_unavailable",
+            "upstream_http_status": 503,
+            "provider_elapsed_ms": 161.42995801055804,
+            "kind": "upstream_http_error",
+            "attempt_count": 1
+          },
+          {
+            "request_id": "484bb712-34c6-4977-8e99-e4be7a743469",
+            "attempt_no": 2,
+            "protocol": "chat_completions",
+            "error_code": "provider_unavailable",
+            "upstream_http_status": 503,
+            "provider_elapsed_ms": 246.65308301337063,
+            "kind": "upstream_http_error",
+            "attempt_count": 1
+          }
+        ]
+      }
+    },
+    {
+      "directory": "test_real_provider_case_F4_L060",
+      "request_id": "7bd7d288-74ef-44f3-8a93-fcf2a6af340a",
+      "proof": {
+        "request_id": "7bd7d288-74ef-44f3-8a93-fcf2a6af340a",
+        "kind": "manual_probe_reports_upstream_unavailable",
+        "attempt_count": 1,
+        "source": "actual HTTP503 + typed failure + saved SQL/Trace/billing + zero resources"
+      }
+    },
+    {
+      "directory": "test_real_call_and_committed_r5",
+      "request_id": "2a466ee7-e77f-45f2-bb35-bb0a09b816ed",
+      "proof": {
+        "request_id": "2a466ee7-e77f-45f2-bb35-bb0a09b816ed",
+        "attempt_no": 2,
+        "protocol": "responses",
+        "error_code": "provider_unavailable",
+        "upstream_http_status": 503,
+        "provider_elapsed_ms": 129.63954196311533,
+        "kind": "upstream_http_error",
+        "attempt_count": 2,
+        "attempts": [
+          {
+            "request_id": "2a466ee7-e77f-45f2-bb35-bb0a09b816ed",
+            "attempt_no": 1,
+            "protocol": "responses",
+            "error_code": "provider_unavailable",
+            "upstream_http_status": 503,
+            "provider_elapsed_ms": 148.09637499274686,
+            "kind": "upstream_http_error",
+            "attempt_count": 1
+          },
+          {
+            "request_id": "2a466ee7-e77f-45f2-bb35-bb0a09b816ed",
+            "attempt_no": 2,
+            "protocol": "responses",
+            "error_code": "provider_unavailable",
+            "upstream_http_status": 503,
+            "provider_elapsed_ms": 129.63954196311533,
+            "kind": "upstream_http_error",
+            "attempt_count": 1
+          }
+        ]
+      }
+    },
+    {
+      "directory": "test_real_call_and_committed_r2",
+      "request_id": "31fc3aff-a0bd-43ae-b9a5-05ed73157e79",
+      "proof": {
+        "request_id": "31fc3aff-a0bd-43ae-b9a5-05ed73157e79",
+        "attempt_no": 2,
+        "protocol": "chat_completions",
+        "error_code": "provider_unavailable",
+        "upstream_http_status": 503,
+        "provider_elapsed_ms": 126.51491700671613,
+        "kind": "upstream_http_error",
+        "attempt_count": 2,
+        "attempts": [
+          {
+            "request_id": "31fc3aff-a0bd-43ae-b9a5-05ed73157e79",
+            "attempt_no": 1,
+            "protocol": "chat_completions",
+            "error_code": "provider_unavailable",
+            "upstream_http_status": 503,
+            "provider_elapsed_ms": 270.3277080436237,
+            "kind": "upstream_http_error",
+            "attempt_count": 1
+          },
+          {
+            "request_id": "31fc3aff-a0bd-43ae-b9a5-05ed73157e79",
+            "attempt_no": 2,
+            "protocol": "chat_completions",
+            "error_code": "provider_unavailable",
+            "upstream_http_status": 503,
+            "provider_elapsed_ms": 126.51491700671613,
+            "kind": "upstream_http_error",
+            "attempt_count": 1
+          }
+        ]
+      }
+    },
+    {
+      "directory": "test_real_provider_case_F4_L050",
+      "request_id": "717f7259-544e-49f4-9386-1f351584f6db",
+      "proof": null,
+      "limitation": "snapshot not yet a verified persisted terminal; no exemption issued"
+    }
+  ],
+  "f11_dependency_blocked_scenarios": [
+    {
+      "directory": "test_stream_disconnect_retains3",
+      "requests": [
+        {
+          "request_id": "77a7e7ab-7580-497e-a50a-9e4fb7279b67",
+          "attempts": [
+            {
+              "attempt_no": 1,
+              "http_status": 503,
+              "code": "provider_unavailable",
+              "read_closed": true
+            },
+            {
+              "attempt_no": 2,
+              "http_status": 503,
+              "code": "provider_unavailable",
+              "read_closed": true
+            }
+          ]
+        }
+      ],
+      "final_counts": {
+        "active_requests": 0,
+        "agents": {}
+      },
+      "classification": "dependency prevented some success-scenario assertions; not relabeled as scenario success",
+      "limitation": "no per-request SQL snapshot retained for these six fixtures; prior same-product real six successes are separate evidence"
+    },
+    {
+      "directory": "test_agent_credential_and_mode3",
+      "requests": [
+        {
+          "request_id": "7cd8f6e0-47ff-45fe-8223-ffe0dc82dc04",
+          "attempts": [
+            {
+              "attempt_no": 1,
+              "http_status": 503,
+              "code": "provider_unavailable",
+              "read_closed": true
+            },
+            {
+              "attempt_no": 2,
+              "http_status": 503,
+              "code": "provider_unavailable",
+              "read_closed": true
+            }
+          ]
+        }
+      ],
+      "final_counts": {
+        "active_requests": 0,
+        "agents": {}
+      },
+      "classification": "dependency prevented some success-scenario assertions; not relabeled as scenario success",
+      "limitation": "no per-request SQL snapshot retained for these six fixtures; prior same-product real six successes are separate evidence"
+    },
+    {
+      "directory": "test_agent_credential_and_mode2",
+      "requests": [
+        {
+          "request_id": "5d24611f-5c58-425d-9399-dc6bc4c68ffd",
+          "attempts": [
+            {
+              "attempt_no": 1,
+              "http_status": 503,
+              "code": "provider_unavailable",
+              "read_closed": true
+            },
+            {
+              "attempt_no": 2,
+              "http_status": 503,
+              "code": "provider_unavailable",
+              "read_closed": true
+            }
+          ]
+        }
+      ],
+      "final_counts": {
+        "active_requests": 0,
+        "agents": {}
+      },
+      "classification": "dependency prevented some success-scenario assertions; not relabeled as scenario success",
+      "limitation": "no per-request SQL snapshot retained for these six fixtures; prior same-product real six successes are separate evidence"
+    },
+    {
+      "directory": "test_stream_disconnect_retains2",
+      "requests": [
+        {
+          "request_id": "95851a7b-279b-40f4-b8eb-5d32b6b5751f",
+          "attempts": [
+            {
+              "attempt_no": 1,
+              "http_status": 503,
+              "code": "provider_unavailable",
+              "read_closed": true
+            },
+            {
+              "attempt_no": 2,
+              "http_status": 503,
+              "code": "provider_unavailable",
+              "read_closed": true
+            }
+          ]
+        }
+      ],
+      "final_counts": {
+        "active_requests": 0,
+        "agents": {}
+      },
+      "classification": "dependency prevented some success-scenario assertions; not relabeled as scenario success",
+      "limitation": "no per-request SQL snapshot retained for these six fixtures; prior same-product real six successes are separate evidence"
+    },
+    {
+      "directory": "test_global_admission_and_pend3",
+      "requests": [
+        {
+          "request_id": "82e4eb7a-e148-470d-a95c-f62a49f40876",
+          "attempts": [
+            {
+              "attempt_no": 1,
+              "http_status": 503,
+              "code": "provider_unavailable",
+              "read_closed": true
+            },
+            {
+              "attempt_no": 2,
+              "http_status": 503,
+              "code": "provider_unavailable",
+              "read_closed": true
+            }
+          ]
+        }
+      ],
+      "final_counts": {
+        "active_requests": 0,
+        "agents": {}
+      },
+      "classification": "dependency prevented some success-scenario assertions; not relabeled as scenario success",
+      "limitation": "no per-request SQL snapshot retained for these six fixtures; prior same-product real six successes are separate evidence"
+    },
+    {
+      "directory": "test_global_admission_and_pend2",
+      "requests": [
+        {
+          "request_id": "aa2a4432-33e7-4f80-8a56-9d53b7f80478",
+          "attempts": [
+            {
+              "attempt_no": 1,
+              "http_status": 503,
+              "code": "provider_unavailable",
+              "read_closed": true
+            },
+            {
+              "attempt_no": 2,
+              "http_status": 503,
+              "code": "provider_unavailable",
+              "read_closed": true
+            }
+          ]
+        }
+      ],
+      "final_counts": {
+        "active_requests": 0,
+        "agents": {}
+      },
+      "classification": "dependency prevented some success-scenario assertions; not relabeled as scenario success",
+      "limitation": "no per-request SQL snapshot retained for these six fixtures; prior same-product real six successes are separate evidence"
+    }
+  ]
+}

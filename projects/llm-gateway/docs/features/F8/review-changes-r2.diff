@@ -1,0 +1,654 @@
+--- r1/src/api/routes.py
++++ r2/src/api/routes.py
+@@ -69,7 +69,11 @@
+     trace = request.state.trace
+     execution = gateway.prepare_stream(body, trace)
+     trace._stream_creation = True
+-    await request.app.state.storage.create_pending(trace, execution.snapshot)
++    try:
++        await request.app.state.storage.create_pending(trace, execution.snapshot)
++    except StorageUnavailable:
++        trace.record_storage_failure('create_pending')
++        raise
+     trace.status = 'pending'
+     return StreamCreatedResponse(data=StreamCreatedData(request_id=trace.request_id))
+ 
+--- r1/src/main.py
++++ r2/src/main.py
+@@ -75,13 +75,8 @@
+                     error = trace.error_code or 'storage_unavailable'
+                     event = ('response.failed', {'request_id': request_id, 'code': error,
+                              'message': '请求未能完成'}) if trace.operation == 'streaming' and getattr(trace, '_admitted', False) else None
+-                    status = await storage.finish(trace, attempt, error_code=error, event=event)
++                    status = await storage.finish(trace, attempt, error_code=error, event=event, reconciling=True)
+                     trace.status = status
+-                    if status == 'completed':
+-                        if trace.error_code:
+-                            trace.delivery_error_code = trace.error_code
+-                        trace.error_code = None
+-                        trace.error_stage = None
+                     if attempt is not None and (attempt.status == 'running' or status == 'completed'):
+                         attempt.status = status
+                         if status == 'completed':
+--- r1/src/persistence/store.py
++++ r2/src/persistence/store.py
+@@ -5,7 +5,7 @@
+ from sqlalchemy import select, insert, update, func
+ from sqlalchemy.dialects.postgresql import insert as pg_insert
+ from persistence.tables import request, attempt as attempt_table, event as event_table
+-from utils.json_codec import dumps
++from utils.json_codec import dumps, loads
+ from constants import SUBSCRIPTION_PAGE_SIZE
+ 
+ TERMINAL = {'completed', 'failed', 'canceled'}
+@@ -56,6 +56,7 @@
+             await session.execute(insert(request).values(
+                 request_id=UUID(trace.request_id), operation='streaming', status='pending',
+                 created_at=now(), last_event_seq=0, input_snapshot=dumps(snapshot),
++                timing_snapshot=timing(trace),
+                 **request_values(trace)))
+ 
+     @staticmethod
+@@ -187,9 +188,15 @@
+                 raise ValueError('Request cannot append a delta')
+             return await self._event(session, row, name, payload)
+ 
+-    async def finish(self, trace, attempt=None, *, error_code=None, event=None, deadline=None):
+-        async with self.database.transaction(deadline=deadline) as session:
+-            row = await self._locked(session, trace.request_id)
++    async def finish(self, trace, attempt=None, *, error_code=None, event=None, deadline=None, reconciling=False):
++        async with self.database.transaction(deadline=deadline) as session:
++            row = await self._locked(session, trace.request_id)
++            if reconciling and row is not None and row['status'] in TERMINAL:
++                # A previous writer committed the outcome. The subsequent failure
++                # belongs to the response path, even if both codes happen to match.
++                if error_code == 'storage_unavailable' or error_code != row['error_code']:
++                    trace.delivery_error_code = error_code
++                return row['status']
+             if row is None:
+                 # Entry rejection: only validated metadata, never an execution snapshot.
+                 timestamp = now()
+@@ -222,14 +229,26 @@
+     async def update_diagnostics(self, trace, attempt=None):
+         async with self.database.transaction() as session:
+             row = await self._locked(session, trace.request_id)
+-            if row is None:
++            if row is None or row['status'] not in TERMINAL:
+                 return
+-            await session.execute(update(request).where(request.c.id == row['id']).values(timing_snapshot=timing(trace)))
++            # Execution diagnostics belong to the committed terminal row.
++            # Only these observations can arrive after the winning transaction.
++            saved = loads(row['timing_snapshot']) if row['timing_snapshot'] else {}
++            for field in ('ttft_ms', 'generation_duration_ms', 'stream_duration_ms',
++                          'cleanup_error_code', 'delivery_error_code'):
++                value = getattr(trace, field)
++                if value is not None and saved.get(field) is None:
++                    saved[field] = value
++            await session.execute(update(request).where(request.c.id == row['id']).values(timing_snapshot=dumps(saved)))
++            trace.status, trace.error_code = row['status'], row['error_code']
++            trace.error_stage = saved.get('error_stage')
++            trace.delivery_error_code = saved.get('delivery_error_code')
+             if attempt is not None:
+                 # Only diagnostics acquired after terminal commit may change here.
+-                diagnostics = {'cleanup_error_code': trace.cleanup_error_code}
+-                if attempt.latency_ms is not None:
+-                    diagnostics['latency_ms'] = attempt.latency_ms
++                diagnostics = {
++                    'cleanup_error_code': func.coalesce(attempt_table.c.cleanup_error_code, trace.cleanup_error_code),
++                    'latency_ms': func.coalesce(attempt_table.c.latency_ms, attempt.latency_ms),
++                }
+                 await session.execute(update(attempt_table).where(
+                     attempt_table.c.request_pk == row['id'], attempt_table.c.attempt_no == attempt.number).values(
+                     **diagnostics))
+--- r1/src/persistence/trace_query.py
++++ r2/src/persistence/trace_query.py
+@@ -52,6 +52,10 @@
+     for item in rows:
+         usage = None if item['total_tokens'] is None else Usage(**{k: item[k] for k in Usage.model_fields})
+         values = {col.name: item[col.name] for col in columns}
++        # Registration persists false before dispatch. A running process or a
++        # crash can leave that placeholder even after a real Provider call.
++        if values['provider_entered'] is False:
++            values['provider_entered'] = None
+         # Upstream strings may contain arbitrary text even for a rejected reply.
+         for key in ('finish_reason', 'upstream_finish_reason'):
+             if values[key] not in _END_REASONS:
+--- r1/src/providers/base.py
++++ r2/src/providers/base.py
+@@ -70,14 +70,30 @@
+     async def aclose(self) -> None: ...
+ 
+ 
++def reported_model(raw):
++    model = raw.get('model')
++    if not isinstance(model, str) or not model.strip():
++        raise ValueError
++    return model
++
++
++def chat_usage(raw):
++    if raw is None:
++        return None
++    return Usage(input_tokens=raw['prompt_tokens'], output_tokens=raw['completion_tokens'],
++                 total_tokens=raw['total_tokens'])
++
++
+ def parse_response(raw) -> ProviderResult:
+     """Validate raw wire types before SDK coercion; ignore unrelated metadata."""
++    actual = usage = None
+     try:
+         if not isinstance(raw, dict):
+             raise ValueError
+-        actual = raw.get('model')
++        actual = reported_model(raw)
++        usage = chat_usage(raw.get('usage'))
+         choices = raw.get('choices')
+-        if not isinstance(actual, str) or not actual.strip() or not isinstance(choices, list) or len(choices) != 1:
++        if not isinstance(choices, list) or len(choices) != 1:
+             raise ValueError
+         choice = choices[0]
+         message = choice['message']
+@@ -95,26 +111,20 @@
+             text = text if text is not None else ''
+         if not isinstance(text, str) or not isinstance(reason, str) or not reason.strip():
+             raise ValueError
+-        usage_raw = raw.get('usage')
+-        usage = None
+-        if usage_raw is not None:
+-            usage = Usage(input_tokens=usage_raw['prompt_tokens'],
+-                          output_tokens=usage_raw['completion_tokens'],
+-                          total_tokens=usage_raw['total_tokens'])
+         return ProviderResult(text=text, actual_model=actual, finish_reason=reason, usage=usage,
+                               upstream_finish_reason=original_reason)
+     except (KeyError, TypeError, ValueError, ValidationError):
+-        raise ProviderCallError(code='provider_invalid_response') from None
++        raise ProviderCallError(code='provider_invalid_response', actual_model=actual, usage=usage) from None
+ 
+ 
+ def parse_responses_response(raw) -> ProviderResult:
+     """Decode Responses without treating HTTP 200 or SDK output_text as success."""
++    actual = usage = None
+     try:
+         if not isinstance(raw, dict) or raw.get('object') != 'response':
+             raise ValueError
+-        actual, state = raw.get('model'), raw.get('status')
+-        if not isinstance(actual, str) or not actual.strip():
+-            raise ValueError
++        actual = reported_model(raw)
++        state = raw.get('status')
+         usage_raw = raw.get('usage')
+         usage = None if usage_raw is None else Usage(
+             input_tokens=usage_raw['input_tokens'], output_tokens=usage_raw['output_tokens'],
+@@ -176,7 +186,7 @@
+             raise ValueError
+         return ProviderResult(text=''.join(parts), finish_reason='refusal' if refusal else 'stop', **metadata)
+     except (KeyError, TypeError, ValueError, ValidationError):
+-        raise ProviderCallError(code='provider_invalid_response') from None
++        raise ProviderCallError(code='provider_invalid_response', actual_model=actual, usage=usage) from None
+ 
+ 
+ def validate_result(result: ProviderResult) -> None:
+--- r1/src/providers/streaming.py
++++ r2/src/providers/streaming.py
+@@ -1,7 +1,6 @@
+ """Wire-only SSE decoding and protocol state; Gateway consumes platform events."""
+-from contracts import Usage
+ from errors import ProviderCallError
+-from providers.base import ProviderStreamEvent, parse_responses_response
++from providers.base import ProviderStreamEvent, chat_usage, parse_responses_response, reported_model
+ from utils.json_codec import loads
+ 
+ 
+@@ -26,9 +25,7 @@
+ 
+ 
+ def metadata(raw):
+-    actual=raw.get('model')
+-    if not isinstance(actual,str) or not actual.strip():raise ValueError
+-    return {'actual_model':actual}
++    return {'actual_model': reported_model(raw)}
+ 
+ 
+ _REASONS={'length':'output_truncated','content_filter':'provider_content_filtered',
+@@ -48,6 +45,9 @@
+         if not isinstance(raw,dict) or raw.get('object')!='chat.completion.chunk':raise ValueError
+         meta=metadata(raw)
+         observed.update(meta)
++        usage=chat_usage(raw.get('usage'))
++        if usage is not None:
++            observed['usage']=usage
+         choices=raw.get('choices')
+         if not isinstance(choices,list) or len(choices)!=1:raise ValueError
+         choice=choices[0]
+@@ -62,8 +62,6 @@
+         if refusal is not None:
+             if not isinstance(refusal,str):raise ValueError
+             if refusal:reason='refusal'
+-        usage_raw=raw.get('usage')
+-        usage=None if usage_raw is None else Usage(input_tokens=usage_raw['prompt_tokens'],output_tokens=usage_raw['completion_tokens'],total_tokens=usage_raw['total_tokens'])
+         if reason is None:
+             if usage is not None:raise ValueError
+             yield ProviderStreamEvent(delta=text,**meta)
+@@ -104,7 +102,12 @@
+             if not isinstance(body,dict) or kind!='response.'+str(body.get('status')):raise ValueError
+             try:result=parse_responses_response(body)
+             except ProviderCallError as error:
+-                if error.code=='provider_invalid_response':raise ValueError from None
++                if error.code=='provider_invalid_response':
++                    if error.actual_model is not None:
++                        observed['actual_model']=error.actual_model
++                    if error.usage is not None:
++                        observed['usage']=error.usage
++                    raise ValueError from None
+                 yield failure(error.code,transient=error.transient,actual_model=error.actual_model,usage=error.usage,
+                               upstream_status=error.upstream_status,upstream_terminal_received=True)
+                 return
+--- r1/src/services/gateway.py
++++ r2/src/services/gateway.py
+@@ -68,9 +68,10 @@
+                                                                          deadline=deadline)
+                         trace._persisted_terminal = True
+                     except TimeoutError:
+-                        trace.error_code = 'request_timeout'
++                        failure = self._deadline_error(trace, 'finish')
++                        trace.error_code = failure.code
+                         self.defer(trace, attempt)
+-                        raise GatewayError('request_timeout', '请求处理超时', 504) from None
++                        raise failure from None
+                     except StorageUnavailable:
+                         self.defer(trace, attempt)
+                         if trace.operation == 'provider_probe':
+@@ -83,9 +84,10 @@
+                         trace.status = await self.storage.finish(trace, attempt, deadline=trace._deadline)
+                 trace._persisted_terminal = True
+             except TimeoutError:
+-                trace.error_code = 'request_timeout'
++                failure = self._deadline_error(trace, 'finish')
++                trace.error_code = failure.code
+                 self.defer(trace, attempt)
+-                raise GatewayError('request_timeout', '请求处理超时', 504) from None
++                raise failure from None
+             except StorageUnavailable:
+                 trace.error_code = 'storage_unavailable'
+                 self.defer(trace, attempt)
+@@ -374,8 +376,11 @@
+ 
+     @staticmethod
+     def _deadline_error(trace, stage=None):
+-        if trace.operation == 'provider_probe' and stage == 'provider':
+-            return ProviderCallError(code='provider_timeout', status_code=504)
++        if trace.operation == 'provider_probe':
++            if stage == 'provider':
++                return ProviderCallError(code='provider_timeout', status_code=504)
++            if stage in {'prepare', 'begin_attempt', 'finish_attempt', 'finish'}:
++                return StorageUnavailable(uncertain=True)
+         return GatewayError('request_timeout', '请求处理超时', 504)
+ 
+     @staticmethod
+--- r1/src/services/streaming_manager.py
++++ r2/src/services/streaming_manager.py
+@@ -11,6 +11,7 @@
+ from errors import GatewayError
+ from persistence.database import StorageUnavailable
+ from persistence.store import TERMINAL, request_values
++from services.trace import log_storage_failure
+ from services.streaming import PreparedStream, StreamingExecution, StreamFailure
+ from utils.json_codec import loads
+ 
+@@ -20,6 +21,7 @@
+     ready: asyncio.Future
+     row: dict
+     phase: str = 'new'
++    last_logged_stage: str | None = None
+     task: asyncio.Task | None = None
+     trace: object = None
+     attempt: object = None
+@@ -57,9 +59,16 @@
+             else:
+                 self.claims[request_id] = (lock, users - 1)
+ 
++    async def _read_stream(self, request_id):
++        try:
++            return await self.storage.get_stream(request_id)
++        except StorageUnavailable:
++            log_storage_failure(request_id, 'get_stream')
++            raise
++
+     async def subscribe(self, request_id, after_seq):
+         async with self._claim_lock(request_id):
+-            row = await self.storage.get_stream(request_id)
++            row = await self._read_stream(request_id)
+             if row is None:
+                 raise GatewayError('not_found', '流式请求不存在', 404)
+             if after_seq > row['last_event_seq']:
+@@ -78,7 +87,9 @@
+                 try:
+                     claimed = await self.storage.claim_stream(request_id, timestamp,
+                         timestamp + timedelta(seconds=timeout), deadline=deadline)
+-                except BaseException:
++                except BaseException as exc:
++                    if isinstance(exc, StorageUnavailable):
++                        log_storage_failure(request_id, 'claim_stream')
+                     self.orphans.add(request_id)
+                     raise
+                 if claimed:
+@@ -104,14 +115,14 @@
+                     row = dict(row, status='running', started_at=timestamp,
+                                deadline_at=timestamp + timedelta(seconds=timeout))
+                 else:
+-                    row = await self.storage.get_stream(request_id)
++                    row = await self._read_stream(request_id)
+             if (row['status'] in {'running', 'canceling'} and request_id not in self.tasks
+                     and request_id not in self.cancellations
+                     and not self.awaiting_persistence(request_id)):
+                 self.orphans.add(request_id)
+                 await self.storage.reconcile(request_id)
+                 self.orphans.discard(request_id)
+-                row = await self.storage.get_stream(request_id)
++                row = await self._read_stream(request_id)
+             trace = self.traces.requests.get(request_id) if request_id in self.tasks else None
+             if trace is None:
+                 return row, None
+@@ -128,7 +139,7 @@
+ 
+     async def cancel(self, request_id):
+         async with self._claim_lock(request_id):
+-            row = await self.storage.get_stream(request_id)
++            row = await self._read_stream(request_id)
+             if row is None:
+                 raise GatewayError('not_found', '流式请求不存在', 404)
+             if row['status'] in TERMINAL:
+@@ -162,6 +173,7 @@
+         try:
+             async with self._claim_lock(request_id):
+                 if operation.phase in {'new', 'uncertain'}:
++                    stage = 'accept_cancel' if operation.phase == 'new' else 'get_stream'
+                     if operation.phase == 'new':
+                         # Keep reconciliation responsibility even if commit ACK is lost.
+                         operation.phase = 'uncertain'
+@@ -184,6 +196,8 @@
+                     trace.status, trace.error_code = 'canceling', None
+                     trace._cancel_requested = True
+                     trace._admitted = True
++                    if operation.row['timing_snapshot'] and not hasattr(trace, '_skipped_candidates'):
++                        trace._skipped_candidates = loads(operation.row['timing_snapshot']).get('skipped_candidates')
+                     operation.trace = trace
+                     operation.generation = self.tasks.get(request_id)
+                     operation.phase = 'accepted'
+@@ -206,6 +220,7 @@
+                                           if a.request_id == request_id), None)
+                 operation.error_code = 'cancel_cleanup_failed' if trace.cleanup_error_code else None
+                 operation.phase = 'stopped'
++            stage = 'finish_cancel'
+             status = await self.storage.finish_cancel(operation.trace, operation.attempt,
+                                                      error_code=operation.error_code)
+             if status not in TERMINAL:
+@@ -218,6 +233,9 @@
+             self.defer(trace, operation.attempt)
+             self.cancellations.pop(request_id, None)
+         except StorageUnavailable as exc:
++            if operation.last_logged_stage != stage:
++                log_storage_failure(request_id, stage, operation.attempt)
++                operation.last_logged_stage = stage
+             if not operation.ready.done():
+                 operation.ready.set_exception(exc)
+         except GatewayError as exc:
+--- r1/src/services/trace.py
++++ r2/src/services/trace.py
+@@ -8,6 +8,12 @@
+ 
+ 
+ Status = Literal["pending", "running", "canceling", "completed", "failed", "canceled"]
++
++
++def log_storage_failure(request_id, stage, attempt=None):
++    logging.getLogger(__name__).warning(
++        '持久化失败 request_id=%s stage=%s attempt_no=%s', request_id, stage,
++        attempt.number if attempt is not None else None)
+ 
+ 
+ @dataclass
+@@ -39,9 +45,7 @@
+ 
+     def record_storage_failure(self, stage, attempt=None):
+         self.error_stage = stage
+-        logging.getLogger(__name__).warning(
+-            '持久化失败 request_id=%s stage=%s attempt_no=%s',
+-            self.request_id, stage, attempt.number if attempt else None)
++        log_storage_failure(self.request_id, stage, attempt)
+ 
+     async def wait_for_recovery(self, seconds):
+         started = monotonic()
+--- r1/tests/integration/test_f8_probe.py
++++ r2/tests/integration/test_f8_probe.py
+@@ -138,12 +138,16 @@
+         server.drop_database(name)
+ 
+ 
+-def test_probe_upstream_failure_and_terminal_save_failure(setup_probe, monkeypatch):
++@pytest.mark.parametrize('committed', [False, True])
++def test_probe_upstream_failure_and_terminal_save_failure(setup_probe, monkeypatch, committed):
+     app_factory, provider, connect = setup_probe
+     app = app_factory()
+     provider.error = ProviderCallError(code='provider_timeout', status_code=504)
++    original = app.state.storage.finish
+     async def failed_save(*args, **kwargs):
+-        raise StorageUnavailable()
++        if committed:
++            await original(*args, **kwargs)
++        raise StorageUnavailable(uncertain=committed)
+     with TestClient(app) as client:
+         with monkeypatch.context() as m:
+             m.setattr(app.state.storage, 'finish', failed_save)
+@@ -154,7 +158,11 @@
+     with connect() as conn:
+         assert conn.execute("""select r.error_code,a.error_code from tb_llm_request r
+             join tb_llm_attempt a on a.request_pk=r.id where r.request_id=%s""",(rid,)).fetchone() == (
+-                'storage_unavailable','provider_timeout')
++                'provider_timeout' if committed else 'storage_unavailable', 'provider_timeout')
++    with TestClient(app_factory()) as client:
++        diagnostic = client.get('/v1/traces/'+rid).json()['data']
++        assert diagnostic['error_stage'] == ('provider' if committed else 'finish')
++        assert diagnostic['delivery_error_code'] == ('storage_unavailable' if committed else None)
+     assert len(provider.calls) == 1
+ 
+ 
+@@ -184,12 +192,48 @@
+         with monkeypatch.context() as m:
+             m.setattr(app.state.storage, stage, blocked)
+             response = client.post('/v1/models/general-primary/health')
+-            assert response.status_code == 504
+-            assert response.json()['code'] == 'request_timeout'
++            assert response.status_code == 503
++            assert response.json()['code'] == 'storage_unavailable'
+             rid = response.headers['x-request-id']
+     with connect() as conn:
+         code, snapshot = conn.execute('select error_code,timing_snapshot from tb_llm_request where request_id=%s',
+                                       (rid,)).fetchone()
+-        assert code == 'request_timeout'
++        assert code == 'storage_unavailable'
+         assert json.loads(snapshot)['error_stage'] == stage
+     assert len(provider.calls) == int(stage in {'finish_attempt','finish'})
++
++
++@pytest.mark.parametrize('stage', [None, 'provider', 'finish'])
++def test_reconciler_keeps_existing_owner_even_when_error_codes_collide(setup_probe, stage):
++    from services.trace import AttemptTrace, RequestTrace
++    factory, provider, connect = setup_probe
++    rid = uuid4()
++    # An already committed terminal from an earlier owner. Historical timing
++    # may lack a failure stage; an identical code cannot authenticate the owner.
++    snapshot = {'recovery_stop_reason': 'already_recorded', 'recovery_wait_ms': 25.5}
++    if stage is not None:
++        snapshot['error_stage'] = stage
++    with connect() as conn:
++        pk = conn.execute("""insert into tb_llm_request(request_id,operation,status,error_code,timing_snapshot,
++            created_at,ended_at) values(%s,'provider_probe','failed','storage_unavailable',%s,now(),now())
++            returning id""", (rid,json.dumps(snapshot))).fetchone()[0]
++        conn.execute("""insert into tb_llm_attempt(request_pk,attempt_no,status,provider,adapter,model,
++            configured_model,api_protocol,started_at,cleanup_error_code,latency_ms)
++            values(%s,1,'failed','mock','mock','logical','mock','responses',now(),'stream_cleanup_timeout',17)""",(pk,))
++    app = factory()
++    stale = RequestTrace(str(rid), operation='provider_probe', error_code='storage_unavailable',
++                         error_stage='finish', recovery_wait_ms=0)
++    with TestClient(app) as client:
++        # Shutdown drains the real reconciliation queue.
++        rejected_attempt = AttemptTrace(str(rid), 1, 'logical', latency_ms=85)
++        client.portal.call(app.state.defer_persistence, stale, rejected_attempt)
++    with TestClient(factory()) as client:
++        result = client.get(f'/v1/traces/{rid}').json()['data']
++        assert result['error_stage'] == stage
++        assert result['delivery_error_code'] == 'storage_unavailable'
++        assert result['error_code'] == 'storage_unavailable' and len(result['attempts']) == 1
++        assert result['attempts'][0]['cleanup_error_code'] == 'stream_cleanup_timeout'
++        assert result['attempts'][0]['latency_ms'] == 17
++        assert result['recovery']['stop_reason'] == 'already_recorded'
++        assert result['recovery']['wait_ms'] == 25.5
++    assert not provider.calls
+--- r1/tests/integration/test_f8_trace_query.py
++++ r2/tests/integration/test_f8_trace_query.py
+@@ -116,8 +116,52 @@
+         assert data['attempts'][0]['status'] == 'failed'
+ 
+ 
+-def test_legacy_skip_extraction_accepts_nul_inside_saved_user_message(case):
++def test_legacy_skip_extraction_accepts_nul_inside_saved_user_message(case, server):
+     with TestClient(make_app(case[1])) as client:
+         response = client.post('/v1/llm/stream', json=body(messages=[{'role':'user', 'content':'embedded\x00nul'}]))
+         assert response.status_code == 202
+-        assert get(client, response.headers['x-request-id'])['recovery']['skipped_candidates'] == []
++        rid = response.headers['x-request-id']
++        with server.connect(case[0]) as conn:
++            conn.execute('UPDATE tb_llm_request SET timing_snapshot=NULL WHERE request_id=%s', (rid,))
++        assert get(client, rid)['recovery']['skipped_candidates'] == []
++
++
++def test_new_pending_query_reads_metadata_without_input_snapshot(case, server):
++    app = make_app(case[1])
++    with TestClient(app) as client:
++        rid = client.post('/v1/llm/stream', json=body()).headers['x-request-id']
++        engine = app.state.storage.database.engine.sync_engine
++        statements = []
++        def capture(conn, cursor, statement, parameters, context, many):
++            statements.append(statement)
++        event.listen(engine, 'before_cursor_execute', capture)
++        try:
++            assert get(client, rid)['recovery']['skipped_candidates'] == []
++        finally:
++            event.remove(engine, 'before_cursor_execute', capture)
++        assert not any('input_snapshot' in stmt for stmt in statements)
++
++
++@pytest.mark.parametrize(('point', 'stage'), [
++    ('create_pending', 'create_pending'), ('claim_stream', 'claim_stream'), ('accept_cancel', 'accept_cancel'),
++])
++def test_stream_lifecycle_storage_failure_logged(case, server, point, stage, monkeypatch, caplog):
++    provider = MockProvider()
++    app = make_app(case[1], provider)
++    async def fail(*args, **kwargs):
++        raise StorageUnavailable()
++
++    with TestClient(app) as client, monkeypatch.context() as patch:
++        if point != 'create_pending':
++            rid = client.post('/v1/llm/stream', json=body()).headers['x-request-id']
++        patch.setattr(app.state.storage, point, fail)
++        if point == 'create_pending':
++            response = client.post('/v1/llm/stream', json=body())
++            rid = response.headers['x-request-id']
++        elif point == 'claim_stream':
++            response = client.get(f'/v1/llm/stream/{rid}/events')
++        else:
++            response = client.post(f'/v1/llm/stream/{rid}/cancel')
++        assert (response.status_code, response.json()['code']) == (503, 'storage_unavailable')
++        assert not provider.stream_calls
++        assert f'request_id={rid} stage={stage} attempt_no=None' in caplog.text
+--- r1/tests/protocol/test_f8_rejected_usage.py
++++ r2/tests/protocol/test_f8_rejected_usage.py
+@@ -0,0 +1,59 @@
++"""Verify real adapter bytes, Gateway errors and independently committed usage."""
++import json
++
++import httpx
++import pytest
++
++from persistence.database import DatabaseConfig
++from test_f3_gateway_probe import application
++from test_providers import adapter_type, server
++
++
++@pytest.mark.parametrize('valid_usage', [True, False])
++@pytest.mark.parametrize('stream', [False, True])
++async def test_f8_unsupported_tool_result_preserves_only_valid_usage(
++        server, adapter_type, legacy_postgres_environment, monkeypatch, valid_usage, stream):
++    pg, template = legacy_postgres_environment
++    name = pg.create_database(template=template)
++    monkeypatch.setattr('main.load_database_config', lambda directory: DatabaseConfig(**pg.config(name)))
++    app, adapter, kind = application(adapter_type, server)
++    total = 85 if valid_usage else 86
++    if kind == 'deepseek':
++        response = {'object': 'chat.completion.chunk' if stream else 'chat.completion', 'model': 'wire-model',
++                    'choices': [{'index': 0, 'delta' if stream else 'message': {
++                        'role': 'assistant', 'tool_calls': [{'type': 'function'}]}, 'finish_reason': 'tool_calls'}],
++                    'usage': {'prompt_tokens': 60, 'completion_tokens': 25, 'total_tokens': total}}
++    else:
++        response = {'object': 'response', 'status': 'completed', 'model': 'wire-model',
++                    'output': [{'type': 'function_call'}],
++                    'usage': {'input_tokens': 60, 'output_tokens': 25, 'total_tokens': total}}
++        if stream:
++            response = {'type': 'response.completed', 'response': response}
++    server.raw = (('data: ' + json.dumps(response) + '\n\n') if stream else json.dumps(response)).encode()
++    try:
++        async with app.router.lifespan_context(app):
++            async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url='http://test') as client:
++                if stream:
++                    created = await client.post('/v1/llm/stream', json={
++                        'model': 'general-primary', 'prompt': {'name':'basic_text','version':'1.0.0'},
++                        'messages':[{'role':'user','content':'hello'}]})
++                    assert created.status_code == 202
++                    rid = created.headers['x-request-id']
++                    assert 'response.failed' in (await client.get(f'/v1/llm/stream/{rid}/events')).text
++                else:
++                    failed = await client.post('/v1/models/general-primary/health')
++                    assert failed.status_code == 502 and failed.json()['code'] == 'provider_invalid_response'
++                    rid = failed.headers['x-request-id']
++                trace = (await client.get(f'/v1/traces/{rid}')).json()['data']
++                assert len(server.calls) == 1 and trace['error_code'] == 'provider_invalid_response'
++                with pg.connect(name) as conn:
++                    saved = conn.execute('SELECT a.input_tokens,a.output_tokens,a.total_tokens FROM tb_llm_attempt a '
++                                         'JOIN tb_llm_request r ON a.request_pk=r.id WHERE r.request_id=%s',
++                                         (rid,)).fetchall()
++                assert saved == ([(60, 25, 85)] if valid_usage else [(None, None, None)])
++                assert trace['attempts'][0]['actual_model'] == 'wire-model'
++                subtotal = {'input_tokens':60,'output_tokens':25,'total_tokens':85} if valid_usage else None
++                assert trace['usage'] == {'known_subtotal': subtotal, 'unknown_attempts': [] if valid_usage else [1]}
++    finally:
++        await adapter.aclose()
++        pg.drop_database(name)
+--- r1/tests/smoke/test_f8_interrupted_attempt.py
++++ r2/tests/smoke/test_f8_interrupted_attempt.py
+@@ -0,0 +1,25 @@
++import signal
++
++from test_f5o2_process import create, events, gateway, observations, process_case, process_pg
++
++
++def test_f8_entry_evidence_during_dispatch_and_after_process_loss(process_case):
++    server, name, directory = process_case
++    def inspect(client, rid, status):
++        result = client.get(f'/v1/traces/{rid}')
++        assert result.status_code == 200
++        data = result.json()['data']
++        assert data['status'] == status
++        assert [o for o in observations(directory) if o[0] == 'stream'] == [['stream', 'entry-proof']]
++        assert len(data['attempts']) == 1
++        assert data['attempts'][0]['provider_entered'] is None
++
++    with gateway(directory) as (process, client):
++        rid, url = create(client, 'entry-proof')
++        with client.stream('GET', url) as subscription:
++            assert next(events(subscription))[1] == 'response.delta'
++            inspect(client, rid, 'running')
++            process.kill()
++            assert process.wait(timeout=5) == -signal.SIGKILL
++    with gateway(directory) as (_, client):
++        inspect(client, rid, 'failed')

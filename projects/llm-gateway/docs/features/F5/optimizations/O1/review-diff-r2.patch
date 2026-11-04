@@ -1,0 +1,130 @@
+--- r1/src/api/sse.py
++++ r2/src/api/sse.py
+@@ -44,8 +44,10 @@
+                 if remaining > 0:
+                     async with asyncio.timeout(remaining):
+                         await send({'type': 'http.response.body', 'body': b'', 'more_body': False})
+-        except (OSError, TimeoutError):
+-            pass
++        except (OSError, TimeoutError) as exc:
++            if self.execution.trace.delivery_error_code is None:
++                self.execution.trace.delivery_error_code = (
++                    'request_timeout' if isinstance(exc, TimeoutError) else 'client_disconnected')
+         finally:
+             watcher.cancel()
+             await asyncio.gather(watcher, return_exceptions=True)
+--- r1/src/persistence/database.py
++++ r2/src/persistence/database.py
+@@ -31,8 +31,8 @@
+ 
+ def database_url(config, config_dir):
+     try:
+-        password = (Path(config_dir) / config.password_file).read_text(encoding='utf-8').strip()
+-        if not password:
++        password = (Path(config_dir) / config.password_file).read_bytes().decode('utf-8').rstrip('\n')
++        if not password.strip():
+             raise ValueError
+     except (OSError, ValueError, UnicodeError):
+         raise ConfigurationError('数据库密码文件无法读取或为空') from None
+--- r1/src/services/models.py
++++ r2/src/services/models.py
+@@ -142,5 +142,5 @@
+ def load_registry(config_dir: Path = DEFAULT_CONFIG_DIR) -> ModelRegistry:
+     data = read_yaml(config_dir / 'gateway.yaml')
+     if not {'models', 'providers'} <= set(data) or set(data) - {'models', 'providers', 'database'}:
+-        raise ConfigurationError('gateway.yaml 必须且只能包含 models、providers')
++        raise ConfigurationError('gateway.yaml 必须包含 models、providers，可包含 database，不能包含其他顶层字段')
+     return ModelRegistry(models=data['models'], providers=data['providers'])
+--- r1/tests/integration/test_f5o1_http.py
++++ r2/tests/integration/test_f5o1_http.py
+@@ -847,6 +847,32 @@
+         assert provider.stream_close_calls == 1 and provider.close_calls == 0
+ 
+ 
++@pytest.mark.parametrize('failure,code', [(OSError('controlled EOF disconnect'), 'client_disconnected'),
++                                       (TimeoutError(), 'request_timeout')])
++async def test_final_empty_transport_frame_failure_has_persisted_diagnostic(pg_server, pg_config, failure, code):
++    name, config_dir = pg_config
++    await asyncio.to_thread(migrate, config_dir)
++    provider = MockProvider(text='正文')
++    app = make_app(config_dir, provider)
++
++    async def send(message):
++        if message['type'] == 'http.response.body' and not message.get('more_body', False):
++            assert message.get('body') == b''
++            raise failure
++
++    async with app.router.lifespan_context(app):
++        request_id = await invoke_stream(app, body(), send)
++        for _ in range(100):
++            request, attempts, events = observe(pg_server, name, request_id)
++            if loads(request['timing_snapshot'] or '{}').get('delivery_error_code'):
++                break
++            await asyncio.sleep(.02)
++        assert request['status'] == attempts[0]['status'] == 'completed'
++        assert loads(request['timing_snapshot'])['delivery_error_code'] == code
++        assert [e['event_type'] for e in events] == ['response.delta', 'response.completed']
++        assert provider.stream_close_calls == 1
++
++
+ @pytest.mark.parametrize('table', ['tb_llm_request', 'tb_llm_attempt'])
+ def test_real_pre_provider_sql_failure_has_no_call_or_partial_attempt(pg_server, pg_config, table):
+     from psycopg import sql
+--- r1/tests/postgres/test_f5o1_persistence.py
++++ r2/tests/postgres/test_f5o1_persistence.py
+@@ -50,15 +50,19 @@
+ 
+ 
+ @pytest.mark.asyncio
+-async def test_special_password_authenticates_without_url_corruption(pg_server, persisted):
++@pytest.mark.parametrize('password', ['a:@/?# %特殊字符', ' a:@/?# %特殊字符 '])
++async def test_special_password_authenticates_without_url_corruption(pg_server, persisted, password):
+     from psycopg import sql
+     from sqlalchemy import text
+     from persistence.database import Database, load_database_config
+     name, config_dir = persisted
+     role = 'credential_' + uuid.uuid4().hex[:12]
+-    password = 'a:@/?# %特殊字符'
+     with pg_server.connect(autocommit=True) as conn:
+         conn.execute(sql.SQL('CREATE ROLE {} LOGIN PASSWORD {}').format(sql.Identifier(role), sql.Literal(password)))
++    import psycopg
++    with psycopg.connect(host='127.0.0.1', port=pg_server.port, user=role,
++                         password=password, dbname=name, connect_timeout=5) as control:
++        assert control.execute('SELECT current_user').fetchone() == (role,)
+     (config_dir/'special.password').write_text(password+'\n')
+     config = load_database_config(config_dir).model_copy(update={'username': role, 'password_file': 'special.password'})
+     db = Database(config, config_dir)
+--- r1/tests/unit/test_f5o1_configuration.py
++++ r2/tests/unit/test_f5o1_configuration.py
+@@ -19,6 +19,14 @@
+     actual = load_registry(tmp_path)
+     assert set(actual.models) == set(baseline.models)
+     assert set(actual.providers) == set(baseline.providers)
++
++
++def test_invalid_registry_root_explains_optional_database_section(tmp_path):
++    document = {'providers': {}, 'models': {}, 'databases': {}}
++    (tmp_path/'gateway.yaml').write_text(yaml.safe_dump(document))
++    with pytest.raises(ConfigurationError) as failure:
++        load_registry(tmp_path)
++    assert '可包含 database' in str(failure.value)
+ 
+ 
+ import pytest
+@@ -75,14 +83,14 @@
+     (tmp_path/'gateway.yaml').write_text(yaml.safe_dump({'database': VALID_DATABASE}))
+     password_file = tmp_path/'postgres.password'
+     password_file.write_text('synthetic-private-password')
+-    original = Path.read_text
++    original = Path.read_bytes
+ 
+     def unreadable(path, *args, **kwargs):
+         if path == password_file:
+             raise PermissionError('synthetic-private-password')
+         return original(path, *args, **kwargs)
+ 
+-    monkeypatch.setattr(Path, 'read_text', unreadable)
++    monkeypatch.setattr(Path, 'read_bytes', unreadable)
+     with pytest.raises(ConfigurationError) as failure:
+         database_url(load_database_config(tmp_path), tmp_path)
+     assert 'synthetic-private-password' not in str(failure.value)
